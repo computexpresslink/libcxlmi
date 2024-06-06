@@ -1324,8 +1324,6 @@ static int handle_mctp_endpoint(struct cxlmi_ctx *ctx, const char* objpath,
 		}
 
 		dbus_message_iter_get_basic(&prop, &propname);
-		printf("\t\tpropname::: %s\n\n", propname);
-
 		dbus_message_iter_next(&prop);
 
 		if (!dbus_object_is_type(&prop, DBUS_TYPE_VARIANT)) {
@@ -1340,10 +1338,7 @@ static int handle_mctp_endpoint(struct cxlmi_ctx *ctx, const char* objpath,
 			rc = read_variant_basic(&val, DBUS_TYPE_BYTE, &eid);
 			have_eid = true;
 		} else if (!strcmp(propname, "NetworkId")) {
-			rc = read_variant_basic(&val, DBUS_TYPE_INT32, &net);
-
-			printf("t\t\t\tnetworkid: %d\n", net);
-
+			rc = read_variant_basic(&val, DBUS_TYPE_UINT32, &net);
 			have_net = true;
 		} else if (!strcmp(propname, "SupportedMessageTypes")) {
 			have_cxlmi = has_message_type(&val, MCTP_TYPE_CXL_CCI);
@@ -1395,9 +1390,6 @@ static int handle_mctp_obj(struct cxlmi_ctx *ctx, DBusMessageIter *obj,
 	}
 
 	dbus_message_iter_get_basic(obj, &objpath);
-
-	printf("objpath::: %s\n\n", objpath);
-
 	dbus_message_iter_next(obj);
 
 	if (!dbus_object_is_dict(obj)) {
@@ -1421,8 +1413,6 @@ static int handle_mctp_obj(struct cxlmi_ctx *ctx, DBusMessageIter *obj,
 		}
 
 		dbus_message_iter_get_basic(&intf, &intfname);
-
-		printf("\tintfname::: %s\n", intfname);
 
 		if (strcmp(intfname, MCTP_DBUS_IFACE_ENDPOINT)) {
 			if (!dbus_message_iter_next(&intfs))
