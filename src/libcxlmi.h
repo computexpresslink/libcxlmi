@@ -451,6 +451,12 @@ int cxlmi_cmd_memdev_get_alert_config(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_memdev_set_alert_config(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
 			      struct cxlmi_cmd_memdev_set_alert_config *in);
+int cxlmi_cmd_memdev_get_shutdown_state(struct cxlmi_endpoint *ep,
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_get_shutdown_state *ret);
+int cxlmi_cmd_memdev_set_shutdown_state(struct cxlmi_endpoint *ep,
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_set_shutdown_state *in);
 
 int cxlmi_cmd_memdev_sanitize(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti);

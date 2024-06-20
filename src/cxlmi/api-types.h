@@ -310,6 +310,16 @@ struct cxlmi_cmd_memdev_set_alert_config {
 	uint16_t corrected_persistent_mem_error_programmable_warning_threshold;
 } __attribute__((packed));
 
+/* CXL r3.1 Section 8.2.9.9.3.4: Get Shutdown State (Opcode 4203h) */
+struct cxlmi_cmd_memdev_get_shutdown_state {
+	uint8_t state;
+} __attribute__((packed));
+
+/* CXL r3.1 Section 8.2.9.9.3.5: Set Shutdown State (Opcode 4204h) */
+struct cxlmi_cmd_memdev_set_shutdown_state {
+	uint8_t state;
+} __attribute__((packed));
+
 struct cxlmi_cmd_memdev_get_security_state {
 	uint32_t security_state;
 } __attribute__((packed));

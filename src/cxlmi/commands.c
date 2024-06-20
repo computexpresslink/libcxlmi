@@ -1060,6 +1060,60 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_set_alert_config(struct cxlmi_endpoint *ep,
 	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
 }
 
+CXLMI_EXPORT int cxlmi_cmd_memdev_get_shutdown_state(struct cxlmi_endpoint *ep,
+				   struct cxlmi_tunnel_info *ti,
+				   struct cxlmi_cmd_memdev_get_shutdown_state *ret)
+{
+	struct cxlmi_cmd_memdev_get_shutdown_state *rsp_pl;
+	struct cxlmi_cci_msg req;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	int rc;
+	ssize_t rsp_sz;
+
+	arm_cci_request(ep, &req, 0, HEALTH_INFO_ALERTS, GET_SHUTDOWN_STATE);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_memdev_get_shutdown_state *)rsp->payload;
+	memset(ret, 0, sizeof(*ret));
+
+	ret->state = rsp_pl->state;
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_memdev_set_shutdown_state(struct cxlmi_endpoint *ep,
+				   struct cxlmi_tunnel_info *ti,
+				   struct cxlmi_cmd_memdev_set_shutdown_state *in)
+{
+	struct cxlmi_cmd_memdev_set_shutdown_state *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), HEALTH_INFO_ALERTS, SET_SHUTDOWN_STATE);
+
+	req_pl = (struct cxlmi_cmd_memdev_set_shutdown_state *)req->payload;
+
+	req_pl->state = in->state;
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_sanitize(struct cxlmi_endpoint *ep,
 					   struct cxlmi_tunnel_info *ti)
 {

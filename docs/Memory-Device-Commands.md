@@ -13,14 +13,16 @@ command set, as per the latest specification.
    * [Get Health Info (4200h)](#get-health-info-4200h)
    * [Get Alert Configuration (4201h)](#get-alert-configuration-4201h)
    * [Set Alert Configuration (4202h)](#set-alert-configuration-4202h)
+   * [Get Shutdown State (4203h)](#get-shutdown-state-4203h)
+   * [Set Shutdown State (4204h)](#set-shutdown-state-4204h)
 * [Sanitize and Media Operations (44h)](#sanitize-and-media-operations-44h)
    * [Sanitize (4400h)](#sanitize-4400h)
    * [Secure Erase (4401h)](#secure-erase-4401h)
-* [Persistent Memory Data-at-rest Security](#persistent-memory-data-at-rest-security)
-   * [Get Security State](#get-security-state)
+* [Persistent Memory Data-at-rest Security (45h)](#persistent-memory-data-at-rest-security-45h)
+   * [Get Security State (4500h)](#get-security-state-4500h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Mon May 20 03:21:37 PM PDT 2024 -->
+<!-- Added by: dave, at: Thu Jun 20 08:29:07 AM PDT 2024 -->
 
 <!--te-->
 
@@ -199,7 +201,7 @@ int cxlmi_cmd_memdev_get_alert_config(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_get_alert_config {
+struct cxlmi_cmd_memdev_set_alert_config {
 	uint8_t valid_alert_actions;
 	uint8_t enable_alert_actions;
 	uint8_t life_used_programmable_warning_threshold;
@@ -217,6 +219,42 @@ Command name:
 int cxlmi_cmd_memdev_set_alert_config(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
 			      struct cxlmi_cmd_memdev_set_alert_config *in);
+   ```
+
+## Get Shutdown State (4203h)
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_memdev_get_shutdown_state {
+	uint8_t state;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_get_shutdown_state(struct cxlmi_endpoint *ep,
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_get_shutdown_state *ret);
+   ```
+
+## Set Shutdown State (4204h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_set_shutdown_state {
+	uint8_t state;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_set_shutdown_state(struct cxlmi_endpoint *ep,
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_set_shutdown_state *in);
    ```
 
 # Sanitize and Media Operations (44h)
