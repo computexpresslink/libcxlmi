@@ -180,8 +180,8 @@ static inline void pstrcpy(char *buf, int buf_size, const char *str)
 }
 
 enum {
-	INFOSTAT    = 0x00,
-#define IS_IDENTIFY                    0x1
+    INFOSTAT    = 0x00,
+	#define IS_IDENTIFY                    0x1
 	#define BACKGROUND_OPERATION_STATUS    0x2
 	#define GET_RESP_MSG_LIMIT             003
 	#define SET_RESP_MSG_LIMIT             0x4
@@ -221,11 +221,6 @@ enum {
 	#define SET_ALERT_CONFIG       0x2
 	#define GET_SHUTDOWN_STATE     0x3
 	#define SET_SHUTDOWN_STATE     0x4
-    SANITIZE    = 0x44,
-	#define SANITIZE      0x0
-	#define SECURE_ERASE  0x1
-    PERSISTENT_MEM = 0x45,
-	#define GET_SECURITY_STATE     0x0
     MEDIA_AND_POISON = 0x43,
 	#define GET_POISON_LIST        0x0
 	#define INJECT_POISON          0x1
@@ -233,6 +228,11 @@ enum {
 	#define GET_SCAN_MEDIA_CAPABILITIES 0x3
 	#define SCAN_MEDIA             0x4
 	#define GET_SCAN_MEDIA_RESULTS 0x5
+    SANITIZE    = 0x44,
+	#define SANITIZE      0x0
+	#define SECURE_ERASE  0x1
+    PERSISTENT_MEM = 0x45,
+	#define GET_SECURITY_STATE     0x0
     DCD_CONFIG  = 0x48,
 	#define GET_DC_CONFIG          0x0
 	#define GET_DYN_CAP_EXT_LIST   0x1
