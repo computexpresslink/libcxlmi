@@ -100,7 +100,7 @@ tunneling for commands issued on LDs in an MLD that is accessible through an
 MLD port  of a CXL Switch.  Tunneling targets are: valid LDs within an MLD
 (single level tunneling), switch MLD ports (double level tunneling).
 
-For more information refer [Issuing CCI Commands](https://github.com/davidlohr/libcxlmi/tree/main?tab=readme-ov-file#issuing-cci-commands).
+For more information refer to [Issuing CCI Commands](https://github.com/computexpresslink/libcxlmi/tree/main?tab=readme-ov-file#issuing-cci-commands).
 
    ```C
 /*

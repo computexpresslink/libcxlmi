@@ -475,7 +475,7 @@ int cxlmi_cmd_get_log_cel(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_get_log_capabiltiies_req {
+struct cxlmi_cmd_get_log_capabilities_req {
 	uint8_t uuid[0x10];
 };
    ```
@@ -483,7 +483,7 @@ struct cxlmi_cmd_get_log_capabiltiies_req {
 Return payload:
 
    ```C
-struct cxlmi_cmd_get_log_capabiltiies_rsp {
+struct cxlmi_cmd_get_log_capabilities_rsp {
 	uint32_t parameter_flags;
 };
    ```
