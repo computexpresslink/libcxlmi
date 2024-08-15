@@ -20,7 +20,6 @@ equivalent, benefits for OoB management include:
 - Works on any host OS.
 - Does not require an OS (pre-boot).
 
-
 Abstractions
 ------------
 
@@ -221,7 +220,7 @@ FM-API Management
 By default, an endpoint will allow FM-API commands, *if* supported by the
 CXL component (or implicitly by disabling probing, see Component Discovery
 section above). To check if such command set is supported, `cxlmi_endpoint_has_fmapi()`
-can be called. Similarly, to control it disable/enable it dynamically,
+can be called. Similarly, to control it (disable/enable) dynamically,
 `cxlmi_endpoint_disable_fmapi()` and `cxlmi_endpoint_enable_fmapi()` can be used.
 
 This will impact, for example, on whether or not tunneling is available as a
@@ -258,6 +257,15 @@ and therefore, unsupported.
 - CXL r3.1 + DMTF binding specs are not clear on what Message type is used for the
 generic command set - these can be issued to either a switch or a type 3 device.
 The assumption here is that for those command either smctp_type is fine.
+
+API References
+==============
+
+- [Generic Component Commands](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Generic-Component-Commands.md)
+
+- [Memory Device Commands](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md)
+
+- [FM-API](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md)
 
 
 FAQ
