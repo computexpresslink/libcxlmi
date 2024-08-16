@@ -361,8 +361,8 @@ static int send_mctp_direct(struct cxlmi_endpoint *ep, bool fmapi,
 			    size_t rsp_msg_sz_min)
 {
 	int rc, errno_save, len;
-	socklen_t addrlen;
 	struct sockaddr_mctp addrrx;
+	socklen_t addrlen = sizeof(addrrx);
 	struct cxlmi_transport_mctp *mctp = ep->transport_data;
 	struct pollfd pollfds[1];
 	int timeout = ep->timeout_ms ? ep->timeout_ms : -1;
@@ -484,7 +484,7 @@ static int send_mctp_tunnel1(struct cxlmi_endpoint *ep,
 	int timeout = ep->timeout_ms ? ep->timeout_ms : -1;
 	size_t t_req_msg_sz, t_rsp_msg_sz, len_max, len_min;
 	int len, rc, errno_save;
-	socklen_t addrlen;
+	socklen_t addrlen = sizeof(addrrx);
 
 	cxlmi_msg(ep->ctx, LOG_DEBUG, "1 Level tunnel of opcode %02x%02x\n",
 		  req_msg->command_set, req_msg->command);
@@ -589,7 +589,7 @@ static int send_mctp_tunnel2(struct cxlmi_endpoint *ep,
 	struct sockaddr_mctp addrrx;
 	int timeout = ep->timeout_ms ? ep->timeout_ms : -1;
 	int errno_save, len, rc;
-	socklen_t addrlen;
+	socklen_t addrlen = sizeof(addrrx);
 
 	cxlmi_msg(ep->ctx, LOG_DEBUG, "2 Level tunnel of opcode %02x%02x\n",
 		  req_msg->command_set, req_msg->command);
