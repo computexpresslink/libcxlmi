@@ -481,6 +481,20 @@ int cxlmi_cmd_fmapi_get_phys_port_state(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_phys_port_control *in);
+int cxlmi_cmd_fmapi_get_domain_validation_sv_state(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_domain_validation_sv_state *ret);
+int cxlmi_cmd_fmapi_set_domain_validation_sv(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_set_domain_validation_sv *in);
+int cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_req *in,
+			struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_rsp *ret);
+int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_domain_validation_sv_req *in,
+			struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp *ret);
 
 #ifdef __cplusplus
 }

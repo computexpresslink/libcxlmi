@@ -255,7 +255,7 @@ struct cxlmi_cmd_memdev_get_partition_info {
 
 /* CXL r3.1 Section 8.2.9.9.2.2: Set Partition Info (Opcode 4101h) */
 struct cxlmi_cmd_memdev_set_partition_info {
-        uint64_t volatile_capacity;
+	uint64_t volatile_capacity;
 	uint8_t flags;
 } __attribute__((packed));
 
@@ -367,10 +367,38 @@ struct cxlmi_cmd_fmapi_get_phys_port_state_rsp {
 	struct cxlmi_cmd_fmapi_port_state_info_block ports[];
 } __attribute__((packed));
 
-/* CXL r3.1 Section 7.6.7.1.3: Physical Port control (Opcode 5102h) */
+/* CXL r3.1 Section 7.6.7.1.3: Physical Port Control (Opcode 5102h) */
 struct cxlmi_cmd_fmapi_phys_port_control {
 	uint8_t ppb_id;
 	uint8_t port_opcode;
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.1.5: Get Domain Validation SV State (Opcode 5104h) */
+struct cxlmi_cmd_fmapi_get_domain_validation_sv_state {
+	uint8_t secret_value_state;
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.1.6: Set Domain Validation SV (Opcode 5105h) */
+struct cxlmi_cmd_fmapi_set_domain_validation_sv {
+	uint8_t secret_value_uuid[0x10];
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.1.7: Get VCS Domain Validation SV State (Opcode 5106h) */
+struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_req {
+	uint8_t vcs_id;
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_rsp {
+	uint8_t secret_value_state;
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.1.8: Get Domain Validation SV (Opcode 5107h) */
+struct cxlmi_cmd_fmapi_get_domain_validation_sv_req {
+	uint8_t vcs_id;
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp {
+	uint8_t secret_value_uuid[0x10];
 } __attribute__((packed));
 
 #endif

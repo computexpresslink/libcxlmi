@@ -6,11 +6,15 @@ command set, as per the latest specification.
    * [Identify Switch Device (5100h)](#identify-switch-device-5100h)
    * [Get Physical Port State (5101h)](#get-physical-port-state-5101h)
    * [Physical Port Control (5102h)](#physical-port-control-5102h)
+   * [Get Domain Validation SV State (5104h)](#get-domain-validation-sv-state-5104h)
+   * [Set Domain Validation SV (5105h)](#set-domain-validation-sv-5105h)
+   * [Get VCS Domain Validation SV State (5106h)](#get-vcs-domain-validation-sv-state-5106h)
+   * [Get Domain Validation SV (5107h)](#get-domain-validation-sv-5107h)
 * [MLD Port (53h)](#mld-port-53h)
    * [Tunnel Management Command (5300h)](#tunnel-management-command-5300h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Fri Aug 16 05:02:06 PM PDT 2024 -->
+<!-- Added by: dave, at: Fri Aug 16 06:24:35 PM PDT 2024 -->
 
 <!--te-->
 
@@ -107,6 +111,96 @@ Command name:
 int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
 				 struct cxlmi_cmd_fmapi_phys_port_control *in);
+   ```
+
+## Get Domain Validation SV State (5104h)
+
+Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_domain_validation_sv_state {
+	uint8_t secret_value_state;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_domain_validation_sv_state(struct cxlmi_endpoint *ep,
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_fmapi_get_domain_validation_sv_state *ret);
+   ```
+
+## Set Domain Validation SV (5105h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_set_domain_validation_sv {
+	uint8_t secret_value_uuid[0x10];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_set_domain_validation_sv(struct cxlmi_endpoint *ep,
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_fmapi_set_domain_validation_sv *in);
+   ```
+
+## Get VCS Domain Validation SV State (5106h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_req {
+	uint8_t vcs_id;
+};
+   ```
+
+Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_rsp {
+	uint8_t secret_value_state;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_req *in,
+			struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_rsp *ret);
+   ```
+
+## Get Domain Validation SV (5107h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_domain_validation_sv_req {
+	uint8_t vcs_id;
+};
+   ```
+
+Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp {
+	uint8_t secret_value_uuid[0x10];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_domain_validation_sv_req *in,
+			struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp *ret);
    ```
 
 # MLD Port (53h)

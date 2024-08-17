@@ -652,7 +652,7 @@ int cxlmi_cmd_get_log_capabilities(struct cxlmi_endpoint *ep,
 	int rc = -1;
 
 	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x10);
-	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 4);	
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 4);
 
 	req_sz = sizeof(*req_pl) + sizeof(*req);
 	req = calloc(1, req_sz);
@@ -871,7 +871,7 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_set_partition_info(struct cxlmi_endpoint *ep,
 	size_t req_sz;
 
 	CXLMI_BUILD_BUG_ON(sizeof(*in) != 9);
-	
+
 	req_sz = sizeof(*req) + sizeof(*in);
 	req = calloc(1, req_sz);
 	if (!req)
@@ -1291,4 +1291,151 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
 	req_pl->port_opcode = in->port_opcode;
 
 	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+CXLMI_EXPORT int
+cxlmi_cmd_fmapi_get_domain_validation_sv_state(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_fmapi_get_domain_validation_sv_state *ret)
+{
+	int rc;
+	ssize_t rsp_sz;
+	struct cxlmi_cmd_fmapi_get_domain_validation_sv_state *rsp_pl;
+	struct cxlmi_cci_msg req;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 1);
+
+	arm_cci_request(ep, &req, 0,
+			PHYSICAL_SWITCH, GET_DOMAIN_VALIDATION_SV_STATE);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_domain_validation_sv_state *)rsp->payload;
+
+	ret->secret_value_state = rsp_pl->secret_value_state;
+
+	return rc;
+}
+
+CXLMI_EXPORT int
+cxlmi_cmd_fmapi_set_domain_validation_sv(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_fmapi_set_domain_validation_sv *in)
+{
+	struct cxlmi_cmd_fmapi_set_domain_validation_sv *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x10);
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in),
+			PHYSICAL_SWITCH, SET_DOMAIN_VALIDATION_SV);
+
+	req_pl = (struct cxlmi_cmd_fmapi_set_domain_validation_sv *)req->payload;
+
+	memcpy(req_pl->secret_value_uuid, in->secret_value_uuid,
+	       sizeof(req_pl->secret_value_uuid));
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+CXLMI_EXPORT int
+cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_req *in,
+			    struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_req *req_pl;
+	struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 1);
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 1);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl),
+			PHYSICAL_SWITCH, GET_VCS_DOMAIN_VALIDATION_SV_STATE);
+	req_pl = (struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_req *)req->payload;
+
+	req_pl->vcs_id = in->vcs_id;
+
+	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_rsp *)rsp->payload;
+	memset(ret, 0, sizeof(*ret));
+
+	ret->secret_value_state = rsp_pl->secret_value_state;
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_fmapi_get_domain_validation_sv_req *in,
+			    struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_get_domain_validation_sv_req *req_pl;
+	struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 1);
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 0x10);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl),
+			PHYSICAL_SWITCH, GET_DOMAIN_VALIDATION_SV);
+	req_pl = (struct cxlmi_cmd_fmapi_get_domain_validation_sv_req *)req->payload;
+
+	req_pl->vcs_id = in->vcs_id;
+
+	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp *)rsp->payload;
+	memset(ret, 0, sizeof(*ret));
+
+	memcpy(ret->secret_value_uuid, rsp_pl->secret_value_uuid,
+	       sizeof(rsp_pl->secret_value_uuid));
+
+	return rc;
 }
