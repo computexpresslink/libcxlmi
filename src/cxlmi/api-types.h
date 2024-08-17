@@ -367,4 +367,10 @@ struct cxlmi_cmd_fmapi_get_phys_port_state_rsp {
 	struct cxlmi_cmd_fmapi_port_state_info_block ports[];
 } __attribute__((packed));
 
+/* CXL r3.1 Section 7.6.7.1.3: Physical Port control (Opcode 5102h) */
+struct cxlmi_cmd_fmapi_phys_port_control {
+	uint8_t ppb_id;
+	uint8_t port_opcode;
+} __attribute__((packed));
+
 #endif

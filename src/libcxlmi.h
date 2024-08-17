@@ -478,6 +478,9 @@ int cxlmi_cmd_fmapi_get_phys_port_state(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_phys_port_state_req *in,
 			struct cxlmi_cmd_fmapi_get_phys_port_state_rsp *ret);
+int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_phys_port_control *in);
 
 #ifdef __cplusplus
 }

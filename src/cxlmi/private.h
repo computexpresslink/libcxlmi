@@ -241,6 +241,7 @@ enum {
     PHYSICAL_SWITCH = 0x51,
 	#define IDENTIFY_SWITCH_DEVICE      0x0
 	#define GET_PHYSICAL_PORT_STATE     0x1
+	#define PHYSICAL_PORT_CONTROL       0x2
     TUNNEL = 0x53,
 	#define MANAGEMENT_COMMAND     0x0
     MHD = 0x55,

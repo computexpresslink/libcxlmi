@@ -5,11 +5,12 @@ command set, as per the latest specification.
 * [Physical Switch (51h)](#physical-switch-51h)
    * [Identify Switch Device (5100h)](#identify-switch-device-5100h)
    * [Get Physical Port State (5101h)](#get-physical-port-state-5101h)
+   * [Physical Port Control (5102h)](#physical-port-control-5102h)
 * [MLD Port (53h)](#mld-port-53h)
    * [Tunnel Management Command (5300h)](#tunnel-management-command-5300h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Tue May 21 04:45:59 PM PDT 2024 -->
+<!-- Added by: dave, at: Fri Aug 16 05:02:06 PM PDT 2024 -->
 
 <!--te-->
 
@@ -87,6 +88,25 @@ int cxlmi_cmd_fmapi_get_phys_port_state(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_phys_port_state_req *in,
 			struct cxlmi_cmd_fmapi_get_phys_port_state_rsp *ret);
+   ```
+
+## Physical Port Control (5102h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_phys_port_control {
+	uint8_t ppb_id;
+	uint8_t port_opcode;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_fmapi_phys_port_control *in);
    ```
 
 # MLD Port (53h)

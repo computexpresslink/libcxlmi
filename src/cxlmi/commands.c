@@ -1267,3 +1267,28 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_phys_port_state(struct cxlmi_endpoint *ep,
 
 	return rc;
 }
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_fmapi_phys_port_control *in)
+{
+	struct cxlmi_cmd_fmapi_phys_port_control *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in),
+			PHYSICAL_SWITCH, PHYSICAL_PORT_CONTROL);
+
+	req_pl = (struct cxlmi_cmd_fmapi_phys_port_control *)req->payload;
+
+	req_pl->ppb_id = in->ppb_id;
+	req_pl->port_opcode = in->port_opcode;
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
