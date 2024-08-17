@@ -1,8 +1,8 @@
 Pending features before a first release.
 
-- DBus scanning is broken (endpoints are not found).
 - Add all commands as of latest CXL Spec.
 - Current testing is very simple, add more unit tests.
+- Json support.
 - More examples.
 
 Others:
