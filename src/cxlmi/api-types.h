@@ -401,4 +401,108 @@ struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp {
 	uint8_t secret_value_uuid[0x10];
 } __attribute__((packed));
 
+/* CXL r3.1 Section 7.6.7.4.1: Get LD Info (Opcode 5400h) */
+struct cxlmi_cmd_fmapi_get_ld_info {
+	uint64_t memory_size;
+	uint16_t ld_count;
+	uint8_t qos_telemetry_capability;
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.4.2: Get LD Allocations (Opcode 5401h) */
+struct cxlmi_cmd_fmapi_get_ld_allocations_req {
+	uint8_t start_ld_id;
+	uint8_t ld_allocation_list_limit;
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapu_ld_allocations_list {
+	uint64_t range_1_allocation_mult;
+	uint64_t range_2_allocation_mult;
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_get_ld_allocations_rsp {
+	uint8_t number_ld;
+	uint8_t memory_granularity;
+	uint8_t start_ld_id;
+	uint8_t ld_allocation_list_len;
+	struct cxlmi_cmd_fmapu_ld_allocations_list ld_allocation_list[];
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.4.3: Set LD Allocations (Opcode 5402h) */
+struct cxlmi_cmd_fmapi_set_ld_allocations_req {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t rsvd[2];
+	struct cxlmi_cmd_fmapu_ld_allocations_list ld_allocation_list[];
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_set_ld_allocations_rsp {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t rsvd[2];
+	struct cxlmi_cmd_fmapu_ld_allocations_list ld_allocation_list[];
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.4.4: Get QoS Control (Opcode 5403h) */
+struct cxlmi_cmd_fmapi_get_qos_control {
+	uint8_t qos_telemetry_control;
+	uint8_t egress_moderate_percentage;
+	uint8_t egress_severe_percentage;
+	uint8_t backpressure_sample_interval;
+	uint16_t recmpbasis;
+	uint8_t completion_collection_interval;
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.4.5: Set QoS Control (Opcode 5404h) */
+struct cxlmi_cmd_fmapi_set_qos_control {
+	uint8_t qos_telemetry_control;
+	uint8_t egress_moderate_percentage;
+	uint8_t egress_severe_percentage;
+	uint8_t backpressure_sample_interval;
+	uint16_t recmpbasis;
+	uint8_t completion_collection_interval;
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.4.6: Get QoS Status (Opcode 5405h) */
+struct cxlmi_cmd_fmapi_get_qos_status {
+	uint8_t backpressure_avg_percentage;
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.4.7: Get QoS Allocated BW (Opcode 5406h) */
+struct cxlmi_cmd_fmapi_get_qos_allocated_bw_req {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_get_qos_allocated_bw_rsp {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t qos_allocation_fraction[];
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.4.8: Set QoS Allocated BW (Opcode 5407h) */
+struct cxlmi_cmd_fmapi_set_qos_allocated_bw {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t qos_allocation_fraction[];
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.4.9: Get QoS BW Limit (Opcode 5408h) */
+struct cxlmi_cmd_fmapi_get_qos_bw_limit_req {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_get_qos_bw_limit_rsp {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t qos_limit_fraction[];
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.4.10: Set QoS BW Limit (Opcode 5409h) */
+struct cxlmi_cmd_fmapi_set_qos_bw_limit {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t qos_limit_fraction[];
+} __attribute__((packed));
+
 #endif

@@ -1439,3 +1439,452 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint 
 
 	return rc;
 }
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_ld_info(struct cxlmi_endpoint *ep,
+					  struct cxlmi_tunnel_info *ti,
+					  struct cxlmi_cmd_fmapi_get_ld_info *ret)
+{
+	int rc;
+	ssize_t rsp_sz;
+	struct cxlmi_cmd_fmapi_get_ld_info *rsp_pl;
+	struct cxlmi_cci_msg req;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 11);
+
+	arm_cci_request(ep, &req, 0, MLD_COMPONENTS, GET_LD_INFO);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_ld_info *)rsp->payload;
+
+	ret->memory_size = le64_to_cpu(rsp_pl->memory_size);
+	ret->ld_count = le16_to_cpu(rsp_pl->ld_count);
+	ret->qos_telemetry_capability = rsp_pl->qos_telemetry_capability;
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_ld_allocations(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_fmapi_get_ld_allocations_req *in,
+			    struct cxlmi_cmd_fmapi_get_ld_allocations_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_get_ld_allocations_req *req_pl;
+	struct cxlmi_cmd_fmapi_get_ld_allocations_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int i, rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 2);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl),
+			MLD_COMPONENTS, GET_LD_ALLOCATIONS);
+	req_pl = (struct cxlmi_cmd_fmapi_get_ld_allocations_req *)req->payload;
+
+	req_pl->start_ld_id = in->start_ld_id;
+	req_pl->ld_allocation_list_limit = in->ld_allocation_list_limit;
+
+	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_ld_allocations_rsp *)rsp->payload;
+
+	ret->number_ld = rsp_pl->number_ld;
+	ret->memory_granularity = rsp_pl->memory_granularity;
+	ret->start_ld_id = rsp_pl->start_ld_id;
+	ret->ld_allocation_list_len = rsp_pl->ld_allocation_list_len;
+
+	for (i = 0; i < ret->ld_allocation_list_len; i++) {
+		ret->ld_allocation_list[i].range_1_allocation_mult =
+			le64_to_cpu(rsp_pl->ld_allocation_list[i].range_1_allocation_mult);
+		ret->ld_allocation_list[i].range_2_allocation_mult =
+			le64_to_cpu(rsp_pl->ld_allocation_list[i].range_2_allocation_mult);
+	}
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_set_ld_allocations(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_fmapi_set_ld_allocations_req *in,
+			    struct cxlmi_cmd_fmapi_set_ld_allocations_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_set_ld_allocations_req *req_pl;
+	struct cxlmi_cmd_fmapi_set_ld_allocations_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int i, rc = -1;
+
+	req_sz = sizeof(*req_pl) + sizeof(*req) +
+		in->number_ld * sizeof(*in->ld_allocation_list);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl),
+			MLD_COMPONENTS, SET_LD_ALLOCATIONS);
+	req_pl = (struct cxlmi_cmd_fmapi_set_ld_allocations_req *)req->payload;
+
+	req_pl->number_ld = in->number_ld;
+	req_pl->start_ld_id = in->start_ld_id;
+
+	for (i = 0; i < ret->number_ld; i++) {
+		req_pl->ld_allocation_list[i].range_1_allocation_mult =
+			cpu_to_le64(in->ld_allocation_list[i].range_1_allocation_mult);
+		req_pl->ld_allocation_list[i].range_2_allocation_mult =
+			cpu_to_le64(in->ld_allocation_list[i].range_2_allocation_mult);
+	}
+
+	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp) +
+		in->number_ld * sizeof(*in->ld_allocation_list);;
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_set_ld_allocations_rsp *)rsp->payload;
+
+	ret->number_ld = rsp_pl->number_ld;
+	ret->start_ld_id = rsp_pl->start_ld_id;
+
+	for (i = 0; i < ret->number_ld; i++) {
+		ret->ld_allocation_list[i].range_1_allocation_mult =
+			le64_to_cpu(rsp_pl->ld_allocation_list[i].range_1_allocation_mult);
+		ret->ld_allocation_list[i].range_2_allocation_mult =
+			le64_to_cpu(rsp_pl->ld_allocation_list[i].range_2_allocation_mult);
+	}
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_qos_control(struct cxlmi_endpoint *ep,
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_fmapi_get_qos_control *ret)
+{
+	struct  cxlmi_cmd_fmapi_get_qos_control *rsp_pl;
+	struct cxlmi_cci_msg req;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t rsp_sz;
+	int rc;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 7);
+
+	arm_cci_request(ep, &req, 0, MLD_COMPONENTS, GET_QOS_CONTROL);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_qos_control *)rsp->payload;
+
+	ret->qos_telemetry_control = rsp_pl->qos_telemetry_control;
+	ret->egress_moderate_percentage = rsp_pl->egress_moderate_percentage;
+	ret->egress_severe_percentage = rsp_pl->egress_severe_percentage;
+	ret->backpressure_sample_interval = rsp_pl->backpressure_sample_interval;
+	ret->recmpbasis = le16_to_cpu(rsp_pl->backpressure_sample_interval);
+	ret->completion_collection_interval = rsp_pl->completion_collection_interval;
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_set_qos_control(struct cxlmi_endpoint *ep,
+					  struct cxlmi_tunnel_info *ti,
+					  struct cxlmi_cmd_fmapi_set_qos_control *in,
+					  struct cxlmi_cmd_fmapi_set_qos_control *ret)
+{
+	struct cxlmi_cmd_fmapi_set_qos_control *req_pl;
+	struct cxlmi_cmd_fmapi_set_qos_control *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 7);
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 7);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl),
+			MLD_COMPONENTS, SET_QOS_CONTROL);
+	req_pl = (struct cxlmi_cmd_fmapi_set_qos_control *)req->payload;
+
+	req_pl->qos_telemetry_control = in->qos_telemetry_control;
+	req_pl->egress_moderate_percentage = in->egress_moderate_percentage;
+	req_pl->egress_severe_percentage = in->egress_severe_percentage;
+	req_pl->backpressure_sample_interval = in->backpressure_sample_interval;
+	req_pl->recmpbasis = cpu_to_le16(in->backpressure_sample_interval);
+	req_pl->completion_collection_interval = in->completion_collection_interval;
+
+	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_set_qos_control *)rsp->payload;
+	memset(ret, 0, sizeof(*ret));
+
+	ret->qos_telemetry_control = rsp_pl->qos_telemetry_control;
+	ret->egress_moderate_percentage = rsp_pl->egress_moderate_percentage;
+	ret->egress_severe_percentage = rsp_pl->egress_severe_percentage;
+	ret->backpressure_sample_interval = rsp_pl->backpressure_sample_interval;
+	ret->recmpbasis = le16_to_cpu(rsp_pl->backpressure_sample_interval);
+	ret->completion_collection_interval = rsp_pl->completion_collection_interval;
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_qos_status(struct cxlmi_endpoint *ep,
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_fmapi_get_qos_status *ret)
+{
+	struct  cxlmi_cmd_fmapi_get_qos_status *rsp_pl;
+	struct cxlmi_cci_msg req;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t rsp_sz;
+	int rc;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 1);
+
+	arm_cci_request(ep, &req, 0, MLD_COMPONENTS, GET_QOS_STATUS);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_qos_status *)rsp->payload;
+
+	ret->backpressure_avg_percentage = rsp_pl->backpressure_avg_percentage;
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_qos_allocated_bw(struct cxlmi_endpoint *ep,
+					  struct cxlmi_tunnel_info *ti,
+					  struct cxlmi_cmd_fmapi_get_qos_allocated_bw_req *in,
+					  struct cxlmi_cmd_fmapi_get_qos_allocated_bw_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_get_qos_allocated_bw_req *req_pl;
+	struct cxlmi_cmd_fmapi_get_qos_allocated_bw_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int i, rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 2);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl),
+			MLD_COMPONENTS, GET_QOS_ALLOCATED_BW);
+	req_pl = (struct cxlmi_cmd_fmapi_get_qos_allocated_bw_req *)req->payload;
+
+	req_pl->number_ld = in->number_ld;
+	req_pl->start_ld_id = in->start_ld_id;
+
+	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp) +
+		in->number_ld * sizeof(*ret->qos_allocation_fraction);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_qos_allocated_bw_rsp *)rsp->payload;
+
+	ret->number_ld = rsp_pl->number_ld;
+	ret->start_ld_id = rsp_pl->start_ld_id;
+
+	for (i = 0; i < ret->number_ld; i++)
+		ret->qos_allocation_fraction[i] = rsp_pl->qos_allocation_fraction[i];
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_set_qos_allocated_bw(struct cxlmi_endpoint *ep,
+					  struct cxlmi_tunnel_info *ti,
+					  struct cxlmi_cmd_fmapi_set_qos_allocated_bw *in,
+					  struct cxlmi_cmd_fmapi_set_qos_allocated_bw *ret)
+{
+	struct cxlmi_cmd_fmapi_set_qos_allocated_bw *req_pl;
+	struct cxlmi_cmd_fmapi_set_qos_allocated_bw *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int i, rc = -1;
+
+	req_sz = sizeof(*req_pl) + sizeof(*req) +
+		in->number_ld * sizeof(*ret->qos_allocation_fraction);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl),
+			MLD_COMPONENTS, SET_QOS_ALLOCATED_BW);
+	req_pl = (struct cxlmi_cmd_fmapi_set_qos_allocated_bw *)req->payload;
+
+	req_pl->number_ld = in->number_ld;
+	req_pl->start_ld_id = in->start_ld_id;
+	for (i = 0; i < in->number_ld; i++)
+		req_pl->qos_allocation_fraction[i] = in->qos_allocation_fraction[i];
+
+	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp) +
+		in->number_ld * sizeof(*ret->qos_allocation_fraction);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_set_qos_allocated_bw *)rsp->payload;
+
+	ret->number_ld = rsp_pl->number_ld;
+	ret->start_ld_id = rsp_pl->start_ld_id;
+
+	for (i = 0; i < ret->number_ld; i++)
+		ret->qos_allocation_fraction[i] = rsp_pl->qos_allocation_fraction[i];
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_qos_bw_limit(struct cxlmi_endpoint *ep,
+					  struct cxlmi_tunnel_info *ti,
+					  struct cxlmi_cmd_fmapi_get_qos_bw_limit_req *in,
+					  struct cxlmi_cmd_fmapi_get_qos_bw_limit_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_get_qos_bw_limit_req *req_pl;
+	struct cxlmi_cmd_fmapi_get_qos_bw_limit_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int i, rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 2);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl),
+			MLD_COMPONENTS, GET_QOS_BW_LIMIT);
+	req_pl = (struct cxlmi_cmd_fmapi_get_qos_bw_limit_req *)req->payload;
+
+	req_pl->number_ld = in->number_ld;
+	req_pl->start_ld_id = in->start_ld_id;
+
+	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp) +
+		in->number_ld * sizeof(*ret->qos_limit_fraction);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_qos_bw_limit_rsp *)rsp->payload;
+
+	ret->number_ld = rsp_pl->number_ld;
+	ret->start_ld_id = rsp_pl->start_ld_id;
+
+	for (i = 0; i < ret->number_ld; i++)
+		ret->qos_limit_fraction[i] = rsp_pl->qos_limit_fraction[i];
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
+					  struct cxlmi_tunnel_info *ti,
+					  struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
+					  struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret)
+{
+	struct cxlmi_cmd_fmapi_set_qos_bw_limit *req_pl;
+	struct cxlmi_cmd_fmapi_set_qos_bw_limit *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int i, rc = -1;
+
+	req_sz = sizeof(*req_pl) + sizeof(*req) +
+		in->number_ld * sizeof(*ret->qos_limit_fraction);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl),
+			MLD_COMPONENTS, SET_QOS_BW_LIMIT);
+	req_pl = (struct cxlmi_cmd_fmapi_set_qos_bw_limit *)req->payload;
+
+	req_pl->number_ld = in->number_ld;
+	req_pl->start_ld_id = in->start_ld_id;
+	for (i = 0; i < in->number_ld; i++)
+		req_pl->qos_limit_fraction[i] = in->qos_limit_fraction[i];
+
+	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp) +
+		in->number_ld * sizeof(*ret->qos_limit_fraction);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_set_qos_bw_limit *)rsp->payload;
+
+	ret->number_ld = rsp_pl->number_ld;
+	ret->start_ld_id = rsp_pl->start_ld_id;
+
+	for (i = 0; i < ret->number_ld; i++)
+		ret->qos_limit_fraction[i] = rsp_pl->qos_limit_fraction[i];
+
+	return rc;
+}

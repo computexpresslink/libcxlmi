@@ -495,6 +495,43 @@ int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_domain_validation_sv_req *in,
 			struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp *ret);
+int cxlmi_cmd_fmapi_get_ld_info(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_ld_info *ret);
+int cxlmi_cmd_fmapi_get_ld_allocations(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_ld_allocations_req *in,
+			struct cxlmi_cmd_fmapi_get_ld_allocations_rsp *ret);
+int cxlmi_cmd_fmapi_set_ld_allocations(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_set_ld_allocations_req *in,
+			struct cxlmi_cmd_fmapi_set_ld_allocations_rsp *ret);
+int cxlmi_cmd_fmapi_get_qos_control(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_fmapi_get_qos_control *ret);
+int cxlmi_cmd_fmapi_set_qos_control(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_fmapi_set_qos_control *in,
+				    struct cxlmi_cmd_fmapi_set_qos_control *ret);
+int cxlmi_cmd_fmapi_get_qos_status(struct cxlmi_endpoint *ep,
+				   struct cxlmi_tunnel_info *ti,
+				   struct cxlmi_cmd_fmapi_get_qos_status *ret);
+int cxlmi_cmd_fmapi_get_qos_allocated_bw(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_qos_allocated_bw_req *in,
+			struct cxlmi_cmd_fmapi_get_qos_allocated_bw_rsp *ret);
+int cxlmi_cmd_fmapi_set_qos_allocated_bw(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_set_qos_allocated_bw *in,
+			struct cxlmi_cmd_fmapi_set_qos_allocated_bw *ret);
+int cxlmi_cmd_fmapi_get_qos_bw_limit(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_qos_bw_limit_req *in,
+			struct cxlmi_cmd_fmapi_get_qos_bw_limit_rsp *ret);
+int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
+			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
 
 #ifdef __cplusplus
 }

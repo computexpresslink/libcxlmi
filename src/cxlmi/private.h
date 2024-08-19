@@ -248,6 +248,17 @@ enum {
 	#define GET_DOMAIN_VALIDATION_SV           0x7
     TUNNEL = 0x53,
 	#define MANAGEMENT_COMMAND     0x0
+    MLD_COMPONENTS = 0x54,
+	#define GET_LD_INFO            0x0
+	#define GET_LD_ALLOCATIONS     0x1
+	#define SET_LD_ALLOCATIONS     0x2
+	#define GET_QOS_CONTROL        0x3
+	#define SET_QOS_CONTROL        0x4
+	#define GET_QOS_STATUS         0x5
+	#define GET_QOS_ALLOCATED_BW   0x6
+	#define SET_QOS_ALLOCATED_BW   0x7
+	#define GET_QOS_BW_LIMIT       0x8
+	#define SET_QOS_BW_LIMIT       0x9
     MHD = 0x55,
 	#define GET_MHD_INFO 0x0
     DCD_MANAGEMENT = 0x56,

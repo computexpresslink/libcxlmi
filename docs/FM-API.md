@@ -10,11 +10,22 @@ command set, as per the latest specification.
    * [Set Domain Validation SV (5105h)](#set-domain-validation-sv-5105h)
    * [Get VCS Domain Validation SV State (5106h)](#get-vcs-domain-validation-sv-state-5106h)
    * [Get Domain Validation SV (5107h)](#get-domain-validation-sv-5107h)
+* [MLD Components (52h)](#mld-components-52h)
+   * [Get LD Info (5200h)](#get-ld-info-5200h)
+   * [Get LD Allocations (5201h)](#get-ld-allocations-5201h)
+   * [Set LD Allocations (5202h)](#set-ld-allocations-5202h)
+   * [Get QoS Control (5203h)](#get-qos-control-5203h)
+   * [Set QoS Control (5204h)](#set-qos-control-5204h)
+   * [Get QoS Status (5205h)](#get-qos-status-5205h)
+   * [Get QoS Allocated BW (5206h)](#get-qos-allocated-bw-5206h)
+   * [Set QoS Allocated BW (5207h)](#set-qos-allocated-bw-5207h)
+   * [Get QoS BW Limit (5208h)](#get-qos-bw-limit-5208h)
+   * [Set QoS BW Limit (5209h)](#set-qos-bw-limit-5209h)
 * [MLD Port (53h)](#mld-port-53h)
    * [Tunnel Management Command (5300h)](#tunnel-management-command-5300h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Fri Aug 16 06:24:35 PM PDT 2024 -->
+<!-- Added by: dave, at: Mon Aug 19 12:56:54 PM PDT 2024 -->
 
 <!--te-->
 
@@ -202,6 +213,266 @@ int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_get_domain_validation_sv_req *in,
 			struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp *ret);
    ```
+
+# MLD Components (52h)
+
+## Get LD Info (5200h)
+
+Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_ld_info {
+	uint64_t memory_size;
+	uint16_t ld_count;
+	uint8_t qos_telemetry_capability;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_ld_info(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_ld_info *ret);
+   ```
+
+## Get LD Allocations (5201h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_ld_allocations_req {
+	uint8_t start_ld_id;
+	uint8_t ld_allocation_list_limit;
+};
+   ```
+
+Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapu_ld_allocations_list {
+	uint64_t range_1_allocation_mult;
+	uint64_t range_2_allocation_mult;
+};
+
+struct cxlmi_cmd_fmapi_get_ld_allocations_rsp {
+	uint8_t number_ld;
+	uint8_t memory_granularity;
+	uint8_t start_ld_id;
+	uint8_t ld_allocation_list_len;
+	struct cxlmi_cmd_fmapu_ld_allocations_list ld_allocation_list[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_ld_allocations(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_ld_allocations_req *in,
+			struct cxlmi_cmd_fmapi_get_ld_allocations_rsp *ret);
+   ```
+
+## Set LD Allocations (5202h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_set_ld_allocations_req {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t rsvd[2];
+	struct cxlmi_cmd_fmapu_ld_allocations_list ld_allocation_list[];
+};
+   ```
+
+Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_set_ld_allocations_rsp {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t rsvd[2];
+	struct cxlmi_cmd_fmapu_ld_allocations_list ld_allocation_list[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_set_ld_allocations(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_set_ld_allocations_req *in,
+			struct cxlmi_cmd_fmapi_set_ld_allocations_rsp *ret);
+   ```
+
+## Get QoS Control (5203h)
+
+Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_qos_control {
+	uint8_t qos_telemetry_control;
+	uint8_t egress_moderate_percentage;
+	uint8_t egress_severe_percentage;
+	uint8_t backpressure_sample_interval;
+	uint16_t recmpbasis;
+	uint8_t completion_collection_interval;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_qos_control(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_fmapi_get_qos_control *ret);
+   ```
+
+## Set QoS Control (5204h)
+
+Input/Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_set_qos_control {
+	uint8_t qos_telemetry_control;
+	uint8_t egress_moderate_percentage;
+	uint8_t egress_severe_percentage;
+	uint8_t backpressure_sample_interval;
+	uint16_t recmpbasis;
+	uint8_t completion_collection_interval;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_set_qos_control(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_fmapi_set_qos_control *in,
+				    struct cxlmi_cmd_fmapi_set_qos_control *ret);
+   ```
+
+## Get QoS Status (5205h)
+
+Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_qos_status {
+	uint8_t backpressure_avg_percentage;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_qos_status(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_fmapi_get_qos_status *ret);
+   ```
+
+## Get QoS Allocated BW (5206h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_qos_allocated_bw_req {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+};
+   ```
+
+Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_qos_allocated_bw_rsp {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t qos_allocation_fraction[];
+} __attribute__((packed));
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_qos_allocated_bw(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_qos_allocated_bw_req *in,
+			struct cxlmi_cmd_fmapi_get_qos_allocated_bw_rsp *ret);
+   ```
+
+## Set QoS Allocated BW (5207h)
+
+Input/Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_set_qos_allocated_bw {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t qos_allocation_fraction[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_set_qos_allocated_bw(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_set_qos_allocated_bw *in,
+			struct cxlmi_cmd_fmapi_set_qos_allocated_bw *ret);
+   ```
+
+## Get QoS BW Limit (5208h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_qos_bw_limit_req {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+};
+   ```
+
+Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_qos_bw_limit_rsp {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t qos_limit_fraction[];
+} __attribute__((packed));
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_qos_bw_limit(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_qos_bw_limit_req *in,
+			struct cxlmi_cmd_fmapi_get_qos_bw_limit_rsp *ret);
+   ```
+
+## Set QoS BW Limit (5209h)
+
+Input/Output payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_set_qos_bw_limit {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t qos_limit_fraction[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
+			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
+   ```
+
 
 # MLD Port (53h)
 
