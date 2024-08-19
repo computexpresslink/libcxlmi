@@ -10,22 +10,22 @@ command set, as per the latest specification.
    * [Set Domain Validation SV (5105h)](#set-domain-validation-sv-5105h)
    * [Get VCS Domain Validation SV State (5106h)](#get-vcs-domain-validation-sv-state-5106h)
    * [Get Domain Validation SV (5107h)](#get-domain-validation-sv-5107h)
-* [MLD Components (52h)](#mld-components-52h)
-   * [Get LD Info (5200h)](#get-ld-info-5200h)
-   * [Get LD Allocations (5201h)](#get-ld-allocations-5201h)
-   * [Set LD Allocations (5202h)](#set-ld-allocations-5202h)
-   * [Get QoS Control (5203h)](#get-qos-control-5203h)
-   * [Set QoS Control (5204h)](#set-qos-control-5204h)
-   * [Get QoS Status (5205h)](#get-qos-status-5205h)
-   * [Get QoS Allocated BW (5206h)](#get-qos-allocated-bw-5206h)
-   * [Set QoS Allocated BW (5207h)](#set-qos-allocated-bw-5207h)
-   * [Get QoS BW Limit (5208h)](#get-qos-bw-limit-5208h)
-   * [Set QoS BW Limit (5209h)](#set-qos-bw-limit-5209h)
 * [MLD Port (53h)](#mld-port-53h)
    * [Tunnel Management Command (5300h)](#tunnel-management-command-5300h)
+* [MLD Components (54h)](#mld-components-54h)
+   * [Get LD Info (5400h)](#get-ld-info-5400h)
+   * [Get LD Allocations (5401h)](#get-ld-allocations-5401h)
+   * [Set LD Allocations (5402h)](#set-ld-allocations-5402h)
+   * [Get QoS Control (5403h)](#get-qos-control-5403h)
+   * [Set QoS Control (5404h)](#set-qos-control-5404h)
+   * [Get QoS Status (5405h)](#get-qos-status-5405h)
+   * [Get QoS Allocated BW (5406h)](#get-qos-allocated-bw-5406h)
+   * [Set QoS Allocated BW (5407h)](#set-qos-allocated-bw-5407h)
+   * [Get QoS BW Limit (5408h)](#get-qos-bw-limit-5408h)
+   * [Set QoS BW Limit (5409h)](#set-qos-bw-limit-5409h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Mon Aug 19 12:56:54 PM PDT 2024 -->
+<!-- Added by: dave, at: Mon Aug 19 01:13:48 PM PDT 2024 -->
 
 <!--te-->
 
@@ -214,9 +214,37 @@ int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp *ret);
    ```
 
-# MLD Components (52h)
+# MLD Port (53h)
 
-## Get LD Info (5200h)
+## Tunnel Management Command (5300h)
+
+Tunneling is supported through `struct cxlmi_tunnel_info`, passed as needed by the
+user when sending a command.  When sent to an MLD, the provided command is tunneled
+by the FM-owned LD to the specified LD. This can include an additional layer of
+tunneling for commands issued on LDs in an MLD that is accessible through an
+MLD port  of a CXL Switch.  Tunneling targets are: valid LDs within an MLD
+(single level tunneling), switch MLD ports (double level tunneling).
+
+For more information refer to [Issuing CCI Commands](https://github.com/computexpresslink/libcxlmi/tree/main?tab=readme-ov-file#issuing-cci-commands).
+
+   ```C
+/*
+ * cxlmi_tunnel_info - Tunneling information associated with a specific command
+ * @port: switch downstream port number
+ * @ld: Logical Device (LD) id within an MLD
+ * @level: tunneling level 1 or 2.
+ */
+struct cxlmi_tunnel_info {
+	int port;
+	int ld;
+	int level;
+};
+   ```
+
+
+# MLD Components (54h)
+
+## Get LD Info (5400h)
 
 Output payload:
 
@@ -236,7 +264,7 @@ int cxlmi_cmd_fmapi_get_ld_info(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_get_ld_info *ret);
    ```
 
-## Get LD Allocations (5201h)
+## Get LD Allocations (5401h)
 
 Input payload:
 
@@ -273,7 +301,7 @@ int cxlmi_cmd_fmapi_get_ld_allocations(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_get_ld_allocations_rsp *ret);
    ```
 
-## Set LD Allocations (5202h)
+## Set LD Allocations (5402h)
 
 Input payload:
 
@@ -306,7 +334,7 @@ int cxlmi_cmd_fmapi_set_ld_allocations(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_set_ld_allocations_rsp *ret);
    ```
 
-## Get QoS Control (5203h)
+## Get QoS Control (5403h)
 
 Output payload:
 
@@ -329,7 +357,7 @@ int cxlmi_cmd_fmapi_get_qos_control(struct cxlmi_endpoint *ep,
 				    struct cxlmi_cmd_fmapi_get_qos_control *ret);
    ```
 
-## Set QoS Control (5204h)
+## Set QoS Control (5404h)
 
 Input/Output payload:
 
@@ -353,7 +381,7 @@ int cxlmi_cmd_fmapi_set_qos_control(struct cxlmi_endpoint *ep,
 				    struct cxlmi_cmd_fmapi_set_qos_control *ret);
    ```
 
-## Get QoS Status (5205h)
+## Get QoS Status (5405h)
 
 Output payload:
 
@@ -371,7 +399,7 @@ int cxlmi_cmd_fmapi_get_qos_status(struct cxlmi_endpoint *ep,
 			    struct cxlmi_cmd_fmapi_get_qos_status *ret);
    ```
 
-## Get QoS Allocated BW (5206h)
+## Get QoS Allocated BW (5406h)
 
 Input payload:
 
@@ -401,7 +429,7 @@ int cxlmi_cmd_fmapi_get_qos_allocated_bw(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_get_qos_allocated_bw_rsp *ret);
    ```
 
-## Set QoS Allocated BW (5207h)
+## Set QoS Allocated BW (5407h)
 
 Input/Output payload:
 
@@ -422,7 +450,7 @@ int cxlmi_cmd_fmapi_set_qos_allocated_bw(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_set_qos_allocated_bw *ret);
    ```
 
-## Get QoS BW Limit (5208h)
+## Get QoS BW Limit (5408h)
 
 Input payload:
 
@@ -452,7 +480,7 @@ int cxlmi_cmd_fmapi_get_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_get_qos_bw_limit_rsp *ret);
    ```
 
-## Set QoS BW Limit (5209h)
+## Set QoS BW Limit (5409h)
 
 Input/Output payload:
 
@@ -471,32 +499,4 @@ int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
-   ```
-
-
-# MLD Port (53h)
-
-## Tunnel Management Command (5300h)
-
-Tunneling is supported through `struct cxlmi_tunnel_info`, passed as needed by the
-user when sending a command.  When sent to an MLD, the provided command is tunneled
-by the FM-owned LD to the specified LD. This can include an additional layer of
-tunneling for commands issued on LDs in an MLD that is accessible through an
-MLD port  of a CXL Switch.  Tunneling targets are: valid LDs within an MLD
-(single level tunneling), switch MLD ports (double level tunneling).
-
-For more information refer to [Issuing CCI Commands](https://github.com/computexpresslink/libcxlmi/tree/main?tab=readme-ov-file#issuing-cci-commands).
-
-   ```C
-/*
- * cxlmi_tunnel_info - Tunneling information associated with a specific command
- * @port: switch downstream port number
- * @ld: Logical Device (LD) id within an MLD
- * @level: tunneling level 1 or 2.
- */
-struct cxlmi_tunnel_info {
-	int port;
-	int ld;
-	int level;
-};
    ```
