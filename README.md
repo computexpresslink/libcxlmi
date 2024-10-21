@@ -341,3 +341,7 @@ References
 - CXL 3.1 Specification.
 - CXL Type3 Device Component Command Interface over MCTP Binding Specification (DSP0281).
 - CXL Fabric Manager API over MCTP Binding Specification (DSP0324).
+
+Resources
+=========
+- [libcxlmi: a CXL Management Interface (LPC24)](https://lpc.events/event/18/contributions/1876/attachments/1441/3072/lpc24-dbueso-libcxlmi.pdf)
