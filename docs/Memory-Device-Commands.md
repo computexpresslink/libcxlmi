@@ -15,6 +15,10 @@ command set, as per the latest specification.
    * [Set Alert Configuration (4202h)](#set-alert-configuration-4202h)
    * [Get Shutdown State (4203h)](#get-shutdown-state-4203h)
    * [Set Shutdown State (4204h)](#set-shutdown-state-4204h)
+* [Media and Poison Management (43h)](#media-and-poison-management-43h)
+   * [Get Poison List (4300h)](#get-poison-list-4300h)
+   * [Inject Poison (4301h)](#inject-poison-4301h)
+   * [Clear Poison (4302h)](#inject-poison-4302h)
 * [Sanitize and Media Operations (44h)](#sanitize-and-media-operations-44h)
    * [Sanitize (4400h)](#sanitize-4400h)
    * [Secure Erase (4401h)](#secure-erase-4401h)
@@ -255,6 +259,89 @@ Command name:
 int cxlmi_cmd_memdev_set_shutdown_state(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
 			      struct cxlmi_cmd_memdev_set_shutdown_state *in);
+   ```
+
+# Media and Poison Management (43h)
+
+## Get Poison List (4300h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_get_poison_list_req {
+	uint64_t get_poison_list_phy_addr;
+	uint64_t get_poison_list_phy_addr_len;
+};
+   ```
+
+Return payload:
+
+   ```C
+
+struct cxlmi_memdev_media_err_record {
+	uint64_t media_err_addr;
+	uint32_t media_err_len;
+	uint8_t rsvd1[4];
+};
+
+struct cxlmi_cmd_memdev_get_poison_list_rsp {
+	uint8_t poison_list_flags;
+	uint8_t rsv1;
+	uint64_t overflow_timestamp;
+	uint16_t more_err_media_record_cnt;
+	uint8_t rsv2[0x14];
+	struct cxlmi_memdev_media_err_record records[];
+};
+
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_memdev_get_poison_list_req *in,
+			struct cxlmi_cmd_memdev_get_poison_list_rsp *ret);
+
+   ```
+
+## Inject Poison (4301h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_inject_poison {
+	uint64_t inject_poison_phy_addr;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_inject_poison(struct cxlmi_endpoint *ep,
+				   struct cxlmi_tunnel_info *ti,
+				   struct cxlmi_cmd_memdev_inject_poison *in);
+
+   ```
+
+## Clear Poison (4302h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_clear_poison {
+	uint64_t clear_poison_phy_addr;
+	uint8_t clear_poison_write_data[64];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_clear_poison(struct cxlmi_endpoint *ep,
+				   struct cxlmi_tunnel_info *ti,
+				   struct cxlmi_cmd_memdev_clear_poison *in);
+
    ```
 
 # Sanitize and Media Operations (44h)

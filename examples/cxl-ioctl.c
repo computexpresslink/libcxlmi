@@ -265,6 +265,70 @@ static int get_device_logs(struct cxlmi_endpoint *ep)
 	return rc;
 }
 
+static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
+{
+	const int num_poisons = 3;
+	int i, rc[num_poisons];
+	struct cxlmi_cmd_memdev_get_poison_list_req get_poison_list_req[num_poisons];
+	struct cxlmi_cmd_memdev_get_poison_list_rsp get_poison_list_rsp[num_poisons];
+	struct cxlmi_cmd_memdev_inject_poison inject_poison[num_poisons];
+	struct cxlmi_cmd_memdev_clear_poison clear_poison[num_poisons];
+	uint64_t phy_addr[num_poisons];
+	uint64_t phy_start_addr = 0x00001000;
+
+	for (i = 0; i < num_poisons; i++) {
+		phy_addr[i] = phy_start_addr;
+		phy_start_addr += 0x100;
+	}
+
+	for (i = 0; i < num_poisons; i++) {
+		int j;
+
+		inject_poison[i].inject_poison_phy_addr = phy_addr[i];
+		get_poison_list_req[i].get_poison_list_phy_addr = phy_addr[i];
+		get_poison_list_req[i].get_poison_list_phy_addr_len = 64;
+		clear_poison[i].clear_poison_phy_addr = phy_addr[i];
+		for (j = 0; j < 64; j++)
+			clear_poison[i].clear_poison_write_data[j] = 0;
+	}
+
+	for (i = 0; i < num_poisons; i++) {
+		rc[i] = cxlmi_cmd_memdev_inject_poison(ep, NULL, &inject_poison[i]);
+		if (rc[i])
+			return rc[i];
+		else {
+			printf("Inject poison physical address - %d - %ld\n",
+			       i, inject_poison[i].inject_poison_phy_addr);
+		}
+
+		memset(&get_poison_list_rsp[i], 0, sizeof(get_poison_list_rsp[i]));
+		rc[i] = cxlmi_cmd_get_poison_list(ep, NULL, &get_poison_list_req[i],
+						  &get_poison_list_rsp[i]);
+		if (rc[i])
+			return rc[i];
+		else {
+			printf("Get poison list flags - %d\n",
+					get_poison_list_rsp[i].poison_list_flags);
+			printf("Get poison list overflow timestamp - %ld\n",
+					get_poison_list_rsp[i].overflow_timestamp);
+			printf("Get poison list more media err count - %d\n",
+					get_poison_list_rsp[i].more_err_media_record_cnt);
+			printf("Get poison list media err records err address - %ld\n",
+					get_poison_list_rsp[i].records[0].media_err_addr);
+			printf("Get poison list media err records err length - %d\n",
+					get_poison_list_rsp[i].records[0].media_err_len);
+		}
+
+		rc[i] = cxlmi_cmd_memdev_clear_poison(ep, NULL, &clear_poison[i]);
+		if (rc[i])
+			return rc[i];
+	}
+
+	printf("Poison mgmt commands executed successfully\n");
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	struct cxlmi_ctx *ctx;
@@ -296,6 +360,8 @@ int main(int argc, char **argv)
 	rc = show_some_info_from_all_devices(ctx);
 
 	rc = play_with_device_timestamp(ep);
+
+	rc = play_with_poison_mgmt(ep);
 
 	rc = get_device_logs(ep);
 

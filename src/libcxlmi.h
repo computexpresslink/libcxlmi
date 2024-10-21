@@ -458,6 +458,17 @@ int cxlmi_cmd_memdev_set_shutdown_state(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
 			      struct cxlmi_cmd_memdev_set_shutdown_state *in);
 
+int cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
+					struct cxlmi_tunnel_info *ti,
+					struct cxlmi_cmd_memdev_get_poison_list_req *in,
+					struct cxlmi_cmd_memdev_get_poison_list_rsp *ret);
+int cxlmi_cmd_memdev_inject_poison(struct cxlmi_endpoint *ep,
+				   struct cxlmi_tunnel_info *ti,
+				   struct cxlmi_cmd_memdev_inject_poison *in);
+int cxlmi_cmd_memdev_clear_poison(struct cxlmi_endpoint *ep,
+				   struct cxlmi_tunnel_info *ti,
+				   struct cxlmi_cmd_memdev_clear_poison *in);
+
 int cxlmi_cmd_memdev_sanitize(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti);
 int cxlmi_cmd_memdev_secure_erase(struct cxlmi_endpoint *ep,

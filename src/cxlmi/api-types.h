@@ -324,6 +324,38 @@ struct cxlmi_cmd_memdev_get_security_state {
 	uint32_t security_state;
 } __attribute__((packed));
 
+/* CXL r3.1 Section 8.2.9.9.4.1: Get poison List (Opcode 4300h) */
+struct cxlmi_cmd_memdev_get_poison_list_req {
+	uint64_t get_poison_list_phy_addr;
+	uint64_t get_poison_list_phy_addr_len;
+} __attribute__((packed));
+
+struct cxlmi_memdev_media_err_record {
+	uint64_t media_err_addr;
+	uint32_t media_err_len;
+	uint8_t rsvd1[4];
+} __attribute__((packed));
+
+struct cxlmi_cmd_memdev_get_poison_list_rsp {
+	uint8_t poison_list_flags;
+	uint8_t rsv1;
+	uint64_t overflow_timestamp;
+	uint16_t more_err_media_record_cnt;
+	uint8_t rsv2[0x14];
+	struct cxlmi_memdev_media_err_record records[];
+} __attribute__((packed));
+
+/* CXL r3.1 Section 8.2.9.9.4.2: Inject Poison (Opcode 43001) */
+struct cxlmi_cmd_memdev_inject_poison {
+	uint64_t inject_poison_phy_addr;
+} __attribute__((packed));
+
+/* CXL r3.1 Section 8.2.9.9.4.3: Clear Poison (Opcode 43002) */
+struct cxlmi_cmd_memdev_clear_poison {
+	uint64_t clear_poison_phy_addr;
+	uint8_t clear_poison_write_data[64];
+} __attribute__((packed));
+
 /* CXL r3.1 Section 7.6.7.1.1: Identify Switch Device (Opcode 5100h) */
 struct cxlmi_cmd_fmapi_identify_sw_device {
 	uint8_t ingres_port_id;

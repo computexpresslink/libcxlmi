@@ -1113,6 +1113,104 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_set_shutdown_state(struct cxlmi_endpoint *ep,
 	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
 }
 
+CXLMI_EXPORT int
+cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
+		     struct cxlmi_tunnel_info *ti,
+		     struct cxlmi_cmd_memdev_get_poison_list_req *in,
+		     struct cxlmi_cmd_memdev_get_poison_list_rsp *ret)
+{
+	struct cxlmi_cmd_memdev_get_poison_list_req *req_pl;
+	struct cxlmi_cmd_memdev_get_poison_list_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int i, rc = -1;
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), MEDIA_AND_POISON, GET_POISON_LIST);
+	req_pl = (struct cxlmi_cmd_memdev_get_poison_list_req *)req->payload;
+
+	req_pl->get_poison_list_phy_addr = cpu_to_le64(in->get_poison_list_phy_addr);
+	req_pl->get_poison_list_phy_addr_len = cpu_to_le64(in->get_poison_list_phy_addr_len);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_memdev_get_poison_list_rsp *)rsp->payload;
+	memset(ret, 0, sizeof(*ret));
+
+	ret->poison_list_flags = rsp_pl->poison_list_flags;
+	ret->overflow_timestamp =
+		le64_to_cpu(rsp_pl->overflow_timestamp);
+	ret->more_err_media_record_cnt = le16_to_cpu(rsp_pl->more_err_media_record_cnt);
+
+	for (i = 0; i < rsp_pl->more_err_media_record_cnt; i++) {
+		ret->records[i].media_err_addr =
+			le64_to_cpu(rsp_pl->records[i].media_err_addr);
+		ret->records[i].media_err_len =
+			le32_to_cpu(rsp_pl->records[i].media_err_len);
+	}
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_memdev_inject_poison(struct cxlmi_endpoint *ep,
+				   struct cxlmi_tunnel_info *ti,
+				   struct cxlmi_cmd_memdev_inject_poison *in)
+{
+	struct cxlmi_cmd_memdev_inject_poison *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), MEDIA_AND_POISON, INJECT_POISON);
+
+	req_pl = (struct cxlmi_cmd_memdev_inject_poison *)req->payload;
+
+	req_pl->inject_poison_phy_addr = cpu_to_le64(in->inject_poison_phy_addr);
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+CXLMI_EXPORT int cxlmi_cmd_memdev_clear_poison(struct cxlmi_endpoint *ep,
+				   struct cxlmi_tunnel_info *ti,
+				   struct cxlmi_cmd_memdev_clear_poison *in)
+{
+	struct cxlmi_cmd_memdev_clear_poison *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), MEDIA_AND_POISON, CLEAR_POISON);
+
+	req_pl = (struct cxlmi_cmd_memdev_clear_poison *)req->payload;
+
+	req_pl->clear_poison_phy_addr = cpu_to_le64(in->clear_poison_phy_addr);
+	memcpy(req_pl->clear_poison_write_data, in->clear_poison_write_data,
+	       sizeof(in->clear_poison_write_data));
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
 
 CXLMI_EXPORT int cxlmi_cmd_memdev_sanitize(struct cxlmi_endpoint *ep,
 					   struct cxlmi_tunnel_info *ti)
