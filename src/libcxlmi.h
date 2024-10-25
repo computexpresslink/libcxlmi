@@ -355,9 +355,11 @@ int cxlmi_cmd_set_response_msg_limit(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_request_bg_op_abort(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti);
 
+#define CXLMI_MAX_SUPPORTED_EVENT_RECORDS 20
 int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_get_event_records *ret);
+				struct cxlmi_cmd_get_event_records_req *in,
+				struct cxlmi_cmd_get_event_records_rsp *ret);
 int cxlmi_cmd_clear_event_records(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti,
 				  struct cxlmi_cmd_clear_event_records *in);

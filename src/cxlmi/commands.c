@@ -146,31 +146,39 @@ CXLMI_EXPORT int cxlmi_cmd_request_bg_op_abort(struct cxlmi_endpoint *ep,
 
 CXLMI_EXPORT int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 				     struct cxlmi_tunnel_info *ti,
-				     struct cxlmi_cmd_get_event_records *ret)
+				     struct cxlmi_cmd_get_event_records_req *in,
+				     struct cxlmi_cmd_get_event_records_rsp *ret)
 {
-	struct cxlmi_cmd_get_event_records *rsp_pl;
-	struct cxlmi_cci_msg req;
+	struct cxlmi_cmd_get_event_records_rsp *rsp_pl;
+	struct cxlmi_cmd_get_event_records_req *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
-	ssize_t rsp_sz;
+	ssize_t rsp_sz, req_sz;
 	int i, rc;
 
-	arm_cci_request(ep, &req, 0, EVENTS, GET_RECORDS);
+	req_sz = sizeof(*req) + sizeof(*req_pl);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), EVENTS, GET_RECORDS);
+	req_pl = (struct cxlmi_cmd_get_event_records_req *)req->payload;
+	req_pl->event_log = in->event_log;
 
 	/*
 	 * This command shall retrieve as many event records from the
 	 * event log that fit into the mailbox output payload (1mb).
 	 */
-	rsp_sz = sizeof(*rsp) + (1 << 20);
+	rsp_sz = sizeof(*rsp) + (CXLMI_MAX_SUPPORTED_EVENT_RECORDS * sizeof(*rsp_pl->records));
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
 		return -1;
 
-	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz, rsp_sz);
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
 	if (rc)
 		return rc;
 
-	rsp_pl = (struct cxlmi_cmd_get_event_records *)rsp->payload;
-	ret->event_log = rsp_pl->event_log;
+	rsp_pl = (struct cxlmi_cmd_get_event_records_rsp *)rsp->payload;
 	ret->flags = rsp_pl->flags;
 	ret->overflow_err_count = le16_to_cpu(rsp_pl->overflow_err_count);
 	ret->first_overflow_timestamp =
