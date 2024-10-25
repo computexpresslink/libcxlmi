@@ -357,6 +357,7 @@ int cxlmi_cmd_request_bg_op_abort(struct cxlmi_endpoint *ep,
 
 int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_get_event_records_request *in,
 				struct cxlmi_cmd_get_event_records *ret);
 int cxlmi_cmd_clear_event_records(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti,

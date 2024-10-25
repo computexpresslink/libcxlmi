@@ -750,10 +750,11 @@ static int send_ioctl_direct(struct cxlmi_endpoint *ep,
 				  cmd.retval);
 		return cmd.retval;
 	}
+	/* To make it compatible with CXL2.0, do not impose size check */
 	if (cmd.out.size < rsp_msg_sz_min - sizeof(*rsp_msg)) {
 		errno_save = errno;
-		cxlmi_msg(ctx, LOG_ERR, "ioctl returned too little data\n");
-		goto err;
+		cxlmi_msg(ctx, LOG_WARNING, "ioctl returned too little data\n");
+		//goto err;
 
 	}
 
