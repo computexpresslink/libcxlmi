@@ -71,8 +71,11 @@ struct cxlmi_event_record {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.2.2: Get Event Records (Opcode 0100h) */
-struct cxlmi_cmd_get_event_records {
+struct cxlmi_cmd_get_event_records_req {
 	uint8_t event_log;
+} __attribute__((packed));
+
+struct cxlmi_cmd_get_event_records_rsp {
 	uint8_t flags;
 	uint8_t reserved1;
 	uint16_t overflow_err_count;

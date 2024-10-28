@@ -157,13 +157,19 @@ The types of events can be any of:
 ## Get Event Records (0100h)
 
 This command shall retrieve as many event records from the
-event log that fit into the mailbox output payload (1Mb).
+event log that fit into the mailbox output payload (20 records).
 
+Input payload:
+
+   ```C
+struct cxlmi_cmd_get_event_records_req {
+	uint8_t event_log;
+};
+   ```
 Return payload:
 
    ```C
-struct cxlmi_cmd_get_event_records {
-	uint8_t event_log;
+struct cxlmi_cmd_get_event_records_rsp {
 	uint8_t flags;
 	uint8_t reserved1;
 	uint16_t overflow_err_count;
@@ -179,7 +185,8 @@ Command name:
    ```C
 int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_get_event_records *ret);
+				struct cxlmi_cmd_get_event_records_req *in,;
+				struct cxlmi_cmd_get_event_records_rsp *ret);
    ```
 
 ## Clear Event Records (0101h)
