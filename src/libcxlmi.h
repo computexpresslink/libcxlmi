@@ -151,7 +151,7 @@ bool cxlmi_endpoint_disable_fmapi(struct cxlmi_endpoint *ep);
 
 /**
  * cxlmi_first_endpoint - Start endpoint iterator
- * @m: &cxlmi_ctx object
+ * @ctx: &cxlmi_ctx object
  *
  * Return: first MI endpoint object under this context, or NULL if no endpoints
  *         are present. This library does not guarantee any order upon endpoint
@@ -159,19 +159,19 @@ bool cxlmi_endpoint_disable_fmapi(struct cxlmi_endpoint *ep);
  *
  * See: &cxlmi_next_endpoint, &cxlmi_for_each_endpoint
  */
-struct cxlmi_endpoint *cxlmi_first_endpoint(struct cxlmi_ctx *m);
+struct cxlmi_endpoint *cxlmi_first_endpoint(struct cxlmi_ctx *ctx);
 
 /**
  * cxlmi_next_endpoint - Continue endpoint iterator
- * @m: &cxlmi_ctx object
- * @e: &cxlmi_endpoint current position of iterator
+ * @ctx: &cxlmi_ctx object
+ * @ep: &cxlmi_endpoint current position of iterator
  *
  * Return: next endpoint MI endpoint object after @e under this root, or NULL
  *         if no further endpoints are present.
  *
  * See: &cxlmi_first_endpoint, &cxlmi_for_each_endpoint
  */
- struct cxlmi_endpoint *cxlmi_next_endpoint(struct cxlmi_ctx *m,
+ struct cxlmi_endpoint *cxlmi_next_endpoint(struct cxlmi_ctx *ctx,
 					    struct cxlmi_endpoint *ep);
 /**
  * cxlmi_for_each_endpoint - Iterator for CXL-MI endpoints.

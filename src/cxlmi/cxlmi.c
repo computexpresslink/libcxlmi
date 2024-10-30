@@ -1613,15 +1613,15 @@ CXLMI_EXPORT const char *cxlmi_cmd_retcode_tostr(enum cxlmi_cmd_retcode code)
 	return cxlmi_cmd_retcode_tbl[code];
 }
 
-CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_first_endpoint(struct cxlmi_ctx *m)
+CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_first_endpoint(struct cxlmi_ctx *ctx)
 {
-	return list_top(&m->endpoints, struct cxlmi_endpoint, entry);
+	return list_top(&ctx->endpoints, struct cxlmi_endpoint, entry);
 }
 
-CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_next_endpoint(struct cxlmi_ctx *m,
+CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_next_endpoint(struct cxlmi_ctx *ctx,
 						struct cxlmi_endpoint *ep)
 {
-	return ep ? list_next(&m->endpoints, ep, entry) : NULL;
+	return ep ? list_next(&ctx->endpoints, ep, entry) : NULL;
 }
 
 void arm_cci_request(struct cxlmi_endpoint *ep, struct cxlmi_cci_msg *req,
