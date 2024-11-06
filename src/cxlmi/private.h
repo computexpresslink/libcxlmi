@@ -233,6 +233,10 @@ enum {
 	#define SECURE_ERASE  0x1
     PERSISTENT_MEM = 0x45,
 	#define GET_SECURITY_STATE     0x0
+    SLD_QOS_TELEMETRY = 0x47,
+	#define GET_SLD_QOS_CONTROL        0x0
+	#define SET_SLD_QOS_CONTROL        0x1
+	#define GET_SLD_QOS_STATUS         0x2
     DCD_CONFIG  = 0x48,
 	#define GET_DC_CONFIG          0x0
 	#define GET_DYN_CAP_EXT_LIST   0x1

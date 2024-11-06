@@ -480,6 +480,16 @@ int cxlmi_cmd_memdev_get_security_state(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
 				struct cxlmi_cmd_memdev_get_security_state *ret);
 
+int cxlmi_cmd_memdev_get_sld_qos_control(struct cxlmi_endpoint *ep,
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_memdev_get_sld_qos_control *ret);
+int cxlmi_cmd_memdev_set_sld_qos_control(struct cxlmi_endpoint *ep,
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_memdev_set_sld_qos_control *in,
+				 struct cxlmi_cmd_memdev_set_sld_qos_control *ret);
+int cxlmi_cmd_memdev_get_sld_qos_status(struct cxlmi_endpoint *ep,
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_memdev_get_sld_qos_status *ret);
 
 /*
  * Definitions for FMAPI Commands. per CXL r3.1 Table 8-215.

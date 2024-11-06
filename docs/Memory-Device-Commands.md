@@ -387,3 +387,66 @@ int cxlmi_cmd_memdev_get_security_state(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
 				struct cxlmi_cmd_memdev_get_security_state *ret);
    ```
+
+# SLD QoS Telemetry (47h)
+
+## Get SLD QoS Control (4700h)
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_memdev_get_sld_qos_control {
+	uint8_t qos_telemetry_control;
+	uint8_t egress_moderate_percentage;
+	uint8_t egress_severe_percentage;
+	uint8_t backpressure_sample_interval;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_get_sld_qos_control(struct cxlmi_endpoint *ep,
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_memdev_get_sld_qos_control *ret);
+   ```
+
+## Set SLD QoS Control (4701h)
+
+Input/Return payloads:
+
+   ```C
+struct cxlmi_cmd_memdev_get_sld_qos_control {
+	uint8_t qos_telemetry_control;
+	uint8_t egress_moderate_percentage;
+	uint8_t egress_severe_percentage;
+	uint8_t backpressure_sample_interval;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_set_sld_qos_control(struct cxlmi_endpoint *ep,
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_memdev_set_sld_qos_control *in,
+				 struct cxlmi_cmd_memdev_set_sld_qos_control *ret);
+   ```
+
+## Get SLD QoS Status (4702h)
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_memdev_get_sld_qos_status {
+	uint8_t backpressure_avg_percentage;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_get_sld_qos_status(struct cxlmi_endpoint *ep,
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_memdev_get_sld_qos_status *ret);
+   ```

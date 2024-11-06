@@ -1272,6 +1272,118 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_security_state(struct cxlmi_endpoint *ep,
 	return rc;
 }
 
+CXLMI_EXPORT int cxlmi_cmd_memdev_get_sld_qos_control(struct cxlmi_endpoint *ep,
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_memdev_get_sld_qos_control *ret)
+{
+	struct cxlmi_cmd_memdev_get_sld_qos_control *rsp_pl;
+	struct cxlmi_cci_msg req;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t rsp_sz;
+	int rc;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 4);
+
+	arm_cci_request(ep, &req, 0, SLD_QOS_TELEMETRY, GET_SLD_QOS_CONTROL);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_memdev_get_sld_qos_control *)rsp->payload;
+
+	ret->qos_telemetry_control = rsp_pl->qos_telemetry_control;
+	ret->egress_moderate_percentage = rsp_pl->egress_moderate_percentage;
+	ret->egress_severe_percentage = rsp_pl->egress_severe_percentage;
+	ret->backpressure_sample_interval = rsp_pl->backpressure_sample_interval;
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_memdev_set_sld_qos_control(struct cxlmi_endpoint *ep,
+				      struct cxlmi_tunnel_info *ti,
+				      struct cxlmi_cmd_memdev_set_sld_qos_control *in,
+				      struct cxlmi_cmd_memdev_set_sld_qos_control *ret)
+{
+	struct cxlmi_cmd_memdev_set_sld_qos_control *req_pl;
+	struct cxlmi_cmd_memdev_set_sld_qos_control *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 4);
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 4);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl),
+			SLD_QOS_TELEMETRY, SET_SLD_QOS_CONTROL);
+	req_pl = (struct cxlmi_cmd_memdev_set_sld_qos_control *)req->payload;
+
+	req_pl->qos_telemetry_control = in->qos_telemetry_control;
+	req_pl->egress_moderate_percentage = in->egress_moderate_percentage;
+	req_pl->egress_severe_percentage = in->egress_severe_percentage;
+	req_pl->backpressure_sample_interval = in->backpressure_sample_interval;
+
+	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_memdev_set_sld_qos_control *)rsp->payload;
+	memset(ret, 0, sizeof(*ret));
+
+	ret->qos_telemetry_control = rsp_pl->qos_telemetry_control;
+	ret->egress_moderate_percentage = rsp_pl->egress_moderate_percentage;
+	ret->egress_severe_percentage = rsp_pl->egress_severe_percentage;
+	ret->backpressure_sample_interval = rsp_pl->backpressure_sample_interval;
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_memdev_get_sld_qos_status(struct cxlmi_endpoint *ep,
+				     struct cxlmi_tunnel_info *ti,
+				     struct cxlmi_cmd_memdev_get_sld_qos_status *ret)
+{
+	struct cxlmi_cmd_memdev_get_sld_qos_status *rsp_pl;
+	struct cxlmi_cci_msg req;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t rsp_sz;
+	int rc;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 1);
+
+	arm_cci_request(ep, &req, 0, SLD_QOS_TELEMETRY, GET_SLD_QOS_STATUS);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_memdev_get_sld_qos_status *)rsp->payload;
+
+	ret->backpressure_avg_percentage = rsp_pl->backpressure_avg_percentage;
+
+	return rc;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_fmapi_identify_sw_device(struct cxlmi_endpoint *ep,
 			    struct cxlmi_tunnel_info *ti,
 			    struct cxlmi_cmd_fmapi_identify_sw_device *ret)

@@ -360,6 +360,27 @@ struct cxlmi_cmd_memdev_get_security_state {
 	uint32_t security_state;
 } __attribute__((packed));
 
+/* CXL r3.1 Section 8.2.9.9.8.1: Get SLD QoS Control (Opcode 4700h) */
+struct cxlmi_cmd_memdev_get_sld_qos_control {
+	uint8_t qos_telemetry_control;
+	uint8_t egress_moderate_percentage;
+	uint8_t egress_severe_percentage;
+	uint8_t backpressure_sample_interval;
+} __attribute__((packed));
+
+/* CXL r3.1 Section 8.2.9.9.8.2: Set SLD QoS Control (Opcode 4701h) */
+struct cxlmi_cmd_memdev_set_sld_qos_control {
+	uint8_t qos_telemetry_control;
+	uint8_t egress_moderate_percentage;
+	uint8_t egress_severe_percentage;
+	uint8_t backpressure_sample_interval;
+} __attribute__((packed));
+
+/* CXL r3.1 Section 8.2.9.9.8.3: Get SLD QoS Status (Opcode 4702h) */
+struct cxlmi_cmd_memdev_get_sld_qos_status {
+	uint8_t backpressure_avg_percentage;
+} __attribute__((packed));
+
 /* CXL r3.1 Section 7.6.7.1.1: Identify Switch Device (Opcode 5100h) */
 struct cxlmi_cmd_fmapi_identify_sw_device {
 	uint8_t ingres_port_id;
