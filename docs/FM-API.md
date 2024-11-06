@@ -278,7 +278,7 @@ struct cxlmi_cmd_fmapi_get_ld_allocations_req {
 Output payload:
 
    ```C
-struct cxlmi_cmd_fmapu_ld_allocations_list {
+struct cxlmi_cmd_fmapi_ld_allocations_list {
 	uint64_t range_1_allocation_mult;
 	uint64_t range_2_allocation_mult;
 };
@@ -288,7 +288,7 @@ struct cxlmi_cmd_fmapi_get_ld_allocations_rsp {
 	uint8_t memory_granularity;
 	uint8_t start_ld_id;
 	uint8_t ld_allocation_list_len;
-	struct cxlmi_cmd_fmapu_ld_allocations_list ld_allocation_list[];
+	struct cxlmi_cmd_fmapi_ld_allocations_list ld_allocation_list[];
 };
    ```
 
@@ -310,7 +310,7 @@ struct cxlmi_cmd_fmapi_set_ld_allocations_req {
 	uint8_t number_ld;
 	uint8_t start_ld_id;
 	uint8_t rsvd[2];
-	struct cxlmi_cmd_fmapu_ld_allocations_list ld_allocation_list[];
+	struct cxlmi_cmd_fmapi_ld_allocations_list ld_allocation_list[];
 };
    ```
 
@@ -321,7 +321,7 @@ struct cxlmi_cmd_fmapi_set_ld_allocations_rsp {
 	uint8_t number_ld;
 	uint8_t start_ld_id;
 	uint8_t rsvd[2];
-	struct cxlmi_cmd_fmapu_ld_allocations_list ld_allocation_list[];
+	struct cxlmi_cmd_fmapi_ld_allocations_list ld_allocation_list[];
 };
    ```
 
