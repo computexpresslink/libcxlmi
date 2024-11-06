@@ -18,15 +18,19 @@ command set, as per the latest specification.
 * [Media and Poison Management (43h)](#media-and-poison-management-43h)
    * [Get Poison List (4300h)](#get-poison-list-4300h)
    * [Inject Poison (4301h)](#inject-poison-4301h)
-   * [Clear Poison (4302h)](#inject-poison-4302h)
+   * [Clear Poison (4302h)](#clear-poison-4302h)
 * [Sanitize and Media Operations (44h)](#sanitize-and-media-operations-44h)
    * [Sanitize (4400h)](#sanitize-4400h)
    * [Secure Erase (4401h)](#secure-erase-4401h)
 * [Persistent Memory Data-at-rest Security (45h)](#persistent-memory-data-at-rest-security-45h)
    * [Get Security State (4500h)](#get-security-state-4500h)
+* [SLD QoS Telemetry (47h)](#sld-qos-telemetry-47h)
+   * [Get SLD QoS Control (4700h)](#get-sld-qos-control-4700h)
+   * [Set SLD QoS Control (4701h)](#set-sld-qos-control-4701h)
+   * [Get SLD QoS Status (4702h)](#get-sld-qos-status-4702h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Thu Jun 20 08:29:07 AM PDT 2024 -->
+<!-- Added by: dave, at: Tue Nov  5 09:05:00 PM PST 2024 -->
 
 <!--te-->
 
@@ -277,7 +281,6 @@ struct cxlmi_cmd_memdev_get_poison_list_req {
 Return payload:
 
    ```C
-
 struct cxlmi_memdev_media_err_record {
 	uint64_t media_err_addr;
 	uint32_t media_err_len;
@@ -292,7 +295,6 @@ struct cxlmi_cmd_memdev_get_poison_list_rsp {
 	uint8_t rsv2[0x14];
 	struct cxlmi_memdev_media_err_record records[];
 };
-
    ```
 
 Command name:
@@ -302,7 +304,6 @@ int cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_memdev_get_poison_list_req *in,
 			struct cxlmi_cmd_memdev_get_poison_list_rsp *ret);
-
    ```
 
 ## Inject Poison (4301h)
@@ -321,7 +322,6 @@ Command name:
 int cxlmi_cmd_memdev_inject_poison(struct cxlmi_endpoint *ep,
 				   struct cxlmi_tunnel_info *ti,
 				   struct cxlmi_cmd_memdev_inject_poison *in);
-
    ```
 
 ## Clear Poison (4302h)
@@ -341,7 +341,6 @@ Command name:
 int cxlmi_cmd_memdev_clear_poison(struct cxlmi_endpoint *ep,
 				   struct cxlmi_tunnel_info *ti,
 				   struct cxlmi_cmd_memdev_clear_poison *in);
-
    ```
 
 # Sanitize and Media Operations (44h)
@@ -354,7 +353,6 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_sanitize(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti);
-
    ```
 
 ## Secure Erase (4401h)

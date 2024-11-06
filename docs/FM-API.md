@@ -33,7 +33,7 @@ command set, as per the latest specification.
 
 ## Identify Switch Device (5100h)
 
-Output payload:
+Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_identify_sw_device {
@@ -126,7 +126,7 @@ int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
 
 ## Get Domain Validation SV State (5104h)
 
-Output payload:
+Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_get_domain_validation_sv_state {
@@ -170,7 +170,7 @@ struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_req {
 };
    ```
 
-Output payload:
+Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_rsp {
@@ -197,7 +197,7 @@ struct cxlmi_cmd_fmapi_get_domain_validation_sv_req {
 };
    ```
 
-Output payload:
+Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp {
@@ -246,7 +246,7 @@ struct cxlmi_tunnel_info {
 
 ## Get LD Info (5400h)
 
-Output payload:
+Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_get_ld_info {
@@ -275,7 +275,7 @@ struct cxlmi_cmd_fmapi_get_ld_allocations_req {
 };
    ```
 
-Output payload:
+Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_ld_allocations_list {
@@ -314,7 +314,7 @@ struct cxlmi_cmd_fmapi_set_ld_allocations_req {
 };
    ```
 
-Output payload:
+Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_set_ld_allocations_rsp {
@@ -336,7 +336,7 @@ int cxlmi_cmd_fmapi_set_ld_allocations(struct cxlmi_endpoint *ep,
 
 ## Get QoS Control (5403h)
 
-Output payload:
+Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_get_qos_control {
@@ -359,7 +359,7 @@ int cxlmi_cmd_fmapi_get_qos_control(struct cxlmi_endpoint *ep,
 
 ## Set QoS Control (5404h)
 
-Input/Output payload:
+Input/Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_set_qos_control {
@@ -383,7 +383,7 @@ int cxlmi_cmd_fmapi_set_qos_control(struct cxlmi_endpoint *ep,
 
 ## Get QoS Status (5405h)
 
-Output payload:
+Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_get_qos_status {
@@ -410,7 +410,7 @@ struct cxlmi_cmd_fmapi_get_qos_allocated_bw_req {
 };
    ```
 
-Output payload:
+Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_get_qos_allocated_bw_rsp {
@@ -431,7 +431,7 @@ int cxlmi_cmd_fmapi_get_qos_allocated_bw(struct cxlmi_endpoint *ep,
 
 ## Set QoS Allocated BW (5407h)
 
-Input/Output payload:
+Input/Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_set_qos_allocated_bw {
@@ -461,7 +461,7 @@ struct cxlmi_cmd_fmapi_get_qos_bw_limit_req {
 };
    ```
 
-Output payload:
+Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_get_qos_bw_limit_rsp {
@@ -482,7 +482,7 @@ int cxlmi_cmd_fmapi_get_qos_bw_limit(struct cxlmi_endpoint *ep,
 
 ## Set QoS BW Limit (5409h)
 
-Input/Output payload:
+Input/Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_set_qos_bw_limit {
