@@ -323,10 +323,6 @@ struct cxlmi_cmd_memdev_set_shutdown_state {
 	uint8_t state;
 } __attribute__((packed));
 
-struct cxlmi_cmd_memdev_get_security_state {
-	uint32_t security_state;
-} __attribute__((packed));
-
 /* CXL r3.1 Section 8.2.9.9.4.1: Get poison List (Opcode 4300h) */
 struct cxlmi_cmd_memdev_get_poison_list_req {
 	uint64_t get_poison_list_phy_addr;
@@ -348,15 +344,20 @@ struct cxlmi_cmd_memdev_get_poison_list_rsp {
 	struct cxlmi_memdev_media_err_record records[];
 } __attribute__((packed));
 
-/* CXL r3.1 Section 8.2.9.9.4.2: Inject Poison (Opcode 43001) */
+/* CXL r3.1 Section 8.2.9.9.4.2: Inject Poison (Opcode 4301h) */
 struct cxlmi_cmd_memdev_inject_poison {
 	uint64_t inject_poison_phy_addr;
 } __attribute__((packed));
 
-/* CXL r3.1 Section 8.2.9.9.4.3: Clear Poison (Opcode 43002) */
+/* CXL r3.1 Section 8.2.9.9.4.3: Clear Poison (Opcode 4302h) */
 struct cxlmi_cmd_memdev_clear_poison {
 	uint64_t clear_poison_phy_addr;
 	uint8_t clear_poison_write_data[64];
+} __attribute__((packed));
+
+/* CXL r3.1 Section 8.2.9.9.6.1: Get Security State (Opcode 4500h) */
+struct cxlmi_cmd_memdev_get_security_state {
+	uint32_t security_state;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.1.1: Identify Switch Device (Opcode 5100h) */
