@@ -28,9 +28,13 @@ command set, as per the latest specification.
    * [Get SLD QoS Control (4700h)](#get-sld-qos-control-4700h)
    * [Set SLD QoS Control (4701h)](#set-sld-qos-control-4701h)
    * [Get SLD QoS Status (4702h)](#get-sld-qos-status-4702h)
+* [Dynamic Capacity (48h)](#dynamic-capacity-48h)
+   * [Get Dynamic Capacity Extent List (4801h)](#get-dynamic-capacity-extent-list-4801h)
+   * [Add Dynamic Capacity Response (4802h)](#add-dynamic-capacity-response-4802h)
+   * [Release Dynamic Capacity (4803h)](#release-dynamic-capacity-4803h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Tue Nov  5 09:05:00 PM PST 2024 -->
+<!-- Added by: dave, at: Thu Nov  7 10:12:25 AM PST 2024 -->
 
 <!--te-->
 
