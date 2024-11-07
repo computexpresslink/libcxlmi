@@ -448,3 +448,43 @@ int cxlmi_cmd_memdev_get_sld_qos_status(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
 				struct cxlmi_cmd_memdev_get_sld_qos_status *ret);
    ```
+
+# Dynamic Capacity (48h)
+
+## Get Dynamic Capacity Extent List (4801h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_get_dc_extent_list_req {
+       uint32_t extent_cnt;
+       uint32_t start_extent_idx;
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_memdev_get_dc_extent_list_rsp {
+       uint32_t num_extents_returned;
+       uint32_t total_num_extents;
+       uint32_t generation_num;
+       uint8_t rsvd[4];
+       struct {
+               uint64_t start_dpa;
+               uint64_t len;
+               uint8_t tag[0x10];
+               uint16_t shared_seq;
+               uint8_t rsvd[0x6];
+       } extents[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_get_dc_extent_list(struct cxlmi_endpoint *ep,
+                       struct cxlmi_tunnel_info *ti,
+                       struct cxlmi_cmd_memdev_get_dc_extent_list_req *in,
+                       struct cxlmi_cmd_memdev_get_dc_extent_list_rsp *ret);
+   ```

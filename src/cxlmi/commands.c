@@ -1384,6 +1384,63 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_sld_qos_status(struct cxlmi_endpoint *ep,
 	return rc;
 }
 
+CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_extent_list(struct cxlmi_endpoint *ep,
+						     struct cxlmi_tunnel_info *ti,
+						     struct cxlmi_cmd_memdev_get_dc_extent_list_req *in,
+						     struct cxlmi_cmd_memdev_get_dc_extent_list_rsp *ret)
+{
+	struct cxlmi_cmd_memdev_get_dc_extent_list_req *req_pl;
+	struct cxlmi_cmd_memdev_get_dc_extent_list_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz, rsp_sz_min;
+	int i, rc = -1;
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), DCD_CONFIG, GET_DYN_CAP_EXT_LIST);
+	req_pl = (struct cxlmi_cmd_memdev_get_dc_extent_list_req *)req->payload;
+	req_pl->extent_cnt = cpu_to_le32(in->extent_cnt);
+	req_pl->start_extent_idx = cpu_to_le32(in->start_extent_idx);
+
+	/*
+	 * Assume we retrieve at most 8 extents at one time, the software is
+	 * responsible to retrieve all the extents based on the total extent
+	 * count and the number of extents returned till now.
+	 */
+	if (req_pl->extent_cnt  == 0 || req_pl->extent_cnt > 8)
+		req_pl->extent_cnt = cpu_to_le32(8);
+	rsp_sz = sizeof(rsp) + sizeof(rsp_pl) + 8 * sizeof(rsp_pl->extents[0]);
+	rsp_sz_min = sizeof(rsp) + sizeof(rsp_pl);
+
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz_min);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_memdev_get_dc_extent_list_rsp *)rsp->payload;
+	memset(ret, 0, sizeof(*ret));
+
+	ret->num_extents_returned = le32_to_cpu(rsp_pl->num_extents_returned);
+	ret->total_num_extents = le32_to_cpu(rsp_pl->total_num_extents);
+	ret->generation_num = le32_to_cpu(rsp_pl->generation_num);
+
+	for (i = 0; i < ret->num_extents_returned; i++) {
+		ret->extents[i].start_dpa = le64_to_cpu(rsp_pl->extents[i].start_dpa);
+		ret->extents[i].len = le64_to_cpu(rsp_pl->extents[i].len);
+		memcpy(ret->extents[i].tag, rsp_pl->extents[i].tag, 0x10);
+		ret->extents[i].shared_seq = le16_to_cpu(rsp_pl->extents[i].shared_seq);
+	}
+
+	return rc;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_fmapi_identify_sw_device(struct cxlmi_endpoint *ep,
 			    struct cxlmi_tunnel_info *ti,
 			    struct cxlmi_cmd_fmapi_identify_sw_device *ret)

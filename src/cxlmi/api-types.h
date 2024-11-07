@@ -381,6 +381,26 @@ struct cxlmi_cmd_memdev_get_sld_qos_status {
 	uint8_t backpressure_avg_percentage;
 } __attribute__((packed));
 
+/* CXL r3.1 Section 8.2.9.9.9.2 Get Dynamic Capacity Extent List (Opcode 4801h) */
+struct cxlmi_cmd_memdev_get_dc_extent_list_req {
+       uint32_t extent_cnt;
+       uint32_t start_extent_idx;
+} __attribute__((packed));
+
+struct cxlmi_cmd_memdev_get_dc_extent_list_rsp {
+       uint32_t num_extents_returned;
+       uint32_t total_num_extents;
+       uint32_t generation_num;
+       uint8_t rsvd[4];
+       struct {
+               uint64_t start_dpa;
+               uint64_t len;
+               uint8_t tag[0x10];
+               uint16_t shared_seq;
+               uint8_t rsvd[0x6];
+       } __attribute__((packed)) extents[];
+} __attribute__((packed));
+
 /* CXL r3.1 Section 7.6.7.1.1: Identify Switch Device (Opcode 5100h) */
 struct cxlmi_cmd_fmapi_identify_sw_device {
 	uint8_t ingres_port_id;

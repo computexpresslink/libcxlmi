@@ -491,6 +491,11 @@ int cxlmi_cmd_memdev_get_sld_qos_status(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
 				struct cxlmi_cmd_memdev_get_sld_qos_status *ret);
 
+int cxlmi_cmd_memdev_get_dc_extent_list(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_memdev_get_dc_extent_list_req *in,
+			struct cxlmi_cmd_memdev_get_dc_extent_list_rsp *ret);
+
 /*
  * Definitions for FMAPI Commands. per CXL r3.1 Table 8-215.
  */
