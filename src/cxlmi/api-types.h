@@ -360,6 +360,33 @@ struct cxlmi_cmd_memdev_get_security_state {
 	uint32_t security_state;
 } __attribute__((packed));
 
+/* CXL r3.1 Section 8.2.9.9.6.2: Set Passphrase (Opcode 4501h) */
+struct cxlmi_cmd_memdev_set_passphrase {
+	uint8_t passphrase_type;
+	uint8_t rsvd[0x1F];
+	uint8_t current_passphrase[0x20];
+	uint8_t new_passphrase[0x20];
+} __attribute__((packed));
+
+/* CXL r3.1 Section 8.2.9.9.6.3: Disable Passphrase (Opcode 4502h) */
+struct cxlmi_cmd_memdev_disable_passphrase {
+	uint8_t passphrase_type;
+	uint8_t rsvd[0x1F];
+	uint8_t passphrase[0x20];
+} __attribute__((packed));
+
+/* CXL r3.1 Section 8.2.9.9.6.4: Unlock (Opcode 4503h) */
+struct cxlmi_cmd_memdev_unlock {
+	uint8_t current_passphrase[0x20];
+} __attribute__((packed));
+
+/* CXL r3.1 Section 8.2.9.9.6.6: Passphrase Secure Erase (Opcode 4505h) */
+struct cxlmi_cmd_memdev_passphrase_secure_erase {
+	uint8_t passphrase_type;
+	uint8_t rsvd[0x1F];
+	uint8_t passphrase[0x20];
+} __attribute__((packed));
+
 /* CXL r3.1 Section 8.2.9.9.8.1: Get SLD QoS Control (Opcode 4700h) */
 struct cxlmi_cmd_memdev_get_sld_qos_control {
 	uint8_t qos_telemetry_control;
@@ -393,7 +420,7 @@ struct cxlmi_cmd_memdev_get_dc_extent_list_rsp {
        uint32_t generation_num;
        uint8_t rsvd[4];
        struct {
-               uint64_t start_dpa;
+	       uint64_t start_dpa;
 	       uint64_t len;
 	       uint8_t tag[0x10];
 	       uint16_t shared_seq;

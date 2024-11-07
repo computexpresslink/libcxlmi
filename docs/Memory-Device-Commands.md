@@ -24,6 +24,11 @@ command set, as per the latest specification.
    * [Secure Erase (4401h)](#secure-erase-4401h)
 * [Persistent Memory Data-at-rest Security (45h)](#persistent-memory-data-at-rest-security-45h)
    * [Get Security State (4500h)](#get-security-state-4500h)
+   * [Set Passphrase (4501h)](#set-passphrase-4501h)
+   * [Disable Passphrase (4502h)](#disable-passphrase-4502h)
+   * [Unlock (4503h)](#unlock-4503h)
+   * [Freeze Security State (4504h)](#freeze-security-state-4504h)
+   * [Passphrase Secure Erase (4505h)](#passphrase-secure-erase-4505h)
 * [SLD QoS Telemetry (47h)](#sld-qos-telemetry-47h)
    * [Get SLD QoS Control (4700h)](#get-sld-qos-control-4700h)
    * [Set SLD QoS Control (4701h)](#set-sld-qos-control-4701h)
@@ -34,7 +39,7 @@ command set, as per the latest specification.
    * [Release Dynamic Capacity (4803h)](#release-dynamic-capacity-4803h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Thu Nov  7 10:12:25 AM PST 2024 -->
+<!-- Added by: dave, at: Thu Nov  7 02:09:25 PM PST 2024 -->
 
 <!--te-->
 
@@ -388,6 +393,96 @@ Command name:
 int cxlmi_cmd_memdev_get_security_state(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
 				struct cxlmi_cmd_memdev_get_security_state *ret);
+   ```
+
+## Set Passphrase (4501h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_set_passphrase {
+	uint8_t passphrase_type;
+	uint8_t rsvd[0x1F];
+	uint8_t current_passphrase[0x20];
+	uint8_t new_passphrase[0x20];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_set_passphrase(struct cxlmi_endpoint *ep,
+			     struct cxlmi_tunnel_info *ti,
+			     struct cxlmi_cmd_memdev_set_passphrase *in);
+   ```
+
+## Disable Passphrase (4502h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_disable_passphrase {
+	uint8_t passphrase_type;
+	uint8_t rsvd[0x1F];
+	uint8_t passphrase[0x20];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_disable_passphrase(struct cxlmi_endpoint *ep,
+			     struct cxlmi_tunnel_info *ti,
+			     struct cxlmi_cmd_memdev_disable_passphrase *in);
+   ```
+
+## Unlock (4503h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_unlock {
+	uint8_t current_passphrase[0x20];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_unlock(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_memdev_unlock *in);
+   ```
+
+## Freeze Security State (4504h)
+
+No payload.
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_freeze_security_state(struct cxlmi_endpoint *ep,
+					struct cxlmi_tunnel_info *ti);
+   ```
+
+## Passphrase Secure Erase (4505h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_passphrase_secure_erase {
+	uint8_t passphrase_type;
+	uint8_t rsvd[0x1F];
+	uint8_t passphrase[0x20];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_passphrase_secure_erase(struct cxlmi_endpoint *ep,
+			     struct cxlmi_tunnel_info *ti,
+			     struct cxlmi_cmd_memdev_passphrase_secure_erase *in);
    ```
 
 # SLD QoS Telemetry (47h)

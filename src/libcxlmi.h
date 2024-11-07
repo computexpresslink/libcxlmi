@@ -479,6 +479,20 @@ int cxlmi_cmd_memdev_secure_erase(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_memdev_get_security_state(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
 				struct cxlmi_cmd_memdev_get_security_state *ret);
+int cxlmi_cmd_memdev_set_passphrase(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_memdev_set_passphrase *in);
+int cxlmi_cmd_memdev_disable_passphrase(struct cxlmi_endpoint *ep,
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_memdev_disable_passphrase *in);
+int cxlmi_cmd_memdev_unlock(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_memdev_unlock *in);
+int cxlmi_cmd_memdev_freeze_security_state(struct cxlmi_endpoint *ep,
+					   struct cxlmi_tunnel_info *ti);
+int cxlmi_cmd_memdev_passphrase_secure_erase(struct cxlmi_endpoint *ep,
+			     struct cxlmi_tunnel_info *ti,
+			     struct cxlmi_cmd_memdev_passphrase_secure_erase *in);
 
 int cxlmi_cmd_memdev_get_sld_qos_control(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,

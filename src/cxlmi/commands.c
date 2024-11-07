@@ -1272,6 +1272,124 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_security_state(struct cxlmi_endpoint *ep,
 	return rc;
 }
 
+CXLMI_EXPORT int
+cxlmi_cmd_memdev_set_passphrase(struct cxlmi_endpoint *ep,
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_memdev_set_passphrase *in)
+{
+	struct cxlmi_cmd_memdev_set_passphrase *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x60);
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), PERSISTENT_MEM, SET_PASSPHRASE);
+
+	req_pl = (struct cxlmi_cmd_memdev_set_passphrase *)req->payload;
+	req_pl->passphrase_type = in->passphrase_type;
+	memcpy(req_pl->current_passphrase,
+	       in->current_passphrase, sizeof(in->current_passphrase));
+	memcpy(req_pl->new_passphrase,
+	       in->new_passphrase, sizeof(in->new_passphrase));
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+CXLMI_EXPORT int
+cxlmi_cmd_memdev_disable_passphrase(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_memdev_disable_passphrase *in)
+{
+	struct cxlmi_cmd_memdev_disable_passphrase *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x40);
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), PERSISTENT_MEM, DISABLE_PASSPHRASE);
+
+	req_pl = (struct cxlmi_cmd_memdev_disable_passphrase *)req->payload;
+	req_pl->passphrase_type = in->passphrase_type;
+	memcpy(req_pl->passphrase, in->passphrase, sizeof(in->passphrase));
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+CXLMI_EXPORT int cxlmi_cmd_memdev_unlock(struct cxlmi_endpoint *ep,
+					 struct cxlmi_tunnel_info *ti,
+					 struct cxlmi_cmd_memdev_unlock *in)
+{
+	struct cxlmi_cmd_memdev_unlock *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x20);
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), PERSISTENT_MEM, UNLOCK);
+
+	req_pl = (struct cxlmi_cmd_memdev_unlock *)req->payload;
+	memcpy(req_pl->current_passphrase,
+	       in->current_passphrase, sizeof(in->current_passphrase));
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+CXLMI_EXPORT int cxlmi_cmd_memdev_freeze_security_state(struct cxlmi_endpoint *ep,
+							struct cxlmi_tunnel_info *ti)
+{
+	struct cxlmi_cci_msg req, rsp;
+
+	arm_cci_request(ep, &req, 0, PERSISTENT_MEM, FREEZE_SECURITY_STATE);
+
+	return send_cmd_cci(ep, ti, &req, sizeof(req),
+			    &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+CXLMI_EXPORT int
+cxlmi_cmd_memdev_passphrase_secure_erase(struct cxlmi_endpoint *ep,
+			  struct cxlmi_tunnel_info *ti,
+			  struct cxlmi_cmd_memdev_passphrase_secure_erase *in)
+{
+	struct cxlmi_cmd_memdev_passphrase_secure_erase *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x40);
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), PERSISTENT_MEM,
+			PASSPHRASE_SECURE_ERASE);
+
+	req_pl = (struct cxlmi_cmd_memdev_passphrase_secure_erase *)req->payload;
+	req_pl->passphrase_type = in->passphrase_type;
+	memcpy(req_pl->passphrase, in->passphrase, sizeof(in->passphrase));
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_get_sld_qos_control(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti,
 				  struct cxlmi_cmd_memdev_get_sld_qos_control *ret)

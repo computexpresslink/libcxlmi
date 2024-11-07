@@ -232,7 +232,12 @@ enum {
 	#define SANITIZE      0x0
 	#define SECURE_ERASE  0x1
     PERSISTENT_MEM = 0x45,
-	#define GET_SECURITY_STATE     0x0
+	#define GET_SECURITY_STATE        0x0
+	#define SET_PASSPHRASE            0x1
+	#define DISABLE_PASSPHRASE        0x2
+	#define UNLOCK                    0x3
+	#define FREEZE_SECURITY_STATE     0x4
+	#define PASSPHRASE_SECURE_ERASE   0x5
     SLD_QOS_TELEMETRY = 0x47,
 	#define GET_SLD_QOS_CONTROL        0x0
 	#define SET_SLD_QOS_CONTROL        0x1
