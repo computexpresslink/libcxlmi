@@ -635,6 +635,10 @@ int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
+int cxlmi_cmd_fmapi_get_dcd_info(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_dcd_info *ret);
+
 
 /*
  * Vendor specific commands.

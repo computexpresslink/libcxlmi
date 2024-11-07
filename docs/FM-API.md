@@ -23,7 +23,8 @@ command set, as per the latest specification.
    * [Set QoS Allocated BW (5407h)](#set-qos-allocated-bw-5407h)
    * [Get QoS BW Limit (5408h)](#get-qos-bw-limit-5408h)
    * [Set QoS BW Limit (5409h)](#set-qos-bw-limit-5409h)
-
+* [FMAPI DCD Management (56h)](#fmapi-dcd-management-56h)
+	* [Get DCD Info (5600h)](#get-dcd-info-5600h)
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 <!-- Added by: dave, at: Mon Aug 19 01:13:48 PM PDT 2024 -->
 
@@ -513,4 +514,33 @@ int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
+   ```
+
+# FMAPI DCD Management (56h)
+
+## Get DCD Info (5600h)
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_dcd_info {
+	uint8_t num_hosts;
+	uint8_t num_supported_dc_regions;
+	uint8_t rsvd1[0x2];
+	uint16_t capacity_selection_policies;
+	uint8_t rsvd2[0x2];
+	uint16_t capacity_removal_policies;
+	uint8_t sanitize_on_release_config_mask;
+	uint8_t rsvd3;
+	uint64_t total_dynamic_capacity;
+	uint64_t supported_block_sizes[8];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_dcd_info(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_dcd_info *ret);
    ```
