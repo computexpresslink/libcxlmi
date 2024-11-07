@@ -91,8 +91,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_get_response_msg_limit(struct cxlmi_endpoint *ep,
-			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_get_response_msg_limit *ret);
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_get_response_msg_limit *ret);
    ```
 
 ## Set Response Message Limit (0004h)
@@ -109,8 +109,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_set_response_msg_limit(struct cxlmi_endpoint *ep,
-				     struct cxlmi_tunnel_info *ti,
-				     struct cxlmi_cmd_set_response_msg_limit *in);
+					 struct cxlmi_tunnel_info *ti,
+					 struct cxlmi_cmd_set_response_msg_limit *in);
    ```
 
 ## Request Abort Background Operation (0005h)
@@ -270,8 +270,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_get_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
-			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_get_mctp_event_interrupt_policy *ret);
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_get_mctp_event_interrupt_policy *ret);
    ```
 
 ## Set MCTP Event Interrupt Policy (0105h)
@@ -288,8 +288,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_set_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
-			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_set_mctp_event_interrupt_policy *in);
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_set_mctp_event_interrupt_policy *in);
    ```
 
 ## Event Notification (0106h)
@@ -392,8 +392,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_get_timestamp(struct cxlmi_endpoint *ep,
-			    struct cxlmi_tunnel_info *ti,
-			    struct cxlmi_cmd_get_timestamp *ret);
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_get_timestamp *ret);
    ```
 
 ## Set Timestamp (Opcode 0301h)
@@ -410,8 +410,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_set_timestamp(struct cxlmi_endpoint *ep,
-			    struct cxlmi_tunnel_info *ti,
-			    struct cxlmi_cmd_set_timestamp *in);
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_set_timestamp *in);
    ```
 
 # Logs (04h)
@@ -462,9 +462,9 @@ General command name:
 
    ```C
 int cxlmi_cmd_get_log(struct cxlmi_endpoint *ep,
-		      struct cxlmi_tunnel_info *ti,
-		      struct cxlmi_cmd_get_log_req *in,
-		      void *ret);
+			  struct cxlmi_tunnel_info *ti,
+			  struct cxlmi_cmd_get_log_req *in,
+			  void *ret);
    ```
 
 CEL-specific command name:

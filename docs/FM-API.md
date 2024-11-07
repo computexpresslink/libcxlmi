@@ -53,8 +53,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_fmapi_identify_sw_device(struct cxlmi_endpoint *ep,
-		       struct cxlmi_tunnel_info *ti,
-		       struct cxlmi_cmd_fmapi_identify_sw_device *ret);
+			   struct cxlmi_tunnel_info *ti,
+			   struct cxlmi_cmd_fmapi_identify_sw_device *ret);
    ```
 
 ## Get Physical Port State (5101h)
@@ -353,8 +353,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_fmapi_get_qos_control(struct cxlmi_endpoint *ep,
-				    struct cxlmi_tunnel_info *ti,
-				    struct cxlmi_cmd_fmapi_get_qos_control *ret);
+					struct cxlmi_tunnel_info *ti,
+					struct cxlmi_cmd_fmapi_get_qos_control *ret);
    ```
 
 ## Set QoS Control (5404h)
@@ -376,9 +376,9 @@ Command name:
 
    ```C
 int cxlmi_cmd_fmapi_set_qos_control(struct cxlmi_endpoint *ep,
-				    struct cxlmi_tunnel_info *ti,
-				    struct cxlmi_cmd_fmapi_set_qos_control *in,
-				    struct cxlmi_cmd_fmapi_set_qos_control *ret);
+					struct cxlmi_tunnel_info *ti,
+					struct cxlmi_cmd_fmapi_set_qos_control *in,
+					struct cxlmi_cmd_fmapi_set_qos_control *ret);
    ```
 
 ## Get QoS Status (5405h)
@@ -395,8 +395,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_fmapi_get_qos_status(struct cxlmi_endpoint *ep,
-			    struct cxlmi_tunnel_info *ti,
-			    struct cxlmi_cmd_fmapi_get_qos_status *ret);
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_fmapi_get_qos_status *ret);
    ```
 
 ## Get QoS Allocated BW (5406h)

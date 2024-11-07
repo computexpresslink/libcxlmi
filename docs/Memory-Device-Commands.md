@@ -64,8 +64,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_identify(struct cxlmi_endpoint *ep,
-			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_memdev_identify *ret);
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_memdev_identify *ret);
    ```
 
 # Capacity Configuration and Label Storage (41h)
@@ -126,8 +126,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_get_lsa(struct cxlmi_endpoint *ep,
-			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_memdev_get_lsa *ret);
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_memdev_get_lsa *ret);
    ```
 
 ## Set LSA (4103h)
@@ -146,8 +146,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_set_lsa(struct cxlmi_endpoint *ep,
-			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_memdev_set_lsa *in);
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_memdev_set_lsa *in);
    ```
 
 # Health Info and Alerts (42h)
@@ -173,8 +173,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_get_health_info(struct cxlmi_endpoint *ep,
-			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_memdev_get_health_info *ret);
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_memdev_get_health_info *ret);
    ```
 
 ## Get Alert Configuration (4201h)
@@ -200,8 +200,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_get_alert_config(struct cxlmi_endpoint *ep,
-			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_memdev_get_alert_config *ret);
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_memdev_get_alert_config *ret);
    ```
 
 ## Set Alert Configuration (4202h)
@@ -225,8 +225,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_set_alert_config(struct cxlmi_endpoint *ep,
-			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_memdev_set_alert_config *in);
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_memdev_set_alert_config *in);
    ```
 
 ## Get Shutdown State (4203h)
@@ -243,8 +243,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_get_shutdown_state(struct cxlmi_endpoint *ep,
-			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_memdev_get_shutdown_state *ret);
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_memdev_get_shutdown_state *ret);
    ```
 
 ## Set Shutdown State (4204h)
@@ -261,8 +261,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_set_shutdown_state(struct cxlmi_endpoint *ep,
-			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_memdev_set_shutdown_state *in);
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_memdev_set_shutdown_state *in);
    ```
 
 # Media and Poison Management (43h)
@@ -535,6 +535,6 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_release_dc(struct cxlmi_endpoint *ep,
-                       struct cxlmi_tunnel_info *ti,
-                       struct cxlmi_cmd_memdev_release_dyn_cap *in);
+					   struct cxlmi_tunnel_info *ti,
+					   struct cxlmi_cmd_memdev_release_dyn_cap *in);
    ```
