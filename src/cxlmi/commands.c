@@ -1385,9 +1385,9 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_sld_qos_status(struct cxlmi_endpoint *ep,
 }
 
 CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_extent_list(struct cxlmi_endpoint *ep,
-						     struct cxlmi_tunnel_info *ti,
-						     struct cxlmi_cmd_memdev_get_dc_extent_list_req *in,
-						     struct cxlmi_cmd_memdev_get_dc_extent_list_rsp *ret)
+				     struct cxlmi_tunnel_info *ti,
+				     struct cxlmi_cmd_memdev_get_dc_extent_list_req *in,
+				     struct cxlmi_cmd_memdev_get_dc_extent_list_rsp *ret)
 {
 	struct cxlmi_cmd_memdev_get_dc_extent_list_req *req_pl;
 	struct cxlmi_cmd_memdev_get_dc_extent_list_rsp *rsp_pl;
@@ -1470,9 +1470,40 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_add_dc_response(struct cxlmi_endpoint *ep,
        return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
 }
 
+CXLMI_EXPORT int cxlmi_cmd_memdev_release_dc(struct cxlmi_endpoint *ep,
+					  struct cxlmi_tunnel_info *ti,
+					  struct cxlmi_cmd_memdev_release_dc *in)
+{
+	struct cxlmi_cmd_memdev_release_dc *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	ssize_t req_sz;
+	int i, rc = -1;
+
+	req_sz = sizeof(*req_pl) + sizeof(*req) +
+		in->updated_extent_list_size * sizeof(in->extents[0]);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), DCD_CONFIG, RELEASE_DYN_CAP);
+	req_pl = (struct cxlmi_cmd_memdev_release_dc *)req->payload;
+	req_pl->updated_extent_list_size = cpu_to_le32(in->updated_extent_list_size);
+	req_pl->flags = in->flags;
+
+	for (i = 0; i < in->updated_extent_list_size; i++) {
+		req_pl->extents[i].start_dpa = cpu_to_le64(in->extents[i].start_dpa);
+		req_pl->extents[i].len = cpu_to_le64(in->extents[i].len);
+	}
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+
+	return rc;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_fmapi_identify_sw_device(struct cxlmi_endpoint *ep,
-			    struct cxlmi_tunnel_info *ti,
-			    struct cxlmi_cmd_fmapi_identify_sw_device *ret)
+						    struct cxlmi_tunnel_info *ti,
+						    struct cxlmi_cmd_fmapi_identify_sw_device *ret)
 {
 	int rc;
 	ssize_t rsp_sz;

@@ -498,6 +498,9 @@ int cxlmi_cmd_memdev_get_dc_extent_list(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_memdev_add_dc_response(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
 			  struct cxlmi_cmd_memdev_add_dc_response *in);
+int cxlmi_cmd_memdev_release_dc(struct cxlmi_endpoint *ep,
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_memdev_release_dc *in);
 
 /*
  * Definitions for FMAPI Commands. per CXL r3.1 Table 8-215.
