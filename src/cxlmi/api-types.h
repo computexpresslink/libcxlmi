@@ -394,11 +394,23 @@ struct cxlmi_cmd_memdev_get_dc_extent_list_rsp {
        uint8_t rsvd[4];
        struct {
                uint64_t start_dpa;
-               uint64_t len;
-               uint8_t tag[0x10];
-               uint16_t shared_seq;
-               uint8_t rsvd[0x6];
+	       uint64_t len;
+	       uint8_t tag[0x10];
+	       uint16_t shared_seq;
+	       uint8_t rsvd[0x6];
        } __attribute__((packed)) extents[];
+} __attribute__((packed));
+
+/* CXL r3.1 Section 8.2.9.9.9.3 Add Dynamic Capacity Response (Opcode 4802h) */
+struct cxlmi_cmd_memdev_add_dc_response {
+	uint32_t updated_extent_list_size;
+	uint8_t flags;
+	uint8_t rsvd1[3];
+	struct {
+		uint64_t start_dpa;
+		uint64_t len;
+		uint8_t rsvd[8];
+	} __attribute__((packed)) extents[];
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.1.1: Identify Switch Device (Opcode 5100h) */
