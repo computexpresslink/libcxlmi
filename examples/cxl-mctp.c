@@ -11,6 +11,8 @@
 
 #include <libcxlmi.h>
 
+static int show_dc_extents(struct cxlmi_endpoint *ep);
+
 static int show_memdev_info(struct cxlmi_endpoint *ep)
 {
 	int rc;
@@ -178,6 +180,153 @@ static int play_with_device_timestamp(struct cxlmi_endpoint *ep)
 	return 0;
 }
 
+static int issue_dynamic_capacity_operation(struct cxlmi_endpoint *ep, bool add)
+{
+	struct cxlmi_cmd_memdev_add_dc_response *req;
+	uint64_t dpa, len;
+	int i = 0, rc = -1;
+
+	req = calloc(1, sizeof(*req) + sizeof(req->extents[0]) * 2);
+	if (!req)
+		return -1;
+
+	req->updated_extent_list_size = 2;
+	req->flags = 0;
+	dpa = 0;
+	len = 16 * 1024 * 1024;
+	for (i = 0; i < 2; i++) {
+		req->extents[i].start_dpa = dpa;
+		req->extents[i].len = len;
+		dpa += len;
+	}
+
+	if (add) {
+		printf("Send response to device for accepting %d extents\n",
+				req->updated_extent_list_size);
+		rc = cxlmi_cmd_memdev_add_dc_response(ep, NULL, req);
+	} else {
+		struct cxlmi_cmd_memdev_release_dc *in;
+		in = (struct cxlmi_cmd_memdev_release_dc *)req;
+		printf("Notify device to release %d extents\n",
+				req->updated_extent_list_size);
+		rc = cxlmi_cmd_memdev_release_dc(ep, NULL, in);
+	}
+
+    free(req);
+	return rc;
+}
+
+static int play_with_dcd(struct cxlmi_endpoint *ep)
+{
+	int i, rc;
+	struct cxlmi_cmd_memdev_get_dc_config_req req = {
+		.region_cnt = 8,
+		.start_region_id = 0,
+	};
+	struct cxlmi_cmd_memdev_get_dc_config_rsp *out;
+
+	out = calloc(1, sizeof(*out));
+	if (!out)
+		return -1;
+
+	rc = cxlmi_cmd_memdev_get_dc_config(ep, NULL, &req, out);
+	if (rc) {
+		rc = -1;
+		goto free_out;
+	}
+
+	printf("Print out get DC config response: \n");
+	printf("# of regions: %d\n", out->num_regions);
+	printf("# of regions returned: %d\n", out->regions_returned);
+
+	for (i = 0; i < out->regions_returned; i++) {
+		printf("region %d: base %lu decode_len %lu region_len %lu block_size %lu\n",
+				req.start_region_id + i,
+				out->region_configs[i].base,
+				out->region_configs[i].decode_len,
+				out->region_configs[i].region_len,
+				out->region_configs[i].block_size);
+	}
+
+	printf("# of extents supported: %d\n", out->num_extents_supported);
+	printf("# of extents available: %d\n", out->num_extents_available);
+	printf("# of tags supported: %d\n", out->num_tags_supported);
+	printf("# of tags available: %d\n", out->num_tags_available);
+
+	printf("Print out get DC config response: done\n");
+	rc = 0;
+
+	if (out->num_regions) {
+		rc = show_dc_extents(ep);
+		if (rc)
+			goto free_out;
+		rc = issue_dynamic_capacity_operation(ep, true);
+		if (rc)
+			goto free_out;
+		rc = show_dc_extents(ep);
+		if (rc)
+			goto free_out;
+		rc = issue_dynamic_capacity_operation(ep, false);
+		if (rc)
+			goto free_out;
+		rc = show_dc_extents(ep);
+	}
+
+free_out:
+	free(out);
+
+	return rc;
+}
+
+static int show_dc_extents(struct cxlmi_endpoint *ep)
+{
+	int i, rc;
+	uint64_t total_cnt, extent_returned = 0;
+	bool first = true;
+
+	struct cxlmi_cmd_memdev_get_dc_extent_list_req req = {
+		.extent_cnt = 0,
+		.start_extent_idx = 0,
+	};
+	struct cxlmi_cmd_memdev_get_dc_extent_list_rsp *out;
+
+	out = calloc(1, sizeof(*out) + sizeof(out->extents[0]) * 8);
+	if (!out)
+		return -1;
+
+	do {
+		printf("Try to read %d extents starting with id: %d\n",
+				req.extent_cnt, req.start_extent_idx);
+		rc = cxlmi_cmd_memdev_get_dc_extent_list(ep, NULL, &req, out);
+		if (rc)
+			goto free_out;
+
+		if (first) {
+			total_cnt = out->total_num_extents;
+
+			printf("# of total extents: %d\n", out->total_num_extents);
+			printf("generation number: %d\n", out->generation_num);
+			first = false;
+		}
+
+		printf("# of extents returned: %u\n", out->num_extents_returned);
+		for (i = 0; i < out->num_extents_returned; i++) {
+			printf("extent[%u] : [%lx, %lx]\n", i + req.start_extent_idx,
+					out->extents[i].start_dpa,
+					out->extents[i].len);
+		}
+
+		extent_returned += out->num_extents_returned;
+		req.start_extent_idx = extent_returned;
+		req.extent_cnt = total_cnt - extent_returned;
+	} while (extent_returned < total_cnt);
+
+free_out:
+	free(out);
+
+	return rc;
+}
+
 static const uint8_t cel_uuid[0x10] = { 0x0d, 0xa9, 0xc0, 0xb5,
 					0xbf, 0x41,
 					0x4b, 0x78,
@@ -267,6 +416,63 @@ static int show_cel(struct cxlmi_endpoint *ep, int cel_size)
 done:
 	free(ret);
 	return rc;
+}
+
+static int support_opcode(struct cxlmi_endpoint *ep, int cel_size,
+		uint16_t opcode, bool *supported)
+{
+	struct cxlmi_cmd_get_log_req in = {
+		.offset = 0,
+		.length = cel_size,
+	};
+	struct cxlmi_cmd_get_log_cel_rsp *ret;
+	int i, rc;
+
+	ret = calloc(1, sizeof(*ret) + cel_size);
+	if (!ret)
+		return -1;
+
+	memcpy(in.uuid, cel_uuid, sizeof(in.uuid));
+	rc = cxlmi_cmd_get_log_cel(ep, NULL, &in, ret);
+	if (rc)
+		goto done;
+
+	for (i = 0; i < cel_size / sizeof(*ret); i++) {
+		if (opcode == ret[i].opcode) {
+			*supported = true;
+			break;
+		}
+	}
+done:
+	free(ret);
+	return rc;
+}
+
+static bool ep_supports_op(struct cxlmi_endpoint *ep, uint16_t opcode)
+{
+	int rc;
+	size_t cel_size;
+	struct cxlmi_cmd_get_supported_logs *gsl;
+	bool op_support = false;
+
+	gsl = calloc(1, sizeof(*gsl) + maxlogs * sizeof(*gsl->entries));
+	if (!gsl)
+		return op_support;
+
+	rc = cxlmi_cmd_get_supported_logs(ep, NULL, gsl);
+	if (rc)
+		return op_support;
+
+	rc = parse_supported_logs(gsl, &cel_size);
+	if (rc)
+		return op_support;
+	else {
+		/* we know there is a CEL */
+		rc = support_opcode(ep, cel_size, opcode, &op_support);
+	}
+
+	free(gsl);
+	return op_support;
 }
 
 static int get_device_logs(struct cxlmi_endpoint *ep)
@@ -413,6 +619,9 @@ int main(int argc, char **argv)
 		rc = play_with_poison_mgmt(ep);
 
 		rc = toggle_abort(ep);
+
+		if (ep_supports_op(ep, 0x4800))
+			play_with_dcd(ep);
 
 		cxlmi_close(ep);
 	}
