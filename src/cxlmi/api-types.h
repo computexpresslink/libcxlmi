@@ -408,6 +408,32 @@ struct cxlmi_cmd_memdev_get_sld_qos_status {
 	uint8_t backpressure_avg_percentage;
 } __attribute__((packed));
 
+/* CXL r3.1 Section 8.2.9.9.9.1 Get Dynamic Capacity Configuration (Opcode 4800h) */
+/* Note: The region config structure array is fixed to hold 8 regions */
+struct cxlmi_cmd_memdev_get_dc_config_req {
+	uint8_t region_cnt;
+	uint8_t start_region_id;
+} __attribute__((packed));
+
+struct cxlmi_cmd_memdev_get_dc_config_rsp {
+	uint8_t num_regions;
+	uint8_t regions_returned;
+	uint8_t rsvd1[6];
+	struct {
+		uint64_t base;
+		uint64_t decode_len;
+		uint64_t region_len;
+		uint64_t block_size;
+		uint32_t dsmadhandle;
+		uint8_t flags;
+		uint8_t rsvd2[3];
+	} __attribute__((packed)) region_configs[8];
+	uint32_t num_extents_supported;
+	uint32_t num_extents_available;
+	uint32_t num_tags_supported;
+	uint32_t num_tags_available;
+} __attribute__((packed));
+
 /* CXL r3.1 Section 8.2.9.9.9.2 Get Dynamic Capacity Extent List (Opcode 4801h) */
 struct cxlmi_cmd_memdev_get_dc_extent_list_req {
        uint32_t extent_cnt;
@@ -632,5 +658,4 @@ struct cxlmi_cmd_fmapi_set_qos_bw_limit {
 	uint8_t start_ld_id;
 	uint8_t qos_limit_fraction[];
 } __attribute__((packed));
-
 #endif
