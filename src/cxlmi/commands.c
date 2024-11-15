@@ -1784,7 +1784,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_phys_port_state(struct cxlmi_endpoint *ep,
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(*req_pl),
+	arm_cci_request(ep, req, sizeof(*req_pl) + in->num_ports,
 			PHYSICAL_SWITCH, GET_PHYSICAL_PORT_STATE);
 	req_pl = (struct cxlmi_cmd_fmapi_get_phys_port_state_req *)req->payload;
 
