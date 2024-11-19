@@ -148,6 +148,58 @@ static int play_with_device_timestamp(struct cxlmi_endpoint *ep)
 	return 0;
 }
 
+static int play_with_scan_media(struct cxlmi_endpoint *ep)
+{
+	int rc;
+
+	struct cxlmi_cmd_get_scan_media_capabilities_req req ={
+		.get_scan_media_capabilities_start_physaddr = 0x0,
+		.get_scan_media_capabilities_physaddr_length = 64,
+	};
+	struct cxlmi_cmd_get_scan_media_capabilities_rsp rsp;
+	struct cxlmi_cmd_scan_media media = {
+		.scan_media_physaddr = 0x0,
+		.scan_media_physaddr_length = 64,
+		.scan_media_flags = 0x0,
+	};
+	struct cxlmi_cmd_get_scan_media_results results;
+
+	memset(&req, 0, sizeof(struct cxlmi_cmd_get_scan_media_capabilities_req));
+
+	rc = cxlmi_cmd_get_scan_media_capabilities(ep, NULL, &req, &rsp);
+	if(rc)
+		return rc;
+
+	printf("Get scan media capabilities -\n"
+	       "estimated scan media time : %d ms\n",
+	       rsp.estimated_scan_media_time);
+
+	memset(&media, 0, sizeof(struct cxlmi_cmd_scan_media));
+	rc = cxlmi_cmd_scan_media(ep, NULL, &media);
+
+	if(rc){
+		return rc;
+	}
+
+	sleep(rsp.estimated_scan_media_time);
+
+	rc = cxlmi_cmd_get_scan_media_results(ep, NULL, &results);
+
+	if(rc){
+		return rc;
+	}
+
+	printf("Get scan media results - \n restart phy address : 0x%lx\n"
+	       "Physical address length : %ld\n scan media flags : %d\n"
+	       "media error count : %d",
+	       results.scan_media_restart_physaddr,
+	       results.scan_media_restart_physaddr_length,
+	       results.scan_media_flags,
+	       results.media_error_count);
+
+	return 0;
+}
+
 static const uint8_t cel_uuid[0x10] = { 0x0d, 0xa9, 0xc0, 0xb5,
 					0xbf, 0x41,
 					0x4b, 0x78,
@@ -366,6 +418,8 @@ int main(int argc, char **argv)
 	rc = get_device_logs(ep);
 
 	rc = toggle_abort(ep);
+
+	rc = play_with_scan_media(ep);
 
 	cxlmi_close(ep);
 exit_free_ctx:

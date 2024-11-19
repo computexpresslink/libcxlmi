@@ -1220,6 +1220,115 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_clear_poison(struct cxlmi_endpoint *ep,
 	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
 }
 
+CXLMI_EXPORT int cxlmi_cmd_get_scan_media_capabilities(struct cxlmi_endpoint *ep,
+				       struct cxlmi_tunnel_info *ti,
+				       struct cxlmi_cmd_get_scan_media_capabilities_req *in,
+				       struct cxlmi_cmd_get_scan_media_capabilities_rsp *ret)
+{
+	struct cxlmi_cmd_get_scan_media_capabilities_req *req_pl;
+	struct cxlmi_cmd_get_scan_media_capabilities_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	int rc = -1;
+	ssize_t req_sz, rsp_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x10);
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 4);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), MEDIA_AND_POISON, GET_SCAN_MEDIA_CAPABILITIES);
+
+	req_pl = (struct cxlmi_cmd_get_scan_media_capabilities_req *)req->payload;
+	req_pl->get_scan_media_capabilities_start_physaddr =
+		cpu_to_le64(in->get_scan_media_capabilities_start_physaddr);
+	req_pl->get_scan_media_capabilities_physaddr_length =
+		cpu_to_le64(in->get_scan_media_capabilities_physaddr_length);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_get_scan_media_capabilities_rsp *)rsp->payload;
+
+	memset(ret, 0, sizeof(*ret));
+	ret->estimated_scan_media_time = le32_to_cpu(rsp_pl->estimated_scan_media_time);
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_scan_media(struct cxlmi_endpoint *ep,
+				     struct cxlmi_tunnel_info *ti,
+				     struct cxlmi_cmd_scan_media *in)
+{
+	struct cxlmi_cmd_scan_media *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 17);
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), MEDIA_AND_POISON, SCAN_MEDIA);
+
+	req_pl = (struct cxlmi_cmd_scan_media *)req->payload;
+	req_pl->scan_media_physaddr = cpu_to_le64(in->scan_media_physaddr);
+	req_pl->scan_media_physaddr_length = cpu_to_le64(in->scan_media_physaddr_length);
+	req_pl->scan_media_flags = cpu_to_le16(in->scan_media_flags);
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+CXLMI_EXPORT int cxlmi_cmd_get_scan_media_results(struct cxlmi_endpoint *ep,
+				     struct cxlmi_tunnel_info *ti,
+				     struct cxlmi_cmd_get_scan_media_results *ret)
+{
+	struct cxlmi_cmd_get_scan_media_results *rsp_pl;
+	struct cxlmi_cci_msg req;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	int i, rc;
+	ssize_t rsp_sz;
+
+	arm_cci_request(ep, &req, 0, MEDIA_AND_POISON, GET_SCAN_MEDIA_RESULTS);
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_get_scan_media_results *)rsp->payload;
+	memset(ret, 0, sizeof(*ret));
+
+	ret->scan_media_restart_physaddr =
+		le64_to_cpu(rsp_pl->scan_media_restart_physaddr);
+	ret->scan_media_restart_physaddr_length =
+		le64_to_cpu(rsp_pl->scan_media_restart_physaddr_length);
+	ret->scan_media_flags = rsp_pl->scan_media_flags;
+	ret->media_error_count = le16_to_cpu(rsp_pl->media_error_count);
+	for (i = 0; i < ret->media_error_count; i++) {
+		ret->record[i].media_error_address =
+			le64_to_cpu(rsp_pl->record[i].media_error_address);
+		ret->record[i].media_error_length =
+			le32_to_cpu(rsp_pl->record[i].media_error_length);
+	}
+
+	return rc;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_sanitize(struct cxlmi_endpoint *ep,
 					   struct cxlmi_tunnel_info *ti)
 {

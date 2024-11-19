@@ -352,6 +352,85 @@ int cxlmi_cmd_memdev_clear_poison(struct cxlmi_endpoint *ep,
 				   struct cxlmi_cmd_memdev_clear_poison *in);
    ```
 
+## Get Scan Media Capabilities (4303h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_get_scan_media_capabilities_req {
+	uint64_t get_scan_media_capabilities_start_physaddr;
+	uint64_t get_scan_media_capabilities_physaddr_length;
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_get_scan_media_capabilities_rsp {
+	uint32_t estimated_scan_media_time;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_get_scan_media_capabilities(struct cxlmi_endpoint *ep,
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_get_scan_media_capabilities_req *in,
+				  struct cxlmi_cmd_get_scan_media_capabilities_rsp *ret);
+   ```
+
+## Scan Media (4304h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_scan_media {
+	uint64_t scan_media_physaddr;
+	uint64_t scan_media_physaddr_length;
+	uint8_t scan_media_flags;
+} __attribute__((packed));
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_scan_media(struct cxlmi_endpoint *ep,
+			 struct cxlmi_tunnel_info *ti,
+			 struct cxlmi_cmd_scan_media *in);
+   ```
+
+## Get Scan Media Results (4305h)
+
+Return payload:
+
+   ```C
+struct cxlmi_media_error_record {
+	uint64_t media_error_address;
+	uint32_t media_error_length;
+	uint8_t rsvd[4];
+};
+
+struct cxlmi_cmd_get_scan_media_results {
+	uint64_t scan_media_restart_physaddr;
+	uint64_t scan_media_restart_physaddr_length;
+	uint8_t scan_media_flags;
+	uint8_t rsvd1;
+	uint16_t media_error_count;
+	uint8_t rsvd2[12];
+	struct cxlmi_media_error_record record[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_get_scan_media_results(struct cxlmi_endpoint *ep,
+					 struct cxlmi_tunnel_info *ti,
+					 struct cxlmi_cmd_get_scan_media_results *ret);
+   ```
+
+
 # Sanitize and Media Operations (44h)
 
 ## Sanitize (4400h)
@@ -373,7 +452,6 @@ Command name:
    ```C
 int cxlmi_cmd_memdev_secure_erase(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti);
    ```
-
 
 # Persistent Memory Data-at-rest Security (45h)
 
