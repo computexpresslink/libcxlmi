@@ -2510,3 +2510,52 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_config(struct cxlmi_endpoint *ep,
 
 	return rc;
 }
+
+/* Vendor-specific commands */
+
+CXLMI_EXPORT int cxlmi_cmd_vendor_specific(struct cxlmi_endpoint *ep,
+					   struct cxlmi_tunnel_info *ti,
+					   uint16_t opcode,
+					   void *in, ssize_t in_size,
+					   void *ret, ssize_t ret_size)
+{
+
+	int rc = -1;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz = sizeof(*req);
+	ssize_t rsp_sz = sizeof(*rsp);
+
+	/* C000h-FFFFh describe vendor-specific commands */
+	if (opcode < 0xC000)
+		return rc;
+
+	if ((in && !in_size) || (ret && !ret_size))
+		return rc;
+	if ((!in && in_size) || (!ret && ret_size))
+		return rc;
+
+	if (in)
+		req_sz += in_size;
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+	arm_cci_request(ep, req, in ? 0 : in_size, opcode >> 8, opcode & 0xFF);
+	if (in)
+		memcpy(req->payload, in, in_size);
+
+	if (ret)
+		rsp_sz += ret_size;
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	if (ret)
+		memcpy(ret, rsp->payload, ret_size);
+
+	return rc;
+}

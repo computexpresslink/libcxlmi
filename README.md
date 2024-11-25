@@ -84,7 +84,9 @@ data structures are the same, using a `cxlmi_cmd_[memdev|fmapi_]<cmdname>()`
 format. When there are input *and* output payloads, the `_req` and `_rsp`
 suffixes are needed, respectively, for the payload names. Naturally, `memdev`
 and `fmapi` corresponds to the respective command set, otherwise the command
-belongs to the Generic Component set.
+belongs to the Generic Component set. Vendor-specific commands can use
+`cxlmi_cmd_vendor_specific()` passing the opcode, along with any input and/or
+output buffers, with their respective sizes.
 
 When sending any CXL command, the passed parameters, in addition to the
 corresponding endpoint and respective payload information, must indicate the
@@ -267,6 +269,7 @@ API References
 
 - [FM-API](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md)
 
+- [Vendor Specific Commands](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Vendor-Specific-Commands.md)
 
 FAQ
 ===

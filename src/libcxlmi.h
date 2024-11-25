@@ -594,6 +594,16 @@ int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
+
+/*
+ * Vendor specific commands.
+ */
+int cxlmi_cmd_vendor_specific(struct cxlmi_endpoint *ep,
+			      struct cxlmi_tunnel_info *ti,
+			      uint16_t opcode,
+			      void *in, ssize_t in_size,
+			      void *ret, ssize_t ret_size);
+
 #ifdef __cplusplus
 }
 #endif
