@@ -766,4 +766,14 @@ struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp {
 	uint32_t num_tags_supported;
 	uint32_t num_tags_available;
 }__attribute__((packed));
+
+/* CXL r3.2 Section 7.6.7.6.3 Set DC Region Configuration (Opcode 5602h) */
+struct cxlmi_cmd_fmapi_set_dc_region_config {
+	uint8_t region_id;
+	uint8_t rsvd[3];
+	uint64_t block_sz;
+	uint8_t sanitize_on_release;
+	uint8_t rsvd2[3];
+}__attribute__((packed));
+
 #endif

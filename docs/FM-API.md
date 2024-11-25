@@ -26,6 +26,7 @@ command set, as per the latest specification.
 * [FMAPI DCD Management (56h)](#fmapi-dcd-management-56h)
 	* [Get DCD Info (5600h)](#get-dcd-info-5600h)
 	* [Get Host DC Region Config (5601h)](#get-host-dc-region-config-5601h)
+	* [Set DC Region Config (5602h)](#set-host-dc-region-config-5602h)
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 <!-- Added by: dave, at: Mon Aug 19 01:13:48 PM PDT 2024 -->
 
@@ -590,4 +591,23 @@ int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_host_dc_reg_config_req *in,
 			struct cxlmi_cmd_fmapi_get_host_dc_reg_config_rsp *ret);
+   ```
+
+## Set Host DC Region Config (5602h)
+Input Payload:
+```C
+struct cxlmi_cmd_fmapi_set_dc_region_config {
+	uint8_t region_id;
+	uint8_t rsvd[3];
+	uint64_t block_sz;
+	uint8_t sanitize_on_release;
+	uint8_t rsvd2[3];
+};
+```
+
+Command name:
+   ```C
+int cxlmi_cmd_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_set_dc_region_config *in);
    ```

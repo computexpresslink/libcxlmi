@@ -2645,6 +2645,35 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
 	return rc;
 }
 
+CXLMI_EXPORT int cxlmi_cmd_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_fmapi_set_dc_region_config *in)
+{
+	struct cxlmi_cmd_fmapi_set_dc_region_config *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+	int rc = 0;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 16);
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), DCD_MANAGEMENT, SET_DC_REGION_CONFIG);
+
+	req_pl = (struct cxlmi_cmd_fmapi_set_dc_region_config *)req->payload;
+	req_pl->region_id = in->region_id;
+	req_pl->block_sz = cpu_to_le64(in->block_sz);
+	req_pl->sanitize_on_release = in->sanitize_on_release;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+
+	return rc;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_config(struct cxlmi_endpoint *ep,
 		struct cxlmi_tunnel_info *ti,
 		struct cxlmi_cmd_memdev_get_dc_config_req *in,
