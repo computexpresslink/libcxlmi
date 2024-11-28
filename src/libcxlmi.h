@@ -323,19 +323,54 @@ const char *cxlmi_cmd_retcode_tostr(enum cxlmi_cmd_retcode code);
  * @level: tunneling level 1 or 2.
  *
  * When sent to an MLD, the provided command is tunneled by the FM-owned LD
- * to the specified LD. This can include an additional layer of tunneling for
- * commands issued on LDs in an MLD that is accessible through an MLD port
- * of a CXL Switch.
+ * to the specified LD. When sent to a Switch, the provided command is tunneled
+ * to an MLD through a CXL Switch. There can include an additional layer of
+ * tunneling for  commands issued on LDs in an MLD that is accessible through
+ * an MLD port of a CXL Switch.
  *
- * Tunneling targets are:
- *   - valid LDs within an MLD - single level tunneling
- *   - switch MLD ports - double level tunneling
+ * Possible targets are:
+ *   - tunneling to an LD in an MLD
+ *   - tunneling to an MLD through a Switch
+ *   - tunneling to an LD in an MLD through a Switch
  */
 struct cxlmi_tunnel_info {
 	int port;
 	int ld;
 	int level;
 };
+
+#define __TUNNEL_INITIALIZER(_port, _ld, _level)	\
+		{ .port = _port \
+		, .ld = _ld \
+		, .level = _level }
+
+/**
+ * Tunneling Commands to an LD in an MLD.
+ *
+ * @name: tunnel variable name
+ * @ld: Logical Device (LD) id within an MLD
+ */
+#define DEFINE_CXLMI_TUNNEL_MLD(name, ld)				\
+	struct cxlmi_tunnel_info name =	 __TUNNEL_INITIALIZER(-1, ld, 1)
+
+/**
+ * Tunneling Commands to an MLD through a CXL Switch.
+ *
+ * @name: tunnel variable name
+ * @port: switch downstream port number
+ */
+#define DEFINE_CXLMI_TUNNEL_SWITCH(name, port)				\
+	struct cxlmi_tunnel_info name =	__TUNNEL_INITIALIZER(port, -1, 1)
+
+/**
+ * Tunneling Commands to an LD in an MLD through a CXL Switch.
+ *
+ * @name: tunnel variable name
+ * @port: switch downstream port number (outter tunnel)
+ * @ld: Logical Device (LD) id within an MLD (inner tunnel)
+ */
+#define DEFINE_CXLMI_TUNNEL_SWITCH_MLD(name, port, ld)			\
+	struct cxlmi_tunnel_info name =  __TUNNEL_INITIALIZER(port, ld, 2)
 
 /*
  * Definitions for Generic Component Commands, per CXL r3.1 Table 8-37.

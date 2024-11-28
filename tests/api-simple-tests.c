@@ -54,11 +54,7 @@ static int query_mld_from_switch(struct cxlmi_endpoint *ep, int num_ports)
 	for (i = 0; i < ret->num_ports; i++) {
 		struct cxlmi_cmd_identify id;
 		struct cxlmi_cmd_fmapi_port_state_info_block *port;
-		struct cxlmi_tunnel_info ti = {
-			.level = 2,
-			.port = i,
-			.ld = 0, /* MLD port, query LD-0 */
-		};
+		DEFINE_CXLMI_TUNNEL_SWITCH_MLD(ti, i, 0);
 
 		port = &ret->ports[i];
 		if (port->conn_dev_type != 5)
@@ -88,11 +84,7 @@ static int verify_ep_fmapi(struct cxlmi_endpoint *ep)
 	if (cxlmi_endpoint_has_fmapi(ep) && cxlmi_endpoint_disable_fmapi(ep)) {
 		int rc;
 		struct cxlmi_cmd_identify id;
-		struct cxlmi_tunnel_info  ti = {
-			.level = 1,
-			.port = 0,
-			.ld = 0,
-		};
+		DEFINE_CXLMI_TUNNEL_MLD(ti, 0);
 
 		rc = cxlmi_cmd_identify(ep, &ti, &id);
 

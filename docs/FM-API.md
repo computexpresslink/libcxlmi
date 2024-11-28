@@ -222,25 +222,39 @@ Tunneling is supported through `struct cxlmi_tunnel_info`, passed as needed by t
 user when sending a command.  When sent to an MLD, the provided command is tunneled
 by the FM-owned LD to the specified LD. This can include an additional layer of
 tunneling for commands issued on LDs in an MLD that is accessible through an
-MLD port  of a CXL Switch.  Tunneling targets are: valid LDs within an MLD
-(single level tunneling), switch MLD ports (double level tunneling).
+MLD port  of a CXL Switch. Tunneling targets are: CXL Switches, valid LDs within
+an MLD (single level tunneling), switch MLD ports (double level tunneling). For
+each of these, the below helper macros are provided to create (stack-allocated
+variable) and arm the tunneling information.
 
 For more information refer to [Issuing CCI Commands](https://github.com/computexpresslink/libcxlmi/tree/main?tab=readme-ov-file#issuing-cci-commands).
 
    ```C
-/*
- * cxlmi_tunnel_info - Tunneling information associated with a specific command
- * @port: switch downstream port number
+/**
+ * Tunneling Commands to an LD in an MLD.
+ *
+ * @name: tunnel variable name
  * @ld: Logical Device (LD) id within an MLD
- * @level: tunneling level 1 or 2.
  */
-struct cxlmi_tunnel_info {
-	int port;
-	int ld;
-	int level;
-};
-   ```
+DEFINE_CXLMI_TUNNEL_MLD(name, ld)
 
+/**
+ * Tunneling Commands to an MLD through a CXL Switch.
+ *
+ * @name: tunnel variable name
+ * @port: switch downstream port number
+ */
+DEFINE_CXLMI_TUNNEL_SWITCH(name, port)
+
+/**
+ * Tunneling Commands to an LD in an MLD through a CXL Switch.
+ *
+ * @name: tunnel variable name
+ * @port: switch downstream port number (outter tunnel)
+ * @ld: Logical Device (LD) id within an MLD (inner tunnel)
+ */
+DEFINE_CXLMI_TUNNEL_SWITCH_MLD(name, port, ld)
+   ```
 
 # MLD Components (54h)
 

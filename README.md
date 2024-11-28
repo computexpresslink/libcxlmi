@@ -93,7 +93,30 @@ corresponding endpoint and respective payload information, must indicate the
 way the command will be issued: either directly (such as the case of a SLD) or
 through tunneling (such as the CXL-spec images below). For the library, this
 is done by passing a `struct cxlmi_tunnel_info` armed with the necessary
-information - otherwise, direct calls can simply pass NULL.
+information - otherwise, direct calls can simply pass NULL. The possible tunnel
+targets can be armed with the respective helper: `DEFINE_CXLMI_TUNNEL_SWITCH()`,
+which needs the port number to be passed, `DEFINE_CXLMI_TUNNEL_MLD()` which needs
+the LD id and `DEFINE_CXLMI_TUNNEL_SWITCH_MLD()`, which needs both for the
+respective inner and outter tunnels as arguments.
+
+1. Tunneling Commands to an MLD through a CXL Switch.
+
+<img src="http://stgolabs.net/tunnel0.png" width="650" height="260">
+
+   ```C
+   struct cxlmi_cmd_fmapi_set_ld_allocations_req *alloc_req;
+   struct cxlmi_cmd_fmapi_set_ld_allocations_rsp *alloc_rsp;
+   DEFINE_CXLMI_TUNNEL_SWITCH(ti, 1);
+
+   /* prepare payload buffers... */
+
+   rc = cxlmi_cmd_fmapi_set_ld_allocations(ep, &ti, alloc_req, alloc_rsp);
+   if (rc) {
+	   /* handle error */
+   }
+   ```
+
+2. Tunneling Commands to an LD in an MLD.
 
 When sent to an MLD, the provided command is tunneled by the FM-owned LD to
 the specified LD.
@@ -102,29 +125,24 @@ the specified LD.
 
    ```C
    struct cxlmi_cmd_memdev_set_lsa *lsa = arm_lsa(offset, data);
-   struct cxlmi_tunnel_info ti = {
-	  .level = 1,
-	  .ld = 1,
-   };
+   DEFINE_CXLMI_TUNNEL_MLD(ti, 1);
 
    rc = cxlmi_cmd_memdev_set_lsa(ep, &ti, lsa);
    if (rc) {
 	   /* handle error */
    }
    ```
+
+3. Tunneling Commands to an LD in an MLD through a CXL Switch.
 
 An additional layer of tunneling is needed for commands issued on LDs in an MLD
 that is accessible through an MLD port of a CXL Switch.
 
-<img src="http://stgolabs.net/tunnel2.png" width="850 " height="290">
+<img src="http://stgolabs.net/tunnel2.png" width="850 " height="260">
 
    ```C
    struct cxlmi_cmd_memdev_set_lsa *lsa = arm_lsa(offset, data);
-   struct cxlmi_tunnel_info ti = {
-	  .level = 2,
-	  .port = 3, /* outer tunnel */
-	  .ld = 1, /* inner tunnel */
-   };
+   DEFINE_CXLMI_TUNNEL_SWITCH_MLD(ti, 3, 1);
 
    rc = cxlmi_cmd_memdev_set_lsa(ep, &ti, lsa);
    if (rc) {
@@ -132,8 +150,8 @@ that is accessible through an MLD port of a CXL Switch.
    }
    ```
 
-Note that a third level tunneling commands to the LD Pool CCI in a Multi-Headed
-Device (MHD) is unsupported (CXL.io).
+Note that tunneling commands to the LD Pool CCI in a Multi-Headed Device (MHD)
+is currently unsupported (CXL.io).
 
 Commands with simple payload input/output can use  stack-allocated variables,
 while more complex ones require the user to already provide the respective payload
