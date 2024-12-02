@@ -776,4 +776,29 @@ struct cxlmi_cmd_fmapi_set_dc_region_config {
 	uint8_t rsvd2[3];
 }__attribute__((packed));
 
+/* CXL r3.2 Section 7.6.7.6.4 Get DC Region Extent Lists (Opcode 5603h) */
+struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req {
+	uint16_t host_id;
+	uint8_t rsvd[2];
+	uint32_t extent_count;
+	uint32_t start_ext_index;
+}__attribute__((packed));
+
+struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp {
+	uint16_t host_id;
+	uint8_t rsvd1[2];
+	uint32_t start_ext_index;
+	uint32_t extents_returned;
+	uint32_t total_extents;
+	uint32_t list_generation_num;
+	uint8_t rsvd2[4];
+	struct {
+	       uint64_t start_dpa;
+	       uint64_t len;
+	       uint8_t tag[0x10];
+	       uint16_t shared_seq;
+	       uint8_t rsvd[6];
+       } __attribute__((packed)) extents[];
+}__attribute__((packed));
+
 #endif

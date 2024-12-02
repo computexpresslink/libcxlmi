@@ -2674,6 +2674,56 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep,
 	return rc;
 }
 
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *in,
+				    struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *req_pl;
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	size_t req_sz, rsp_sz, min_rsp_sz;
+	int i, rc;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 12);
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), DCD_MANAGEMENT, GET_DC_REGION_EXTENT_LIST);
+	req_pl = (struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *)req->payload;
+	req_pl->host_id = cpu_to_le16(in->host_id);
+	req_pl->extent_count = cpu_to_le32(in->extent_count);
+	req_pl->start_ext_index = cpu_to_le32(in->start_ext_index);
+
+	min_rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) + req_pl->extent_count * sizeof(rsp_pl->extents[0]);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, min_rsp_sz);
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *) rsp->payload;
+	ret->host_id = le16_to_cpu(rsp_pl->host_id);
+	ret->start_ext_index = le32_to_cpu(rsp_pl->start_ext_index);
+	ret->extents_returned = le32_to_cpu(rsp_pl->extents_returned);
+	ret->total_extents = le32_to_cpu(rsp_pl->total_extents);
+	ret->list_generation_num = le32_to_cpu(rsp_pl->list_generation_num);
+
+	for (i = 0; i < ret->extents_returned; i++) {
+		ret->extents[i].start_dpa = le64_to_cpu(rsp_pl->extents[i].start_dpa);
+		ret->extents[i].len = le64_to_cpu(rsp_pl->extents[i].len);
+		memcpy(ret->extents[i].tag, rsp_pl->extents[i].tag, 0x10);
+		ret->extents[i].shared_seq = le16_to_cpu(rsp_pl->extents[i].shared_seq);
+	}
+
+	return rc;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_config(struct cxlmi_endpoint *ep,
 		struct cxlmi_tunnel_info *ti,
 		struct cxlmi_cmd_memdev_get_dc_config_req *in,

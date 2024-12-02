@@ -645,6 +645,10 @@ int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_set_dc_region_config *in);
+int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *in,
+			struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *ret);
 
 
 /*

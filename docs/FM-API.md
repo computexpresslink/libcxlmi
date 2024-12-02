@@ -27,6 +27,7 @@ command set, as per the latest specification.
 	* [Get DCD Info (5600h)](#get-dcd-info-5600h)
 	* [Get Host DC Region Config (5601h)](#get-host-dc-region-config-5601h)
 	* [Set DC Region Config (5602h)](#set-host-dc-region-config-5602h)
+	* [Get DC Region Extent List (5603h)](#get-dc-region-extent-lists-5603h)
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 <!-- Added by: dave, at: Mon Aug 19 01:13:48 PM PDT 2024 -->
 
@@ -610,4 +611,44 @@ Command name:
 int cxlmi_cmd_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_set_dc_region_config *in);
+   ```
+
+## Get DC Region Extent Lists (5603h)
+Input Payload:
+```C
+struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req {
+	uint16_t host_id;
+	uint8_t rsvd[2];
+	uint32_t extent_count;
+	uint32_t start_ext_index;
+};
+```
+Return Payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp {
+	uint16_t host_id;
+	uint8_t rsvd1[2];
+	uint32_t start_ext_index;
+	uint32_t extents_returned;
+	uint32_t total_extents;
+	uint32_t list_generation_num;
+	uint8_t rsvd2[4];
+	struct {
+	       uint64_t start_dpa;
+	       uint64_t len;
+	       uint8_t tag[0x10];
+	       uint16_t shared_seq;
+	       uint8_t rsvd[0x6];
+       } extents[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *in,
+			struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *ret);
    ```
