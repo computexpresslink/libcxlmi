@@ -28,6 +28,7 @@ command set, as per the latest specification.
 	* [Get Host DC Region Config (5601h)](#get-host-dc-region-config-5601h)
 	* [Set DC Region Config (5602h)](#set-host-dc-region-config-5602h)
 	* [Get DC Region Extent List (5603h)](#get-dc-region-extent-lists-5603h)
+	* [Initiate DC Add (5604h)](#initiate-dc-add-5604h)
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 <!-- Added by: dave, at: Mon Aug 19 01:13:48 PM PDT 2024 -->
 
@@ -651,4 +652,32 @@ int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *in,
 			struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *ret);
+   ```
+
+## Initiate DC Add (5604h)
+Input Payload:
+```C
+struct cxlmi_cmd_fmapi_initiate_dc_add_req {
+	uint16_t host_id;
+	uint8_t selection_policy;
+	uint8_t region_num;
+	uint64_t length;
+	uint8_t tag[0x10];
+	uint32_t ext_count;
+	struct {
+	       uint64_t start_dpa;
+	       uint64_t len;
+	       uint8_t tag[0x10];
+	       uint16_t shared_seq;
+	       uint8_t rsvd[0x6];
+       } extents[];
+};
+```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_initiate_dc_add(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_initiate_dc_add_req *in);
    ```

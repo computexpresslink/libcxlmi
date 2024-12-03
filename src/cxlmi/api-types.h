@@ -801,4 +801,21 @@ struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp {
        } __attribute__((packed)) extents[];
 }__attribute__((packed));
 
+/* CXL r3.1 Section 7.6.7.6.5 Initiate Dynamic Capacity Add (Opcode 5604h) */
+struct cxlmi_cmd_fmapi_initiate_dc_add_req {
+	uint16_t host_id;
+	uint8_t selection_policy;
+	uint8_t region_num;
+	uint64_t length;
+	uint8_t tag[0x10];
+	uint32_t ext_count;
+	struct {
+	       uint64_t start_dpa;
+	       uint64_t len;
+	       uint8_t tag[0x10];
+	       uint16_t shared_seq;
+	       uint8_t rsvd[6];
+       } __attribute__((packed)) extents[];
+}__attribute__((packed));
+
 #endif
