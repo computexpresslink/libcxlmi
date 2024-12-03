@@ -2857,6 +2857,55 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_dc_remove_reference(struct cxlmi_endpoint *ep,
 	return send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
 }
 
+CXLMI_EXPORT int cxlmi_cmd_fmapi_dc_list_tags(struct cxlmi_endpoint *ep,
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_fmapi_dc_list_tags_req *in,
+				struct cxlmi_cmd_fmapi_dc_list_tags_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_dc_list_tags_req *req_pl;
+	struct cxlmi_cmd_fmapi_dc_list_tags_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	size_t req_sz, rsp_sz, min_rsp_sz;
+	int i, rc, num_tag_infos;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x08);
+
+	req_sz = sizeof(*req) + sizeof(*req_pl);
+	req = calloc(1, req_sz);
+	if(!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), DCD_MANAGEMENT, DC_LIST_TAGS);
+	req_pl = (struct cxlmi_cmd_fmapi_dc_list_tags_req *)req->payload;
+	req_pl->start_idx = cpu_to_le32(in->start_idx);
+	req_pl->tags_count = cpu_to_le32(in->tags_count);
+
+	num_tag_infos = req_pl->tags_count;
+	min_rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp_sz = min_rsp_sz + num_tag_infos * sizeof(rsp_pl->tags_list[0]);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, min_rsp_sz);
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_dc_list_tags_rsp *)rsp->payload;
+	ret->generation_num = le32_to_cpu(rsp_pl->generation_num);
+	ret->total_num_tags = le32_to_cpu(rsp_pl->total_num_tags);
+	ret->num_tags_returned = le32_to_cpu(rsp_pl->num_tags_returned);
+	ret->validity_bitmap = rsp_pl->validity_bitmap;
+
+	for (i = 0; i < ret->num_tags_returned; i++) {
+		memcpy(&ret->tags_list[i].tag, &rsp_pl->tags_list[i].tag, 0x10);
+		ret->tags_list[i].flags = rsp_pl->tags_list[i].flags;
+		memcpy(&ret->tags_list[i].ref_bitmap, &rsp_pl->tags_list[i].ref_bitmap, 0x20);
+		memcpy(&ret->tags_list[i].pending_ref_bitmap,
+			&rsp_pl->tags_list[i].pending_ref_bitmap, 0x20);
+	}
+
+	return rc;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_config(struct cxlmi_endpoint *ep,
 		struct cxlmi_tunnel_info *ti,
 		struct cxlmi_cmd_memdev_get_dc_config_req *in,

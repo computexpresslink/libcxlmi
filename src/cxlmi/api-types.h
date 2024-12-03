@@ -845,4 +845,25 @@ struct cxlmi_cmd_fmapi_dc_remove_ref {
 	uint8_t tag[0x10];
 }__attribute__((packed));
 
+/* CXL r3.2 Section 7.6.7.6.9 Dynamic Capacity List Tags (Opcode 5608h) */
+struct cxlmi_cmd_fmapi_dc_list_tags_req {
+	uint32_t start_idx;
+	uint32_t tags_count;
+}__attribute__((packed));
+
+struct cxlmi_cmd_fmapi_dc_list_tags_rsp {
+	uint32_t generation_num;
+	uint32_t total_num_tags;
+	uint32_t num_tags_returned;
+	uint8_t validity_bitmap;
+	uint8_t rsvd[3];
+	struct {
+		uint8_t tag[0x10];
+		uint8_t flags;
+		uint8_t rsvd[3];
+		uint8_t ref_bitmap[0x20];
+		uint8_t pending_ref_bitmap[0x20];
+	} __attribute__((packed)) tags_list[];
+}__attribute__((packed));
+
 #endif

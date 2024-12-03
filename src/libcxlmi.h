@@ -661,6 +661,10 @@ int cxlmi_cmd_fmapi_dc_add_reference(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_fmapi_dc_remove_reference(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_dc_remove_ref *in);
+int cxlmi_cmd_fmapi_dc_list_tags(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_dc_list_tags_req *in,
+			struct cxlmi_cmd_fmapi_dc_list_tags_rsp *ret);
 
 
 /*
