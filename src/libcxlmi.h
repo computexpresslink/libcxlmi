@@ -652,6 +652,9 @@ int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_fmapi_initiate_dc_add(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_initiate_dc_add_req *in);
+int cxlmi_cmd_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_initiate_dc_release_req *in);
 
 
 /*

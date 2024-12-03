@@ -818,4 +818,21 @@ struct cxlmi_cmd_fmapi_initiate_dc_add_req {
        } __attribute__((packed)) extents[];
 }__attribute__((packed));
 
+/* CXL r3.2 Section 7.6.7.6.6 Initiate Dynamic Capacity Release (Opcode 5605h) */
+struct cxlmi_cmd_fmapi_initiate_dc_release_req {
+	uint16_t host_id;
+	uint8_t flags;
+	uint8_t rsvd;
+	uint64_t length;
+	uint8_t tag[0x10];
+	uint32_t ext_count;
+	struct {
+	       uint64_t start_dpa;
+	       uint64_t len;
+	       uint8_t tag[0x10];
+	       uint16_t shared_seq;
+	       uint8_t rsvd[6];
+       } __attribute__((packed)) extents[];
+}__attribute__((packed));
+
 #endif
