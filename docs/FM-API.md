@@ -30,6 +30,7 @@ command set, as per the latest specification.
 	* [Get DC Region Extent List (5603h)](#get-dc-region-extent-lists-5603h)
 	* [Initiate DC Add (5604h)](#initiate-dc-add-5604h)
 	* [Initiate DC Release (5605h)](#initiate-dc-release-5605h)
+	* [DC Add Reference (5606h)](#dc-add-reference-5606h)
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 <!-- Added by: dave, at: Mon Aug 19 01:13:48 PM PDT 2024 -->
 
@@ -709,5 +710,21 @@ Command name:
 int cxlmi_cmd_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_initiate_dc_release_req *in);
+   ```
+
+## DC Add Reference (5606h)
+Input Payload:
+```C
+struct cxlmi_cmd_fmapi_dc_add_ref_req {
+	uint8_t tag[0x10];
+};
+```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_dc_add_reference(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_dc_add_ref_req *in);
    ```
 

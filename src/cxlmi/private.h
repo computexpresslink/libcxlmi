@@ -280,6 +280,7 @@ enum {
 	#define GET_DC_REGION_EXTENT_LIST   0x3
 	#define INITIATE_DC_ADD             0x4
 	#define INITIATE_DC_RELEASE         0x5
+	#define DC_ADD_REFERENCE            0x6
 };
 
 struct cxlmi_ctx {

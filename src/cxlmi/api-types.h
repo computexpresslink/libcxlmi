@@ -835,4 +835,9 @@ struct cxlmi_cmd_fmapi_initiate_dc_release_req {
        } __attribute__((packed)) extents[];
 }__attribute__((packed));
 
+/* CXL r3.2 Section 7.6.7.6.7 Dynamic Capacity Add Reference (Opcode 5606h) */
+struct cxlmi_cmd_fmapi_dc_add_ref {
+	uint8_t tag[0x10];
+}__attribute__((packed));
+
 #endif
