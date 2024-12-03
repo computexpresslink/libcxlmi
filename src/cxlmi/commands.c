@@ -2829,6 +2829,34 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_dc_add_reference(struct cxlmi_endpoint *ep,
 	return send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
 }
 
+CXLMI_EXPORT int cxlmi_cmd_fmapi_dc_remove_reference(struct cxlmi_endpoint *ep,
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_fmapi_dc_remove_ref *in)
+{
+	struct cxlmi_cmd_fmapi_dc_remove_ref *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	size_t req_sz, rsp_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x10);
+
+	req_sz = sizeof(*req) + sizeof(*req_pl);
+	req = calloc(1, req_sz);
+	if(!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), DCD_MANAGEMENT, DC_REMOVE_REFERENCE);
+	req_pl = (struct cxlmi_cmd_fmapi_dc_remove_ref *)req->payload;
+	memcpy(req_pl->tag, in->tag, 0x10);
+
+	rsp_sz = sizeof(*rsp);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	return send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+}
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_config(struct cxlmi_endpoint *ep,
 		struct cxlmi_tunnel_info *ti,
 		struct cxlmi_cmd_memdev_get_dc_config_req *in,

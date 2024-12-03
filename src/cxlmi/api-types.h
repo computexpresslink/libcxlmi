@@ -840,4 +840,9 @@ struct cxlmi_cmd_fmapi_dc_add_ref {
 	uint8_t tag[0x10];
 }__attribute__((packed));
 
+/* CXL r3.2 Section 7.6.7.6.8 Dynamic Capacity Remove Reference (Opcode 5607h) */
+struct cxlmi_cmd_fmapi_dc_remove_ref {
+	uint8_t tag[0x10];
+}__attribute__((packed));
+
 #endif
