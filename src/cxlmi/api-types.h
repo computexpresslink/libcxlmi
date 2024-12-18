@@ -739,4 +739,31 @@ struct cxlmi_cmd_fmapi_get_dcd_info {
 	uint64_t region_7_supported_blk_sz_mask;
 } __attribute__((packed));
 
+/* CXL r3.2 7.6.7.6.2 Get Host DC Region Configuration (Opcode 5601h) */
+/* Note: The region configs structure array is fixed to hold 8 regions */
+struct cxlmi_cmd_fmapi_get_host_dc_region_config_req {
+	uint16_t host_id;
+	uint8_t region_cnt;
+	uint8_t start_region_id;
+}__attribute__((packed));
+
+struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp {
+	uint16_t host_id;
+	uint8_t num_regions;
+	uint8_t regions_returned;
+	struct {
+		uint64_t base;
+		uint64_t decode_len;
+		uint64_t region_len;
+		uint64_t block_size;
+		uint8_t flags;
+		uint8_t rsvd[3];
+		uint8_t sanitize_on_release;
+		uint8_t rsvd2[3];
+	} __attribute__((packed)) region_configs[8];
+	uint32_t num_extents_supported;
+	uint32_t num_extents_available;
+	uint32_t num_tags_supported;
+	uint32_t num_tags_available;
+}__attribute__((packed));
 #endif

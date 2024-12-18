@@ -2581,6 +2581,70 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dcd_info(struct cxlmi_endpoint *ep,
 	return rc;
 }
 
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_fmapi_get_host_dc_region_config_req *in,
+				    struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_get_host_dc_region_config_req *req_pl;
+	struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz, rsp_sz_min;
+	int i, rc = -1;
+	void *p;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 340);
+
+	req_sz = sizeof(*req) + sizeof(*req_pl);
+
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), DCD_MANAGEMENT, GET_HOST_DC_REGION_CONFIG);
+	req_pl = (struct cxlmi_cmd_fmapi_get_host_dc_region_config_req *)req->payload;
+	req_pl->host_id = cpu_to_le16(in->host_id);
+	req_pl->region_cnt = in->region_cnt;
+	req_pl->start_region_id = in->start_region_id;
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp_sz_min = rsp_sz - sizeof(rsp_pl->region_configs[0]) * 8;
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz_min);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp *)rsp->payload;
+	memset(ret, 0, sizeof(*ret));
+
+	ret->host_id = le16_to_cpu(rsp_pl->host_id);
+	ret->num_regions = rsp_pl->num_regions;
+	ret->regions_returned = rsp_pl->regions_returned;
+	for (i = 0; i < ret->regions_returned; i++) {
+		ret->region_configs[i].base = le64_to_cpu(rsp_pl->region_configs[i].base);
+		ret->region_configs[i].decode_len =
+			le64_to_cpu(rsp_pl->region_configs[i].decode_len) * CXL_CAPACITY_MULTIPLIER;
+		ret->region_configs[i].region_len = le64_to_cpu(rsp_pl->region_configs[i].region_len);
+		ret->region_configs[i].block_size = le64_to_cpu(rsp_pl->region_configs[i].block_size);
+		ret->region_configs[i].flags = rsp_pl->region_configs[i].flags;
+		ret->region_configs[i].sanitize_on_release = rsp_pl->region_configs[i].sanitize_on_release;
+	}
+	p = (void *)&rsp_pl->region_configs[i];
+	ret->num_extents_supported = le32_to_cpu(*(uint32_t *)p);
+	p += sizeof(uint32_t);
+	ret->num_extents_available = le32_to_cpu(*(uint32_t *)p);
+	p += sizeof(uint32_t);
+	ret->num_tags_supported = le32_to_cpu(*(uint32_t *)p);
+	p += sizeof(uint32_t);
+	ret->num_tags_available = le32_to_cpu(*(uint32_t *)p);
+
+	return rc;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_config(struct cxlmi_endpoint *ep,
 		struct cxlmi_tunnel_info *ti,
 		struct cxlmi_cmd_memdev_get_dc_config_req *in,

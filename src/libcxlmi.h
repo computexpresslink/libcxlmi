@@ -638,6 +638,10 @@ int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_fmapi_get_dcd_info(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_dcd_info *ret);
+int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_host_dc_region_config_req *in,
+			struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp *ret);
 
 
 /*
