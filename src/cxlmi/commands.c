@@ -2002,6 +2002,52 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint 
 	return rc;
 }
 
+CXLMI_EXPORT int cxlmi_cmd_fmapi_bind_vppb(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_fmapi_bind_vppb *in)
+{
+
+	struct cxlmi_cmd_fmapi_bind_vppb req_pl;
+	struct cxlmi_cci_msg rsp;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	ssize_t req_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 5);
+
+	req_sz = sizeof(req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	memcpy(&req_pl, in, sizeof(req_pl));
+	arm_cci_request(ep, req, sizeof(req_pl), VIRTUAL_SWITCH, BIND_VPPB);
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_unbind_vppb(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_fmapi_unbind_vppb *in)
+{
+
+	struct cxlmi_cmd_fmapi_unbind_vppb req_pl;
+	struct cxlmi_cci_msg rsp;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	ssize_t req_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 3);
+
+	req_sz = sizeof(req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	memcpy(&req_pl, in, sizeof(req_pl));
+	arm_cci_request(ep, req, sizeof(req_pl), VIRTUAL_SWITCH, UNBIND_VPPB);
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
 CXLMI_EXPORT int cxlmi_cmd_fmapi_get_ld_info(struct cxlmi_endpoint *ep,
 					  struct cxlmi_tunnel_info *ti,
 					  struct cxlmi_cmd_fmapi_get_ld_info *ret)

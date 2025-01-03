@@ -255,6 +255,9 @@ enum {
 	#define SET_DOMAIN_VALIDATION_SV           0x5
 	#define GET_VCS_DOMAIN_VALIDATION_SV_STATE 0x6
 	#define GET_DOMAIN_VALIDATION_SV           0x7
+	VIRTUAL_SWITCH = 0x52,
+	#define BIND_VPPB     0x2
+	#define UNBIND_VPPB   0x3
     TUNNEL = 0x53,
 	#define MANAGEMENT_COMMAND     0x0
     MLD_COMPONENTS = 0x54,

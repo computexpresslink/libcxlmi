@@ -590,6 +590,22 @@ struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp {
 	uint8_t secret_value_uuid[0x10];
 } __attribute__((packed));
 
+/* CXL r3.1 Section 7.6.7.2.2: BindvPPB (Opcode 5201h) */
+struct cxlmi_cmd_fmapi_bind_vppb {
+	uint8_t vcs_id;
+	uint8_t vppb_id;
+	uint8_t port_id;
+	uint8_t rsv1;
+	uint8_t ld_id;
+} __attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.2.3: UnbindvPPB (Opcode 5202h) */
+struct cxlmi_cmd_fmapi_unbind_vppb {
+	uint8_t vcs_id;
+	uint8_t vppb_id;
+	uint8_t option;
+} __attribute__((packed));
+
 /* CXL r3.1 Section 7.6.7.4.1: Get LD Info (Opcode 5400h) */
 struct cxlmi_cmd_fmapi_get_ld_info {
 	uint64_t memory_size;
