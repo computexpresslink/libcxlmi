@@ -211,7 +211,7 @@ CXLMI_EXPORT int cxlmi_cmd_clear_event_records(struct cxlmi_endpoint *ep,
 	struct cxlmi_cmd_clear_event_records *req_pl;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	struct cxlmi_cci_msg rsp;
-	ssize_t req_sz, handles_sz = struct_size(in, handles, 0);
+	ssize_t req_sz, handles_sz = (in->nr_recs) * sizeof(*(in->handles));
 	int rc = -1;
 
 	req_sz = sizeof(*req_pl) + handles_sz + sizeof(*req);
