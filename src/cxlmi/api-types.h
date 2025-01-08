@@ -101,7 +101,9 @@ struct cxlmi_cmd_get_event_interrupt_policy {
 	uint8_t warning_settings;
 	uint8_t failure_settings;
 	uint8_t fatal_settings;
+#ifndef SUPPORT_CXL_2_0
 	uint8_t dcd_settings;
+#endif
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.2.5: Set Event Interrupt Policy (Opcode 0103h) */
@@ -110,7 +112,9 @@ struct cxlmi_cmd_set_event_interrupt_policy {
 	uint8_t warning_settings;
 	uint8_t failure_settings;
 	uint8_t fatal_settings;
+#ifndef SUPPORT_CXL_2_0
 	uint8_t dcd_settings;
+#endif
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.2.6: Get MCTP Event Interrupt Policy (Opcode 0104h) */
@@ -245,7 +249,9 @@ struct cxlmi_cmd_memdev_identify {
 	uint16_t inject_poison_limit;
 	uint8_t poison_caps;
 	uint8_t qos_telemetry_caps;
+#ifndef SUPPORT_CXL_2_0
 	uint16_t dc_event_log_size;
+#endif
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.2.1: Get Partition Info (Opcode 4100h) */

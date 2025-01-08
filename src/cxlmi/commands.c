@@ -242,7 +242,11 @@ cxlmi_cmd_get_event_interrupt_policy(struct cxlmi_endpoint *ep,
 	ssize_t rsp_sz;
 	int rc;
 
+#ifndef SUPPORT_CXL_2_0
 	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 5);
+#else
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 4);
+#endif
 
 	arm_cci_request(ep, &req, 0, EVENTS, GET_EVENT_IRQ_POL);
 
@@ -260,7 +264,9 @@ cxlmi_cmd_get_event_interrupt_policy(struct cxlmi_endpoint *ep,
 	ret->warning_settings = rsp_pl->warning_settings;
 	ret->failure_settings = rsp_pl->failure_settings;
 	ret->fatal_settings = rsp_pl->fatal_settings;
+#ifndef SUPPORT_CXL_2_0
 	ret->dcd_settings = rsp_pl->dcd_settings;
+#endif
 
 	return rc;
 }
@@ -276,7 +282,11 @@ cxlmi_cmd_set_event_interrupt_policy(struct cxlmi_endpoint *ep,
 	size_t req_sz;
 	int rc = 0;
 
+#ifndef SUPPORT_CXL_2_0
 	CXLMI_BUILD_BUG_ON(sizeof(*in) != 5);
+#else
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 4);
+#endif
 
 	req_sz = sizeof(*req) + sizeof(*in);
 	req = calloc(1, req_sz);
@@ -290,7 +300,9 @@ cxlmi_cmd_set_event_interrupt_policy(struct cxlmi_endpoint *ep,
 	req_pl->warning_settings = in->warning_settings;
 	req_pl->failure_settings = in->failure_settings;
 	req_pl->fatal_settings = in->fatal_settings;
+#ifndef SUPPORT_CXL_2_0
 	req_pl->dcd_settings = in->dcd_settings;
+#endif
 
 	rc = send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
 	return rc;
@@ -798,7 +810,11 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_identify(struct cxlmi_endpoint *ep,
 	int rc;
 	ssize_t rsp_sz;
 
+#ifndef SUPPORT_CXL_2_0
 	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 0x45);
+#else
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 0x43);
+#endif
 
 	arm_cci_request(ep, &req, 0, IDENTIFY, MEMORY_DEVICE);
 
@@ -832,7 +848,9 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_identify(struct cxlmi_endpoint *ep,
 	ret->inject_poison_limit = le16_to_cpu(rsp_pl->inject_poison_limit);
 	ret->poison_caps = rsp_pl->poison_caps;
 	ret->qos_telemetry_caps = rsp_pl->qos_telemetry_caps;
+#ifndef SUPPORT_CXL_2_0
 	ret->dc_event_log_size = le16_to_cpu(rsp_pl->dc_event_log_size);
+#endif
 
 	return rc;
 }
