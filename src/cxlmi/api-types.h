@@ -596,7 +596,7 @@ struct cxlmi_cmd_fmapi_bind_vppb {
 	uint8_t vppb_id;
 	uint8_t port_id;
 	uint8_t rsv1;
-	uint8_t ld_id;
+	uint16_t ld_id;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.2.3: UnbindvPPB (Opcode 5202h) */

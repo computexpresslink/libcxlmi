@@ -2007,20 +2007,25 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_bind_vppb(struct cxlmi_endpoint *ep,
 			    struct cxlmi_cmd_fmapi_bind_vppb *in)
 {
 
-	struct cxlmi_cmd_fmapi_bind_vppb req_pl;
+	struct cxlmi_cmd_fmapi_bind_vppb *req_pl;
 	struct cxlmi_cci_msg rsp;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	ssize_t req_sz;
 
-	CXLMI_BUILD_BUG_ON(sizeof(*in) != 5);
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 6);
 
-	req_sz = sizeof(req_pl) + sizeof(*req);
+	req_sz = sizeof(*req_pl) + sizeof(*req);
 	req = calloc(1, req_sz);
 	if (!req)
 		return -1;
 
-	memcpy(&req_pl, in, sizeof(req_pl));
 	arm_cci_request(ep, req, sizeof(req_pl), VIRTUAL_SWITCH, BIND_VPPB);
+
+	req_pl = (struct cxlmi_cmd_fmapi_bind_vppb *)req->payload;
+	req_pl->vcs_id = in->vcs_id;
+	req_pl->vppb_id = in->vppb_id;
+	req_pl->port_id = in->port_id;
+	req_pl->ld_id = in->ld_id;
 
 	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
 }
@@ -2030,20 +2035,24 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_unbind_vppb(struct cxlmi_endpoint *ep,
 			    struct cxlmi_cmd_fmapi_unbind_vppb *in)
 {
 
-	struct cxlmi_cmd_fmapi_unbind_vppb req_pl;
+	struct cxlmi_cmd_fmapi_unbind_vppb *req_pl;
 	struct cxlmi_cci_msg rsp;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	ssize_t req_sz;
 
 	CXLMI_BUILD_BUG_ON(sizeof(*in) != 3);
 
-	req_sz = sizeof(req_pl) + sizeof(*req);
+	req_sz = sizeof(*req_pl) + sizeof(*req);
 	req = calloc(1, req_sz);
 	if (!req)
 		return -1;
 
-	memcpy(&req_pl, in, sizeof(req_pl));
 	arm_cci_request(ep, req, sizeof(req_pl), VIRTUAL_SWITCH, UNBIND_VPPB);
+
+	req_pl = (struct cxlmi_cmd_fmapi_unbind_vppb *)req->payload;
+	req_pl->vppb_id = in->vcs_id;
+	req_pl->vcs_id = in->vppb_id;
+	req_pl->option = in->option;
 
 	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
 }
