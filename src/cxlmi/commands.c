@@ -2043,7 +2043,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_bind_vppb(struct cxlmi_endpoint *ep,
 	req_pl->vcs_id = in->vcs_id;
 	req_pl->vppb_id = in->vppb_id;
 	req_pl->port_id = in->port_id;
-	req_pl->ld_id = in->ld_id;
+	req_pl->ld_id = cpu_to_le16(in->ld_id);
 
 	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
 }
