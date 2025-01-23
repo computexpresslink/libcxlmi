@@ -23,7 +23,16 @@ command set, as per the latest specification.
    * [Set QoS Allocated BW (5407h)](#set-qos-allocated-bw-5407h)
    * [Get QoS BW Limit (5408h)](#get-qos-bw-limit-5408h)
    * [Set QoS BW Limit (5409h)](#set-qos-bw-limit-5409h)
-
+* [FMAPI DCD Management (56h)](#fmapi-dcd-management-56h)
+	* [Get DCD Info (5600h)](#get-dcd-info-5600h)
+	* [Get Host DC Region Config (5601h)](#get-host-dc-region-config-5601h)
+	* [Set DC Region Config (5602h)](#set-host-dc-region-config-5602h)
+	* [Get DC Region Extent List (5603h)](#get-dc-region-extent-lists-5603h)
+	* [Initiate DC Add (5604h)](#initiate-dc-add-5604h)
+	* [Initiate DC Release (5605h)](#initiate-dc-release-5605h)
+	* [DC Add Reference (5606h)](#dc-add-reference-5606h)
+	* [DC Remove Reference (5607h)](#dc-remove-reference-5607h)
+	* [DC List Tags (5608h)](#dc-list-tags-5608h)
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 <!-- Added by: dave, at: Mon Aug 19 01:13:48 PM PDT 2024 -->
 
@@ -513,4 +522,264 @@ int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
+   ```
+
+# FMAPI DCD Management (56h)
+
+## Get DCD Info (5600h)
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_dcd_info {
+	uint8_t num_hosts;
+	uint8_t num_supported_dc_regions;
+	uint8_t rsvd1[0x2];
+	uint16_t capacity_selection_policies;
+	uint8_t rsvd2[0x2];
+	uint16_t capacity_removal_policies;
+	uint8_t sanitize_on_release_config_mask;
+	uint8_t rsvd3;
+	uint64_t total_dynamic_capacity;
+	uint64_t supported_block_sizes[8];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_dcd_info(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_dcd_info *ret);
+   ```
+
+## Get Host DC Region Config (5601h)
+Note that the returned number of DC region configurations
+is limited by the library to 8. This is because of the
+change of payload size in newer versions of the specification.
+
+Input Payload:
+```C
+struct cxlmi_cmd_fmapi_get_host_dc_reg_config_req {
+	uint16_t host_id;
+	uint8_t region_cnt;
+	uint8_t start_region_id;
+};
+```
+Return Payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_host_dc_reg_config_rsp {
+	uint16_t host_id;
+	uint8_t num_regions;
+	uint8_t regions_returned;
+	struct {
+		uint64_t base;
+		uint64_t decode_len;
+		uint64_t region_len;
+		uint64_t block_size;
+		uint8_t flags;
+		uint8_t rsvd[3];
+		uint8_t sanitize_on_release;
+		uint8_t rsvd2[3];
+	} region_configs[8];
+	uint32_t num_extents_supported;
+	uint32_t num_extents_available;
+	uint32_t num_tags_supported;
+	uint32_t num_tags_available;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_host_dc_reg_config_req *in,
+			struct cxlmi_cmd_fmapi_get_host_dc_reg_config_rsp *ret);
+   ```
+
+## Set Host DC Region Config (5602h)
+Input Payload:
+```C
+struct cxlmi_cmd_fmapi_set_dc_region_config {
+	uint8_t region_id;
+	uint8_t rsvd[3];
+	uint64_t block_sz;
+	uint8_t sanitize_on_release;
+	uint8_t rsvd2[3];
+};
+```
+
+Command name:
+   ```C
+int cxlmi_cmd_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_set_dc_region_config *in);
+   ```
+
+## Get DC Region Extent Lists (5603h)
+Input Payload:
+```C
+struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req {
+	uint16_t host_id;
+	uint8_t rsvd[2];
+	uint32_t extent_count;
+	uint32_t start_ext_index;
+};
+```
+Return Payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp {
+	uint16_t host_id;
+	uint8_t rsvd1[2];
+	uint32_t start_ext_index;
+	uint32_t extents_returned;
+	uint32_t total_extents;
+	uint32_t list_generation_num;
+	uint8_t rsvd2[4];
+	struct {
+	       uint64_t start_dpa;
+	       uint64_t len;
+	       uint8_t tag[0x10];
+	       uint16_t shared_seq;
+	       uint8_t rsvd[0x6];
+       } extents[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *in,
+			struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *ret);
+   ```
+
+## Initiate DC Add (5604h)
+Input Payload:
+```C
+struct cxlmi_cmd_fmapi_initiate_dc_add_req {
+	uint16_t host_id;
+	uint8_t selection_policy;
+	uint8_t region_num;
+	uint64_t length;
+	uint8_t tag[0x10];
+	uint32_t ext_count;
+	struct {
+	       uint64_t start_dpa;
+	       uint64_t len;
+	       uint8_t tag[0x10];
+	       uint16_t shared_seq;
+	       uint8_t rsvd[0x6];
+       } extents[];
+};
+```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_initiate_dc_add(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_initiate_dc_add_req *in);
+   ```
+
+## Initiate DC Release (5605h)
+Input Payload:
+```C
+struct cxlmi_cmd_fmapi_initiate_dc_release_req {
+	uint16_t host_id;
+	uint8_t flags;
+	uint8_t rsvd;
+	uint64_t length;
+	uint8_t tag[0x10];
+	uint32_t ext_count;
+	struct {
+	       uint64_t start_dpa;
+	       uint64_t len;
+	       uint8_t tag[0x10];
+	       uint16_t shared_seq;
+	       uint8_t rsvd[0x6];
+       } extents[];
+};
+```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_initiate_dc_release_req *in);
+   ```
+
+## DC Add Reference (5606h)
+Input Payload:
+```C
+struct cxlmi_cmd_fmapi_dc_add_ref_req {
+	uint8_t tag[0x10];
+};
+```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_dc_add_reference(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_dc_add_ref_req *in);
+   ```
+
+## DC Remove Reference (5607h)
+Input Payload:
+```C
+struct cxlmi_cmd_fmapi_dc_remove_ref_req {
+	uint8_t tag[0x10];
+};
+```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_dc_remove_reference(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_dc_remove_ref_req *in);
+   ```
+
+
+## DC List Tags (5608h)
+Input Payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_dc_list_tags_req {
+	uint32_t start_ind;
+	uint32_t max_tags;
+};
+   ```
+
+Output Payload:
+   ```C
+struct cxlmi_cmd_fmapi_dc_list_tags_rsp {
+	uint32_t generation_num;
+	uint32_t total_num_tags;
+	uint32_t num_tags_returned;
+	uint8_t validity_bitmap;
+	uint8_t rsvd[3];
+	struct {
+		uint8_t tag[0x10];
+		uint8_t flags;
+		uint8_t rsvd[3];
+		uint8_t ref_bitmap[32];
+		uint8_t pending_ref_bitmap[32];
+	} tags_list[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_dc_list_tags(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_dc_list_tags_req *in,
+			struct cxlmi_cmd_fmapi_dc_list_tags_rsp *ret);
    ```

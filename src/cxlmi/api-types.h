@@ -715,4 +715,155 @@ struct cxlmi_cmd_fmapi_set_qos_bw_limit {
 	uint8_t start_ld_id;
 	uint8_t qos_limit_fraction[];
 } __attribute__((packed));
+
+/* CXL r3.2 Section 7.6.7.6.1: Get DCD Info (Opcode 5600h) */
+struct cxlmi_cmd_fmapi_get_dcd_info {
+	uint8_t num_hosts;
+	uint8_t num_supported_dc_regions;
+	uint8_t rsvd1[0x2];
+	uint16_t capacity_selection_policies;
+	uint8_t rsvd2[0x2];
+	uint16_t capacity_removal_policies;
+	uint8_t sanitize_on_release_config_mask;
+	uint8_t rsvd3;
+	/* Multiple of 256MB */
+	uint64_t total_dynamic_capacity;
+	/* region_x_blk_sz_mask only valid if x < num_supported_dc_regions */
+	uint64_t region_0_supported_blk_sz_mask;
+	uint64_t region_1_supported_blk_sz_mask;
+	uint64_t region_2_supported_blk_sz_mask;
+	uint64_t region_3_supported_blk_sz_mask;
+	uint64_t region_4_supported_blk_sz_mask;
+	uint64_t region_5_supported_blk_sz_mask;
+	uint64_t region_6_supported_blk_sz_mask;
+	uint64_t region_7_supported_blk_sz_mask;
+} __attribute__((packed));
+
+/* CXL r3.2 7.6.7.6.2 Get Host DC Region Configuration (Opcode 5601h) */
+/* Note: The region configs structure array is fixed to hold 8 regions */
+struct cxlmi_cmd_fmapi_get_host_dc_region_config_req {
+	uint16_t host_id;
+	uint8_t region_cnt;
+	uint8_t start_region_id;
+}__attribute__((packed));
+
+struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp {
+	uint16_t host_id;
+	uint8_t num_regions;
+	uint8_t regions_returned;
+	struct {
+		uint64_t base;
+		uint64_t decode_len;
+		uint64_t region_len;
+		uint64_t block_size;
+		uint8_t flags;
+		uint8_t rsvd[3];
+		uint8_t sanitize_on_release;
+		uint8_t rsvd2[3];
+	} __attribute__((packed)) region_configs[8];
+	uint32_t num_extents_supported;
+	uint32_t num_extents_available;
+	uint32_t num_tags_supported;
+	uint32_t num_tags_available;
+}__attribute__((packed));
+
+/* CXL r3.2 Section 7.6.7.6.3 Set DC Region Configuration (Opcode 5602h) */
+struct cxlmi_cmd_fmapi_set_dc_region_config {
+	uint8_t region_id;
+	uint8_t rsvd[3];
+	uint64_t block_sz;
+	uint8_t sanitize_on_release;
+	uint8_t rsvd2[3];
+}__attribute__((packed));
+
+/* CXL r3.2 Section 7.6.7.6.4 Get DC Region Extent Lists (Opcode 5603h) */
+struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req {
+	uint16_t host_id;
+	uint8_t rsvd[2];
+	uint32_t extent_count;
+	uint32_t start_ext_index;
+}__attribute__((packed));
+
+struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp {
+	uint16_t host_id;
+	uint8_t rsvd1[2];
+	uint32_t start_ext_index;
+	uint32_t extents_returned;
+	uint32_t total_extents;
+	uint32_t list_generation_num;
+	uint8_t rsvd2[4];
+	struct {
+	       uint64_t start_dpa;
+	       uint64_t len;
+	       uint8_t tag[0x10];
+	       uint16_t shared_seq;
+	       uint8_t rsvd[6];
+       } __attribute__((packed)) extents[];
+}__attribute__((packed));
+
+/* CXL r3.1 Section 7.6.7.6.5 Initiate Dynamic Capacity Add (Opcode 5604h) */
+struct cxlmi_cmd_fmapi_initiate_dc_add_req {
+	uint16_t host_id;
+	uint8_t selection_policy;
+	uint8_t region_num;
+	uint64_t length;
+	uint8_t tag[0x10];
+	uint32_t ext_count;
+	struct {
+	       uint64_t start_dpa;
+	       uint64_t len;
+	       uint8_t tag[0x10];
+	       uint16_t shared_seq;
+	       uint8_t rsvd[6];
+       } __attribute__((packed)) extents[];
+}__attribute__((packed));
+
+/* CXL r3.2 Section 7.6.7.6.6 Initiate Dynamic Capacity Release (Opcode 5605h) */
+struct cxlmi_cmd_fmapi_initiate_dc_release_req {
+	uint16_t host_id;
+	uint8_t flags;
+	uint8_t rsvd;
+	uint64_t length;
+	uint8_t tag[0x10];
+	uint32_t ext_count;
+	struct {
+	       uint64_t start_dpa;
+	       uint64_t len;
+	       uint8_t tag[0x10];
+	       uint16_t shared_seq;
+	       uint8_t rsvd[6];
+       } __attribute__((packed)) extents[];
+}__attribute__((packed));
+
+/* CXL r3.2 Section 7.6.7.6.7 Dynamic Capacity Add Reference (Opcode 5606h) */
+struct cxlmi_cmd_fmapi_dc_add_ref {
+	uint8_t tag[0x10];
+}__attribute__((packed));
+
+/* CXL r3.2 Section 7.6.7.6.8 Dynamic Capacity Remove Reference (Opcode 5607h) */
+struct cxlmi_cmd_fmapi_dc_remove_ref {
+	uint8_t tag[0x10];
+}__attribute__((packed));
+
+/* CXL r3.2 Section 7.6.7.6.9 Dynamic Capacity List Tags (Opcode 5608h) */
+struct cxlmi_cmd_fmapi_dc_list_tags_req {
+	uint32_t start_idx;
+	uint32_t tags_count;
+}__attribute__((packed));
+
+struct cxlmi_cmd_fmapi_dc_list_tags_rsp {
+	uint32_t generation_num;
+	uint32_t total_num_tags;
+	uint32_t num_tags_returned;
+	uint8_t validity_bitmap;
+	uint8_t rsvd[3];
+	struct {
+		uint8_t tag[0x10];
+		uint8_t flags;
+		uint8_t rsvd[3];
+		uint8_t ref_bitmap[0x20];
+		uint8_t pending_ref_bitmap[0x20];
+	} __attribute__((packed)) tags_list[];
+}__attribute__((packed));
+
 #endif

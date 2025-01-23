@@ -10,6 +10,8 @@
 
 #include "private.h"
 
+#define CXL_CAPACITY_MULTIPLIER   (256 * 1024 * 1024)
+
 CXLMI_EXPORT int cxlmi_cmd_identify(struct cxlmi_endpoint *ep,
 				    struct cxlmi_tunnel_info *ti,
 				    struct cxlmi_cmd_identify *ret)
@@ -2524,7 +2526,386 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 	return rc;
 }
 
-#define CXL_CAPACITY_MULTIPLIER   (256 * 1024 * 1024)
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dcd_info(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_fmapi_get_dcd_info *ret)
+{
+	struct cxlmi_cci_msg req;
+	struct cxlmi_cmd_fmapi_get_dcd_info *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	int rc;
+	ssize_t rsp_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 84);
+
+	arm_cci_request(ep, &req, 0, DCD_MANAGEMENT, GET_DCD_INFO);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	memset(ret, 0, sizeof(*ret));
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_dcd_info *)rsp->payload;
+
+	ret->num_hosts = rsp_pl->num_hosts;
+	ret->num_supported_dc_regions = rsp_pl->num_supported_dc_regions;
+	ret->capacity_selection_policies = le16_to_cpu(rsp_pl->capacity_selection_policies);
+	ret->capacity_removal_policies = le16_to_cpu(rsp_pl->capacity_removal_policies);
+	ret->sanitize_on_release_config_mask = rsp_pl->sanitize_on_release_config_mask;
+	ret->total_dynamic_capacity =
+		le64_to_cpu(rsp_pl->total_dynamic_capacity) * CXL_CAPACITY_MULTIPLIER;
+
+	/* All masks copied here but only the first {num_supported_dc_regions} are valid */
+	ret->region_0_supported_blk_sz_mask =
+			le64_to_cpu(rsp_pl->region_0_supported_blk_sz_mask);
+	ret->region_1_supported_blk_sz_mask =
+			le64_to_cpu(rsp_pl->region_1_supported_blk_sz_mask);
+	ret->region_2_supported_blk_sz_mask =
+			le64_to_cpu(rsp_pl->region_2_supported_blk_sz_mask);
+	ret->region_3_supported_blk_sz_mask =
+			le64_to_cpu(rsp_pl->region_3_supported_blk_sz_mask);
+	ret->region_4_supported_blk_sz_mask =
+			le64_to_cpu(rsp_pl->region_4_supported_blk_sz_mask);
+	ret->region_5_supported_blk_sz_mask =
+			le64_to_cpu(rsp_pl->region_5_supported_blk_sz_mask);
+	ret->region_6_supported_blk_sz_mask =
+			le64_to_cpu(rsp_pl->region_6_supported_blk_sz_mask);
+	ret->region_7_supported_blk_sz_mask =
+			le64_to_cpu(rsp_pl->region_7_supported_blk_sz_mask);
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_fmapi_get_host_dc_region_config_req *in,
+				    struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_get_host_dc_region_config_req *req_pl;
+	struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz, rsp_sz_min;
+	int i, rc = -1;
+	void *p;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 340);
+
+	req_sz = sizeof(*req) + sizeof(*req_pl);
+
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), DCD_MANAGEMENT, GET_HOST_DC_REGION_CONFIG);
+	req_pl = (struct cxlmi_cmd_fmapi_get_host_dc_region_config_req *)req->payload;
+	req_pl->host_id = cpu_to_le16(in->host_id);
+	req_pl->region_cnt = in->region_cnt;
+	req_pl->start_region_id = in->start_region_id;
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp_sz_min = rsp_sz - sizeof(rsp_pl->region_configs[0]) * 8;
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz_min);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp *)rsp->payload;
+	memset(ret, 0, sizeof(*ret));
+
+	ret->host_id = le16_to_cpu(rsp_pl->host_id);
+	ret->num_regions = rsp_pl->num_regions;
+	ret->regions_returned = rsp_pl->regions_returned;
+	for (i = 0; i < ret->regions_returned; i++) {
+		ret->region_configs[i].base = le64_to_cpu(rsp_pl->region_configs[i].base);
+		ret->region_configs[i].decode_len =
+			le64_to_cpu(rsp_pl->region_configs[i].decode_len) * CXL_CAPACITY_MULTIPLIER;
+		ret->region_configs[i].region_len = le64_to_cpu(rsp_pl->region_configs[i].region_len);
+		ret->region_configs[i].block_size = le64_to_cpu(rsp_pl->region_configs[i].block_size);
+		ret->region_configs[i].flags = rsp_pl->region_configs[i].flags;
+		ret->region_configs[i].sanitize_on_release = rsp_pl->region_configs[i].sanitize_on_release;
+	}
+	p = (void *)&rsp_pl->region_configs[i];
+	ret->num_extents_supported = le32_to_cpu(*(uint32_t *)p);
+	p += sizeof(uint32_t);
+	ret->num_extents_available = le32_to_cpu(*(uint32_t *)p);
+	p += sizeof(uint32_t);
+	ret->num_tags_supported = le32_to_cpu(*(uint32_t *)p);
+	p += sizeof(uint32_t);
+	ret->num_tags_available = le32_to_cpu(*(uint32_t *)p);
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_fmapi_set_dc_region_config *in)
+{
+	struct cxlmi_cmd_fmapi_set_dc_region_config *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+	int rc = 0;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 16);
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), DCD_MANAGEMENT, SET_DC_REGION_CONFIG);
+
+	req_pl = (struct cxlmi_cmd_fmapi_set_dc_region_config *)req->payload;
+	req_pl->region_id = in->region_id;
+	req_pl->block_sz = cpu_to_le64(in->block_sz);
+	req_pl->sanitize_on_release = in->sanitize_on_release;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *ep,
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *in,
+				    struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *req_pl;
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	size_t req_sz, rsp_sz, min_rsp_sz;
+	int i, rc;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 12);
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), DCD_MANAGEMENT, GET_DC_REGION_EXTENT_LIST);
+	req_pl = (struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *)req->payload;
+	req_pl->host_id = cpu_to_le16(in->host_id);
+	req_pl->extent_count = cpu_to_le32(in->extent_count);
+	req_pl->start_ext_index = cpu_to_le32(in->start_ext_index);
+
+	min_rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) + req_pl->extent_count * sizeof(rsp_pl->extents[0]);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, min_rsp_sz);
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *) rsp->payload;
+	ret->host_id = le16_to_cpu(rsp_pl->host_id);
+	ret->start_ext_index = le32_to_cpu(rsp_pl->start_ext_index);
+	ret->extents_returned = le32_to_cpu(rsp_pl->extents_returned);
+	ret->total_extents = le32_to_cpu(rsp_pl->total_extents);
+	ret->list_generation_num = le32_to_cpu(rsp_pl->list_generation_num);
+
+	for (i = 0; i < ret->extents_returned; i++) {
+		ret->extents[i].start_dpa = le64_to_cpu(rsp_pl->extents[i].start_dpa);
+		ret->extents[i].len = le64_to_cpu(rsp_pl->extents[i].len);
+		memcpy(ret->extents[i].tag, rsp_pl->extents[i].tag, 0x10);
+		ret->extents[i].shared_seq = le16_to_cpu(rsp_pl->extents[i].shared_seq);
+	}
+
+	return rc;
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_initiate_dc_add(struct cxlmi_endpoint *ep,
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_fmapi_initiate_dc_add_req *in)
+{
+	struct cxlmi_cmd_fmapi_initiate_dc_add_req *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	size_t req_sz, rsp_sz;
+	int i, ext_list_sz;
+
+	ext_list_sz = in->ext_count * sizeof(*in->extents);
+	req_sz = sizeof(*req) + sizeof(*in) + ext_list_sz;
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), DCD_MANAGEMENT, INITIATE_DC_ADD);
+	req_pl = (struct cxlmi_cmd_fmapi_initiate_dc_add_req *)req->payload;
+	req_pl->host_id = cpu_to_le16(in->host_id);
+	req_pl->selection_policy = in->selection_policy;
+	req_pl->region_num = in->region_num;
+	req_pl->length = cpu_to_le64(in->length);
+	memcpy(req_pl->tag, in->tag, 0x10);
+	req_pl->ext_count = cpu_to_le32(in->ext_count);
+
+	for (i = 0; i < in->ext_count; i++) {
+		req_pl->extents[i].start_dpa = cpu_to_le64(in->extents[i].start_dpa);
+		req_pl->extents[i].len = cpu_to_le64(in->extents[i].len);
+		memcpy(req_pl->tag, in->tag, 0x10);
+		req_pl->extents[i].shared_seq = cpu_to_le16(in->extents[i].shared_seq);
+	}
+
+	rsp_sz = sizeof(*rsp);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+	return send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep,
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_fmapi_initiate_dc_release_req *in)
+{
+	struct cxlmi_cmd_fmapi_initiate_dc_release_req *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	size_t req_sz, rsp_sz;
+	int i, ext_list_sz;
+
+	ext_list_sz = in->ext_count * sizeof(*in->extents);
+	req_sz = sizeof(*req) + sizeof(*in) + ext_list_sz;
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), DCD_MANAGEMENT, INITIATE_DC_RELEASE);
+	req_pl = (struct cxlmi_cmd_fmapi_initiate_dc_release_req *)req->payload;
+	req_pl->host_id = cpu_to_le16(in->host_id);
+	req_pl->flags = in->flags;
+	req_pl->length = cpu_to_le64(in->length);
+	memcpy(req_pl->tag, in->tag, 0x10);
+	req_pl->ext_count = cpu_to_le32(in->ext_count);
+
+	for (i = 0; i < in->ext_count; i++) {
+		req_pl->extents[i].start_dpa = cpu_to_le64(in->extents[i].start_dpa);
+		req_pl->extents[i].len = cpu_to_le64(in->extents[i].len);
+		memcpy(req_pl->tag, in->tag, 0x10);
+		req_pl->extents[i].shared_seq = cpu_to_le16(in->extents[i].shared_seq);
+	}
+
+	rsp_sz = sizeof(*rsp);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+	return send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_dc_add_reference(struct cxlmi_endpoint *ep,
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_fmapi_dc_add_ref *in)
+{
+	struct cxlmi_cmd_fmapi_dc_add_ref *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	size_t req_sz, rsp_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x10);
+
+	req_sz = sizeof(*req) + sizeof(*req_pl);
+	req = calloc(1, req_sz);
+	if(!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), DCD_MANAGEMENT, DC_ADD_REFERENCE);
+	req_pl = (struct cxlmi_cmd_fmapi_dc_add_ref *)req->payload;
+	memcpy(req_pl->tag, in->tag, 0x10);
+
+	rsp_sz = sizeof(*rsp);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	return send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_dc_remove_reference(struct cxlmi_endpoint *ep,
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_fmapi_dc_remove_ref *in)
+{
+	struct cxlmi_cmd_fmapi_dc_remove_ref *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	size_t req_sz, rsp_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x10);
+
+	req_sz = sizeof(*req) + sizeof(*req_pl);
+	req = calloc(1, req_sz);
+	if(!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), DCD_MANAGEMENT, DC_REMOVE_REFERENCE);
+	req_pl = (struct cxlmi_cmd_fmapi_dc_remove_ref *)req->payload;
+	memcpy(req_pl->tag, in->tag, 0x10);
+
+	rsp_sz = sizeof(*rsp);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	return send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+}
+
+CXLMI_EXPORT int cxlmi_cmd_fmapi_dc_list_tags(struct cxlmi_endpoint *ep,
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_fmapi_dc_list_tags_req *in,
+				struct cxlmi_cmd_fmapi_dc_list_tags_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_dc_list_tags_req *req_pl;
+	struct cxlmi_cmd_fmapi_dc_list_tags_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	size_t req_sz, rsp_sz, min_rsp_sz;
+	int i, rc, num_tag_infos;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x08);
+
+	req_sz = sizeof(*req) + sizeof(*req_pl);
+	req = calloc(1, req_sz);
+	if(!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), DCD_MANAGEMENT, DC_LIST_TAGS);
+	req_pl = (struct cxlmi_cmd_fmapi_dc_list_tags_req *)req->payload;
+	req_pl->start_idx = cpu_to_le32(in->start_idx);
+	req_pl->tags_count = cpu_to_le32(in->tags_count);
+
+	num_tag_infos = req_pl->tags_count;
+	min_rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp_sz = min_rsp_sz + num_tag_infos * sizeof(rsp_pl->tags_list[0]);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, min_rsp_sz);
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_dc_list_tags_rsp *)rsp->payload;
+	ret->generation_num = le32_to_cpu(rsp_pl->generation_num);
+	ret->total_num_tags = le32_to_cpu(rsp_pl->total_num_tags);
+	ret->num_tags_returned = le32_to_cpu(rsp_pl->num_tags_returned);
+	ret->validity_bitmap = rsp_pl->validity_bitmap;
+
+	for (i = 0; i < ret->num_tags_returned; i++) {
+		memcpy(&ret->tags_list[i].tag, &rsp_pl->tags_list[i].tag, 0x10);
+		ret->tags_list[i].flags = rsp_pl->tags_list[i].flags;
+		memcpy(&ret->tags_list[i].ref_bitmap, &rsp_pl->tags_list[i].ref_bitmap, 0x20);
+		memcpy(&ret->tags_list[i].pending_ref_bitmap,
+			&rsp_pl->tags_list[i].pending_ref_bitmap, 0x20);
+	}
+
+	return rc;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_config(struct cxlmi_endpoint *ep,
 		struct cxlmi_tunnel_info *ti,
 		struct cxlmi_cmd_memdev_get_dc_config_req *in,

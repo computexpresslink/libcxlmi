@@ -635,6 +635,37 @@ int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
+int cxlmi_cmd_fmapi_get_dcd_info(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_dcd_info *ret);
+int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_host_dc_region_config_req *in,
+			struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp *ret);
+int cxlmi_cmd_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_set_dc_region_config *in);
+int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *in,
+			struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *ret);
+int cxlmi_cmd_fmapi_initiate_dc_add(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_initiate_dc_add_req *in);
+int cxlmi_cmd_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_initiate_dc_release_req *in);
+int cxlmi_cmd_fmapi_dc_add_reference(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_dc_add_ref *in);
+int cxlmi_cmd_fmapi_dc_remove_reference(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_dc_remove_ref *in);
+int cxlmi_cmd_fmapi_dc_list_tags(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_dc_list_tags_req *in,
+			struct cxlmi_cmd_fmapi_dc_list_tags_rsp *ret);
+
 
 /*
  * Vendor specific commands.

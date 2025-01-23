@@ -11,6 +11,21 @@
 
 #include <libcxlmi.h>
 
+typedef enum CxlExtentSelectionPolicy {
+    CXL_EXTENT_SELECTION_POLICY_FREE,
+    CXL_EXTENT_SELECTION_POLICY_CONTIGUOUS,
+    CXL_EXTENT_SELECTION_POLICY_PRESCRIPTIVE,
+    CXL_EXTENT_SELECTION_POLICY_ENABLE_SHARED_ACCESS,
+    CXL_EXTENT_SELECTION_POLICY__MAX,
+} CxlExtentSelectionPolicy;
+
+typedef enum CxlExtentRemovalPolicy {
+    CXL_EXTENT_REMOVAL_POLICY_TAG_BASED,
+    CXL_EXTENT_REMOVAL_POLICY_PRESCRIPTIVE,
+    CXL_EXTENT_REMOVAL_POLICY__MAX,
+} CxlExtentRemovalPolicy;
+
+
 static int show_dc_extents(struct cxlmi_endpoint *ep);
 
 static int show_memdev_info(struct cxlmi_endpoint *ep)
@@ -567,6 +582,412 @@ static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 	return 0;
 }
 
+static int test_fmapi_get_dcd_info(struct cxlmi_endpoint *ep)
+{
+	int rc;
+	struct cxlmi_cmd_fmapi_get_dcd_info *out;
+
+	out = calloc(1, sizeof(*out));
+	if (!out)
+		return -1;
+
+	rc = cxlmi_cmd_fmapi_get_dcd_info(ep, NULL, out);
+	if (rc) {
+		rc = -1;
+		goto free_out;
+	}
+
+	printf("0x5600: FMAPI Get DCD Info Response:\n");
+	printf("\t# hosts supported: %hhu\n", out->num_hosts);
+	printf("\t# dc regions available/host: %hhu\n", out->num_supported_dc_regions);
+	printf("\tcapacity_selection_policies: %hu\n", out->capacity_selection_policies);
+	printf("\tcapacity_removal_policies: %hu\n", out->capacity_removal_policies);
+	printf("\tsanitize_on_release: %hhu\n", out->sanitize_on_release_config_mask);
+	printf("\ttotal dynamic capacity: %lu\n", out->total_dynamic_capacity);
+	printf("\tregion 0 supported block sizes: %lu\n",
+		out->region_0_supported_blk_sz_mask);
+	printf("\tregion 1 supported block sizes: %lu\n",
+		out->region_1_supported_blk_sz_mask);
+
+free_out:
+	free(out);
+	return rc;
+}
+
+static int test_fmapi_get_host_dc_region_config(struct cxlmi_endpoint *ep)
+{
+	int i, rc;
+	struct cxlmi_cmd_fmapi_get_host_dc_region_config_req dc_region_config_req = {
+		.host_id = 0,
+		.region_cnt = 5,
+		.start_region_id = 0,
+	};
+	struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp *dc_region_config_rsp;
+
+	printf("0x5601: FMAPI Get DC Region Config Response:\n");
+	dc_region_config_rsp = calloc(1, sizeof(*dc_region_config_rsp));
+
+	if (!dc_region_config_rsp) {
+		return -1;
+	}
+
+	rc = cxlmi_cmd_fmapi_get_dc_reg_config(ep, NULL, &dc_region_config_req, dc_region_config_rsp);
+	if (rc) {
+		rc = -1;
+		goto free_out;
+	}
+	printf("\thost id: %hu\n", dc_region_config_rsp->host_id);
+	printf("\tnum available regions: %hhu\n", dc_region_config_rsp->num_regions);
+	printf("\tnum regions returned: %hhu\n", dc_region_config_rsp->regions_returned);
+	printf("\tnum_extents_supported: %u\n", dc_region_config_rsp->num_extents_supported);
+	printf("\tnum_extents_available: %u\n", dc_region_config_rsp->num_extents_available);
+	printf("\tnum_tags_supported: %u\n", dc_region_config_rsp->num_tags_supported);
+
+	for (i = 0; i < dc_region_config_rsp->regions_returned; i++) {
+		printf("\t\tRegion %d:\n", i);
+		printf("\t\t\tBase: %lu\n", dc_region_config_rsp->region_configs->base);
+		printf("\t\t\tBlk_sz: %lu\n", dc_region_config_rsp->region_configs->block_size);
+		printf("\t\t\tLen: %lu\n", dc_region_config_rsp->region_configs->region_len);
+	}
+
+free_out:
+	free(dc_region_config_rsp);
+	return rc;
+}
+
+static int test_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep)
+{
+	struct cxlmi_cmd_fmapi_set_dc_region_config req = {
+		.region_id = 0,
+		.block_sz = 128,
+		.sanitize_on_release = 0,
+	};
+
+	printf("0x5602: FMAPI Set DC Region Config\n");
+
+	if (cxlmi_cmd_fmapi_set_dc_region_config(ep, NULL, &req)) {
+		return -1;
+	}
+
+	printf("FMAPI Set DC Region Config Success\n");
+
+	return 0;
+
+}
+
+static int print_ext_list(struct cxlmi_endpoint *ep,
+						uint16_t host_id,
+						uint32_t ext_cnt,
+						uint32_t start_ext_ind)
+{
+	int i, rc;
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req req;
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *rsp;
+
+	req.host_id = host_id;
+	req.extent_count = ext_cnt;
+	req.start_ext_index = start_ext_ind;
+
+	rsp = calloc(1, sizeof(*rsp) + req.extent_count * sizeof(rsp->extents[0]));
+
+	if (!rsp) {
+		return -1;
+	}
+
+	rc = cxlmi_cmd_fmapi_get_dc_region_ext_list(ep, NULL, &req, rsp);
+	if (rc) {
+		rc = -1;
+		goto free_out;
+	}
+
+	printf("\tHost Id: %hu\n", rsp->host_id);
+	printf("\tStarting Extent Index: %u\n", rsp->start_ext_index);
+	printf("\tNumber of Extents Returned: %u\n", rsp->extents_returned);
+	printf("\tTotal Extents: %u\n", rsp->total_extents);
+	printf("\tExtent List Generation Number: %u\n", rsp->list_generation_num);
+
+	for (i = 0; i < rsp->extents_returned; i++) {
+		printf("\t\tExtent %d Info:\n", i);
+		printf("\t\t\tStart DPA: %lu\n", rsp->extents[i].start_dpa);
+		printf("\t\t\tLength: %lu\n", rsp->extents[i].len);
+	}
+
+free_out:
+	free(rsp);
+	return rc;
+
+}
+
+static int test_fmapi_get_dc_region_extent_list(struct cxlmi_endpoint *ep)
+{
+	printf("0x5603: FMAPI Get DC Region Extent List\n");
+	return print_ext_list(ep, 0, 2, 0);
+}
+
+static int test_fmapi_initiate_dc_add(struct cxlmi_endpoint *ep)
+{
+	int rc;
+	struct cxlmi_cmd_fmapi_initiate_dc_add_req* req;
+
+	printf("0x5604: FMAPI Initiate DC Add \n");
+	req = calloc(1, sizeof(*req) + 1 * sizeof(req->extents[0]));
+	if (!req) {
+		return -1;
+	}
+
+	req->host_id = 0;
+	req->selection_policy = CXL_EXTENT_SELECTION_POLICY_PRESCRIPTIVE;// only policy currently supported in QEMU
+	req->length = 0;
+	req->ext_count = 1;
+
+	req->extents[0].start_dpa = 0;	// grabbed from printing reg_1.base and len in qemu.log
+	req->extents[0].len = 128;
+
+	rc = cxlmi_cmd_fmapi_initiate_dc_add(ep, NULL, req);
+	if (rc) {
+		rc = -1;
+		goto cleanup;
+	}
+	printf("FMAPI Initiate DC Add Success\n");
+	printf("Show Extents --\n");
+	if (print_ext_list(ep, 0, 2, 0)) {
+		rc = -1;
+	}
+
+cleanup:
+	free(req);
+	return rc;
+}
+
+static int test_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep)
+{
+	int rc;
+	struct cxlmi_cmd_fmapi_initiate_dc_release_req* rls_req = NULL;
+	struct cxlmi_cmd_fmapi_initiate_dc_add_req* add_req = NULL;
+
+	printf("0x5605: FMAPI Initiate DC Release \n");
+
+	rls_req = calloc(1, sizeof(*rls_req) + 2 * sizeof(rls_req->extents[0]));
+
+	if (!rls_req) {
+		return -1;
+	}
+
+	/* First try to release an extent that is not backed by DPA */
+	rls_req->host_id = 0;
+	rls_req->flags = CXL_EXTENT_REMOVAL_POLICY_PRESCRIPTIVE;
+	rls_req->length = 0;
+	rls_req->ext_count = 1;
+	rls_req->extents[0].start_dpa = 128;
+	rls_req->extents[0].len = 256;
+
+	rc = cxlmi_cmd_fmapi_initiate_dc_release(ep, NULL, rls_req);
+
+	/* RC should be 15 (CXL_MBOX_INVALID_PA) */
+	if (!rc) {
+		printf("\tWas able to release nonexistent extent!\n");
+		rc = -1;
+		goto cleanup;
+	}
+
+	/* Try to release misaligned block */
+	rls_req->host_id = 0;
+	rls_req->flags = CXL_EXTENT_REMOVAL_POLICY_PRESCRIPTIVE;
+	rls_req->length = 0;
+	rls_req->ext_count = 1;
+	rls_req->extents[0].start_dpa = 56;
+	rls_req->extents[0].len = 7;
+
+	rc = cxlmi_cmd_fmapi_initiate_dc_release(ep, NULL, rls_req);
+
+	/* RC should be 30 (CXL_MBOX_INVALID_EXTENT_LIST) */
+	if (!rc) {
+		printf("\tWas able to release misaligned extent!\n");
+		rc = -1;
+		goto cleanup;
+	}
+
+	/* Try to release overlapping extents */
+	rls_req->host_id = 0;
+	rls_req->flags = CXL_EXTENT_REMOVAL_POLICY_PRESCRIPTIVE;
+	rls_req->length = 0;
+	rls_req->ext_count = 2;
+	rls_req->extents[0].start_dpa = 0;
+	rls_req->extents[0].len = 128;
+	rls_req->extents[1].start_dpa = 56;
+	rls_req->extents[1].len = 184;
+
+	rc = cxlmi_cmd_fmapi_initiate_dc_release(ep, NULL, rls_req);
+
+	/* RC should be 30 (CXL_MBOX_INVALID_EXTENT_LIST) */
+	if (!rc) {
+		printf("\tWas able to release overlapping extents!\n");
+		rc = -1;
+		goto cleanup;
+	}
+
+	/* Should still have the same extent previously added from testing initiate add */
+	printf("Show Extents --\n");
+	if (print_ext_list(ep, 0, 2, 0)) {
+		rc = -1;
+		goto cleanup;
+	}
+
+	/* Now release the valid extent added previously from testing initiate add */
+	rls_req->host_id = 0;
+	rls_req->flags = CXL_EXTENT_REMOVAL_POLICY_PRESCRIPTIVE;
+	rls_req->length = 0;
+	rls_req->ext_count = 1;
+	rls_req->extents[0].start_dpa = 0;
+	rls_req->extents[0].len = 128;
+
+	rc = cxlmi_cmd_fmapi_initiate_dc_release(ep, NULL, rls_req);
+
+	/* Extent list should be empty */
+	printf("Show Extents --\n");
+	if (print_ext_list(ep, 0, 2, 0)) {
+		rc = -1;
+		goto cleanup;
+	}
+
+	/* Add one extent (3 blocks long) and release the middle block
+	 * Ext_0 = {[0 - 127] [128 - 255] [256 - 384]}
+	 */
+	add_req = calloc(1, sizeof(*add_req));
+	if (!add_req) {
+		rc = -1;
+		goto cleanup;
+	}
+
+	add_req->host_id = 0;
+	add_req->selection_policy = CXL_EXTENT_SELECTION_POLICY_PRESCRIPTIVE;
+	add_req->length = 0;
+	add_req->ext_count = 1;
+	add_req->extents[0].start_dpa = 0;
+	add_req->extents[0].len = 384;
+
+	rc = cxlmi_cmd_fmapi_initiate_dc_add(ep, NULL, add_req);
+	if (rc) {
+		rc = -1;
+		goto cleanup;
+	}
+
+	/* Should have 1 extent [0 - 384]*/
+	printf("Show Extents --\n");
+	if (print_ext_list(ep, 0, 2, 0)) {
+		rc = -1;
+		goto cleanup;
+	}
+
+	rls_req->host_id = 0;
+	rls_req->flags = CXL_EXTENT_REMOVAL_POLICY_PRESCRIPTIVE;
+	rls_req->length = 0;
+	rls_req->ext_count = 1;
+	rls_req->extents[0].start_dpa = 128;
+	rls_req->extents[0].len = 128;
+
+	rc = cxlmi_cmd_fmapi_initiate_dc_release(ep, NULL, rls_req);
+
+	if (rc) {
+		rc = -1;
+		goto cleanup;
+	}
+
+	/* Releasing middle block should result in 2 extents.
+	 * [0 - 127] [256 - 384]
+	 */
+	printf("Show Extents --\n");
+	if (print_ext_list(ep, 0, 4, 0)) {
+		rc = -1;
+		goto cleanup;
+	}
+
+	printf("FMAPI Initiate DC Release Success\n");
+
+cleanup:
+	free(rls_req);
+	if (add_req) {
+		free(add_req);
+	}
+	return rc;
+}
+
+static int test_fmapi_dc_add_reference(struct cxlmi_endpoint *ep)
+{
+	struct cxlmi_cmd_fmapi_dc_add_ref req;
+
+	printf("0x5606: FMAPI DC Add Reference\n");
+	if (cxlmi_cmd_fmapi_dc_add_reference(ep, NULL, &req)) {
+		printf("FMAPI DC Add Reference Error\n");
+		return -1;
+	}
+
+	printf("FMAPI DC Add Reference Success\n");
+	return 0;
+}
+
+static int test_fmapi_dc_remove_reference(struct cxlmi_endpoint *ep)
+{
+	struct cxlmi_cmd_fmapi_dc_remove_ref req;
+
+	printf("0x5607: FMAPI DC Remove Reference\n");
+	if (cxlmi_cmd_fmapi_dc_remove_reference(ep, NULL, &req)) {
+		printf("FMAPI DC Remove Reference Error\n");
+		return -1;
+	}
+
+	printf("FMAPI DC Remove Reference Success\n");
+	return 0;
+}
+
+static int test_fmapi_dc_list_tags(struct cxlmi_endpoint *ep)
+{
+	int rc;
+	struct cxlmi_cmd_fmapi_dc_list_tags_req req = {
+		.start_idx = 0,
+		.tags_count = 2
+	};
+	struct cxlmi_cmd_fmapi_dc_list_tags_rsp * rsp =
+			calloc(1, sizeof(*rsp) + sizeof(rsp->tags_list[0]));
+
+	if (!rsp) {
+		return -1;
+	}
+
+	printf("0x5608: FMAPI DC List Tags\n");
+	rc = cxlmi_cmd_fmapi_dc_list_tags(ep, NULL, &req, rsp);
+	if (rc) {
+		rc = -1;
+		goto cleanup;
+	}
+
+	printf("\t Generation Num: %u\n", rsp->generation_num);
+	printf("\t Max Tags: %u\n", rsp->total_num_tags);
+	printf("\t Num Tags Returned: %u\n", rsp->num_tags_returned);
+
+cleanup:
+	free(rsp);
+	return rc;
+}
+
+static int play_with_fmapi_dcd_management(struct cxlmi_endpoint *ep)
+{
+	if (test_fmapi_get_dcd_info(ep)
+		|| test_fmapi_get_host_dc_region_config(ep)
+		|| test_fmapi_set_dc_region_config(ep)
+		|| test_fmapi_get_dc_region_extent_list(ep)
+		|| test_fmapi_initiate_dc_add(ep)
+		|| test_fmapi_initiate_dc_release(ep)
+		|| test_fmapi_dc_add_reference(ep)
+		|| test_fmapi_dc_remove_reference(ep)
+		|| test_fmapi_dc_list_tags(ep)
+	)
+		return -1;
+
+	return 0;
+
+}
+
 int main(int argc, char **argv)
 {
 	struct cxlmi_ctx *ctx;
@@ -623,7 +1044,12 @@ int main(int argc, char **argv)
 		if (ep_supports_op(ep, 0x4800))
 			play_with_dcd(ep);
 
+		if (ep_supports_op(ep, 0x5600))
+			play_with_fmapi_dcd_management(ep);
+
 		cxlmi_close(ep);
+
+		printf("-------------------------------------------------\n");
 	}
 
 exit_free_ctx:
