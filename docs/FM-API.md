@@ -319,7 +319,7 @@ DEFINE_CXLMI_TUNNEL_SWITCH_MLD(name, port, ld)
  *
  * @name: tunnel variable name
  */
-#define DEFINE_CXLMI_TUNNEL_MHD(name)
+DEFINE_CXLMI_TUNNEL_MHD(name)
    ```
 
 # MLD Components (54h)
