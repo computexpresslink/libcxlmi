@@ -73,7 +73,8 @@ Issuing CCI commands
 Once an endpoint is open, commands may be sent to the CXL component, for which
 response timeouts are configurable through `cxlmi_endpoint_set_timeout()`,
 taking into account any maximum values defined by the transport. For example,
-for MCTP-based that is 2 seconds.
+for MCTP-based that is 2 seconds. Similarly, the `cxlmi_endpoint_get_timeout()`
+counterpart may be used to obtain the timeout value.
 
 API for sending commands is very ad-hoc to the CXL specification, such as for
 payload input and output. As such, the user is expected to know what to look
@@ -325,10 +326,12 @@ For more info, refer to https://gitlab.com/jic23/cxl-fmapi-tests
 
 Build
 =====
-To `configure` the project as a shared library (default):
+This project uses the `meson` build system.
+
+1. To configure as a shared library (default):
 
 ```
-meson setup build;
+meson setup build
 ```
 Alternatively, to configure for static libraries:
 ```
@@ -339,11 +342,11 @@ Also, to configure with dbus support  to enable MCTP scanning:
 meson setup -Dlibdbus=enabled build
 ```
 
-Then compile it:
+2. Then compile it:
 ```
-meson compile -C build;
+meson compile -C build
 ```
-Optionally, to install:
+3. Optionally, to install:
 ```
 meson install -C build
 ```
@@ -365,4 +368,4 @@ References
 
 Resources
 =========
-- [libcxlmi: a CXL Management Interface (LPC24)](https://lpc.events/event/18/contributions/1876/attachments/1441/3072/lpc24-dbueso-libcxlmi.pdf)
+- [libcxlmi: CXL Management Interface library (LPC24)](https://lpc.events/event/18/contributions/1876/attachments/1441/3072/lpc24-dbueso-libcxlmi.pdf)
