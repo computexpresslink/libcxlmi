@@ -10,6 +10,9 @@ command set, as per the latest specification.
    * [Set Domain Validation SV (5105h)](#set-domain-validation-sv-5105h)
    * [Get VCS Domain Validation SV State (5106h)](#get-vcs-domain-validation-sv-state-5106h)
    * [Get Domain Validation SV (5107h)](#get-domain-validation-sv-5107h)
+* [Virtual Switch](#virtual-switch)
+   * [Bind vPPB](#bind-vppb)
+   * [Unbind vPPB](#unbind-vppb)
 * [MLD Port (53h)](#mld-port-53h)
    * [Tunnel Management Command (5300h)](#tunnel-management-command-5300h)
 * [MLD Components (54h)](#mld-components-54h)
@@ -23,18 +26,19 @@ command set, as per the latest specification.
    * [Set QoS Allocated BW (5407h)](#set-qos-allocated-bw-5407h)
    * [Get QoS BW Limit (5408h)](#get-qos-bw-limit-5408h)
    * [Set QoS BW Limit (5409h)](#set-qos-bw-limit-5409h)
-* [FMAPI DCD Management (56h)](#fmapi-dcd-management-56h)
-	* [Get DCD Info (5600h)](#get-dcd-info-5600h)
-	* [Get Host DC Region Config (5601h)](#get-host-dc-region-config-5601h)
-	* [Set DC Region Config (5602h)](#set-host-dc-region-config-5602h)
-	* [Get DC Region Extent List (5603h)](#get-dc-region-extent-lists-5603h)
-	* [Initiate DC Add (5604h)](#initiate-dc-add-5604h)
-	* [Initiate DC Release (5605h)](#initiate-dc-release-5605h)
-	* [DC Add Reference (5606h)](#dc-add-reference-5606h)
-	* [DC Remove Reference (5607h)](#dc-remove-reference-5607h)
-	* [DC List Tags (5608h)](#dc-list-tags-5608h)
+* [DCD Management (56h)](#dcd-management-56h)
+   * [Get DCD Info (5600h)](#get-dcd-info-5600h)
+   * [Get Host DC Region Config (5601h)](#get-host-dc-region-config-5601h)
+   * [Set Host DC Region Config (5602h)](#set-host-dc-region-config-5602h)
+   * [Get DC Region Extent Lists (5603h)](#get-dc-region-extent-lists-5603h)
+   * [Initiate DC Add (5604h)](#initiate-dc-add-5604h)
+   * [Initiate DC Release (5605h)](#initiate-dc-release-5605h)
+   * [DC Add Reference (5606h)](#dc-add-reference-5606h)
+   * [DC Remove Reference (5607h)](#dc-remove-reference-5607h)
+   * [DC List Tags (5608h)](#dc-list-tags-5608h)
+
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Mon Aug 19 01:13:48 PM PDT 2024 -->
+<!-- Added by: dave, at: Mon Jan 27 09:08:47 PM PST 2025 -->
 
 <!--te-->
 
@@ -221,6 +225,50 @@ int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_domain_validation_sv_req *in,
 			struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp *ret);
+   ```
+
+# Virtual Switch
+
+## Bind vPPB
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_bind_vppb {
+	uint8_t vcs_id;
+	uint8_t vppb_id;
+	uint8_t port_id;
+	uint8_t rsv1;
+	uint16_t ld_id;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_bind_vppb(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_fmapi_bind_vppb *in);
+   ```
+
+## Unbind vPPB
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_unbind_vppb {
+	uint8_t vcs_id;
+	uint8_t vppb_id;
+	uint8_t option;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_unbind_vppb(struct cxlmi_endpoint *ep,
+			    struct cxlmi_tunnel_info *ti,
+			    struct cxlmi_cmd_fmapi_unbind_vppb *in);
    ```
 
 # MLD Port (53h)
@@ -524,7 +572,7 @@ int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
    ```
 
-# FMAPI DCD Management (56h)
+# DCD Management (56h)
 
 ## Get DCD Info (5600h)
 
