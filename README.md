@@ -151,8 +151,26 @@ that is accessible through an MLD port of a CXL Switch.
    }
    ```
 
-Note that tunneling commands to the LD Pool CCI in a Multi-Headed Device (MHD)
-is currently unsupported (CXL.io).
+4. Tunneling Commands to the LD Pool CCI in a Multi-Headed Device.
+
+<img src="http://stgolabs.net/tunnel3.png" width="650" height="260">
+
+   ```C
+   struct cxlmi_cmd_fmapi_get_multiheaded_info_req req = {
+	  .start_ld_id = 0,
+	  .ld_map_list_limit = 4,
+   };
+   struct cxlmi_cmd_fmapi_get_multiheaded_info_rsp *rsp;
+   DEFINE_CXLMI_TUNNEL_MHD(ti);
+
+   /* prepare payload return buffer... */
+
+   err = cxlmi_cmd_fmapi_get_multiheaded_info(ep, &ti, &req, rsp);
+   if (!err) {
+           for (i = 0; i < rsp->ld_map_len; i++)
+	           /* do something with rsp->map[i] */
+   }
+   ```
 
 Commands with simple payload input/output can use  stack-allocated variables,
 while more complex ones require the user to already provide the respective payload

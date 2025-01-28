@@ -313,6 +313,13 @@ DEFINE_CXLMI_TUNNEL_SWITCH(name, port)
  * @ld: Logical Device (LD) id within an MLD (inner tunnel)
  */
 DEFINE_CXLMI_TUNNEL_SWITCH_MLD(name, port, ld)
+
+/**
+ * Tunneling Commands to the LD Pool CCI in a Multi-Headed Device.
+ *
+ * @name: tunnel variable name
+ */
+#define DEFINE_CXLMI_TUNNEL_MHD(name)
    ```
 
 # MLD Components (54h)
