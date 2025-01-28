@@ -716,6 +716,22 @@ struct cxlmi_cmd_fmapi_set_qos_bw_limit {
 	uint8_t qos_limit_fraction[];
 } __attribute__((packed));
 
+/* CXL r3.2 Section 7.6.7.5.1: Get Multi-Headed Info (Opcode 5500h) */
+struct cxlmi_cmd_fmapi_get_multiheaded_info_req {
+	uint8_t start_ld_id;
+	uint8_t ld_map_list_limit;
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_get_multiheaded_info_rsp {
+	uint8_t num_lds;
+	uint8_t num_heads;
+	uint8_t rsvd1[2];
+	uint8_t start_ld_id;
+	uint8_t ld_map_len;
+	uint8_t rsvd2[2];
+	uint8_t ld_map[];
+} __attribute__((packed));
+
 /* CXL r3.2 Section 7.6.7.6.1: Get DCD Info (Opcode 5600h) */
 struct cxlmi_cmd_fmapi_get_dcd_info {
 	uint8_t num_hosts;

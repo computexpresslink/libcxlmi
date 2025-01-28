@@ -321,6 +321,7 @@ const char *cxlmi_cmd_retcode_tostr(enum cxlmi_cmd_retcode code);
  * @port: switch downstream port number
  * @ld: Logical Device (LD) id within an MLD
  * @level: tunneling level 1 or 2.
+ * @mhd: Multi-Headed Device
  *
  * When sent to an MLD, the provided command is tunneled by the FM-owned LD
  * to the specified LD. When sent to a Switch, the provided command is tunneled
@@ -332,17 +333,20 @@ const char *cxlmi_cmd_retcode_tostr(enum cxlmi_cmd_retcode code);
  *   - tunneling to an LD in an MLD
  *   - tunneling to an MLD through a Switch
  *   - tunneling to an LD in an MLD through a Switch
+ *   - tunneling to the LD Pool CCI in a MHD
  */
 struct cxlmi_tunnel_info {
 	int port;
 	int ld;
 	int level;
+	bool mhd;
 };
 
-#define __TUNNEL_INITIALIZER(_port, _ld, _level)	\
+#define __TUNNEL_INITIALIZER(_port, _ld, _level, _mhd)	\
 		{ .port = _port \
 		, .ld = _ld \
-		, .level = _level }
+		, .level = _level \
+		, .mhd = _mhd }
 
 /**
  * Tunneling Commands to an LD in an MLD.
@@ -351,7 +355,7 @@ struct cxlmi_tunnel_info {
  * @ld: Logical Device (LD) id within an MLD
  */
 #define DEFINE_CXLMI_TUNNEL_MLD(name, ld)				\
-	struct cxlmi_tunnel_info name =	 __TUNNEL_INITIALIZER(-1, ld, 1)
+	struct cxlmi_tunnel_info name =	 __TUNNEL_INITIALIZER(-1, ld, 1, 0)
 
 /**
  * Tunneling Commands to an MLD through a CXL Switch.
@@ -360,7 +364,7 @@ struct cxlmi_tunnel_info {
  * @port: switch downstream port number
  */
 #define DEFINE_CXLMI_TUNNEL_SWITCH(name, port)				\
-	struct cxlmi_tunnel_info name =	__TUNNEL_INITIALIZER(port, -1, 1)
+	struct cxlmi_tunnel_info name =	__TUNNEL_INITIALIZER(port, -1, 1, 0)
 
 /**
  * Tunneling Commands to an LD in an MLD through a CXL Switch.
@@ -370,7 +374,16 @@ struct cxlmi_tunnel_info {
  * @ld: Logical Device (LD) id within an MLD (inner tunnel)
  */
 #define DEFINE_CXLMI_TUNNEL_SWITCH_MLD(name, port, ld)			\
-	struct cxlmi_tunnel_info name =  __TUNNEL_INITIALIZER(port, ld, 2)
+	struct cxlmi_tunnel_info name =  __TUNNEL_INITIALIZER(port, ld, 2, 0)
+
+/**
+ * Tunneling Commands to the LD Pool CCI in a Multi-Headed Device.
+ *
+ * @name: tunnel variable name
+ */
+#define DEFINE_CXLMI_TUNNEL_MHD(name)					\
+	struct cxlmi_tunnel_info name =  __TUNNEL_INITIALIZER(-1, -1, 1, 1)
+
 
 /*
  * Definitions for Generic Component Commands, per CXL r3.1 Table 8-37.
@@ -635,6 +648,12 @@ int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
+
+int cxlmi_cmd_fmapi_get_multiheaded_info(struct cxlmi_endpoint *ep,
+			 struct cxlmi_tunnel_info *ti,
+			 struct cxlmi_cmd_fmapi_get_multiheaded_info_req *in,
+			 struct cxlmi_cmd_fmapi_get_multiheaded_info_rsp *ret);
+
 int cxlmi_cmd_fmapi_get_dcd_info(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_dcd_info *ret);

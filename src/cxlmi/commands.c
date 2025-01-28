@@ -2526,6 +2526,52 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 	return rc;
 }
 
+CXLMI_EXPORT int cxlmi_cmd_fmapi_get_multiheaded_info(struct cxlmi_endpoint *ep,
+					  struct cxlmi_tunnel_info *ti,
+					  struct cxlmi_cmd_fmapi_get_multiheaded_info_req *in,
+					  struct cxlmi_cmd_fmapi_get_multiheaded_info_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_get_multiheaded_info_req *req_pl;
+	struct cxlmi_cmd_fmapi_get_multiheaded_info_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int rc = -1;
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), MHD, GET_MHD_INFO);
+	req_pl = (struct cxlmi_cmd_fmapi_get_multiheaded_info_req *)req->payload;
+
+	req_pl->start_ld_id = in->start_ld_id;
+	req_pl->ld_map_list_limit = in->ld_map_list_limit;
+
+	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp) +
+		in->ld_map_list_limit * sizeof(*rsp_pl->ld_map);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_get_multiheaded_info_rsp *)rsp->payload;
+
+	ret->num_lds = rsp_pl->num_lds;
+	ret->num_heads = rsp_pl->num_heads;
+	ret->start_ld_id = rsp_pl->start_ld_id;
+	ret->ld_map_len = rsp_pl->ld_map_len;
+
+	memcpy(ret->ld_map, rsp_pl->ld_map,
+	       ret->ld_map_len * sizeof(*rsp_pl->ld_map));
+
+	return rc;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dcd_info(struct cxlmi_endpoint *ep,
 				    struct cxlmi_tunnel_info *ti,
 				    struct cxlmi_cmd_fmapi_get_dcd_info *ret)

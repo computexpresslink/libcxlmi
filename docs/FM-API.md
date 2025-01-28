@@ -10,9 +10,9 @@ command set, as per the latest specification.
    * [Set Domain Validation SV (5105h)](#set-domain-validation-sv-5105h)
    * [Get VCS Domain Validation SV State (5106h)](#get-vcs-domain-validation-sv-state-5106h)
    * [Get Domain Validation SV (5107h)](#get-domain-validation-sv-5107h)
-* [Virtual Switch](#virtual-switch)
-   * [Bind vPPB](#bind-vppb)
-   * [Unbind vPPB](#unbind-vppb)
+* [Virtual Switch (52h)](#virtual-switch-52h)
+   * [Bind vPPB (5201h)](#bind-vppb-5201h)
+   * [Unbind vPPB (5202)](#unbind-vppb-5202)
 * [MLD Port (53h)](#mld-port-53h)
    * [Tunnel Management Command (5300h)](#tunnel-management-command-5300h)
 * [MLD Components (54h)](#mld-components-54h)
@@ -26,6 +26,8 @@ command set, as per the latest specification.
    * [Set QoS Allocated BW (5407h)](#set-qos-allocated-bw-5407h)
    * [Get QoS BW Limit (5408h)](#get-qos-bw-limit-5408h)
    * [Set QoS BW Limit (5409h)](#set-qos-bw-limit-5409h)
+* [Multi-Headed Devices (55h)](#multi-headed-devices-55h)
+   * [Get Multi-Headed Info (5500h)](#get-multi-headed-info-5500h)
 * [DCD Management (56h)](#dcd-management-56h)
    * [Get DCD Info (5600h)](#get-dcd-info-5600h)
    * [Get Host DC Region Config (5601h)](#get-host-dc-region-config-5601h)
@@ -38,7 +40,7 @@ command set, as per the latest specification.
    * [DC List Tags (5608h)](#dc-list-tags-5608h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Mon Jan 27 09:08:47 PM PST 2025 -->
+<!-- Added by: dave, at: Mon Jan 27 09:31:27 PM PST 2025 -->
 
 <!--te-->
 
@@ -227,9 +229,9 @@ int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp *ret);
    ```
 
-# Virtual Switch
+# Virtual Switch (52h)
 
-## Bind vPPB
+## Bind vPPB (5201h)
 
 Input payload:
 
@@ -251,7 +253,7 @@ int cxlmi_cmd_fmapi_bind_vppb(struct cxlmi_endpoint *ep,
 			    struct cxlmi_cmd_fmapi_bind_vppb *in);
    ```
 
-## Unbind vPPB
+## Unbind vPPB (5202)
 
 Input payload:
 
@@ -571,6 +573,42 @@ int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
 			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
    ```
+
+# Multi-Headed Devices (55h)
+
+## Get Multi-Headed Info (5500h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_multiheaded_info_req {
+	uint8_t start_ld_id;
+	uint8_t ld_map_list_limit;
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_multiheaded_info_rsp {
+	uint8_t num_lds;
+	uint8_t num_heads;
+	uint8_t rsvd1[2];
+	uint8_t start_ld_id;
+	uint8_t ld_map_len;
+	uint8_t rsvd2[2];
+	uint8_t ld_map[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_multiheaded_info(struct cxlmi_endpoint *ep,
+			 struct cxlmi_tunnel_info *ti,
+			 struct cxlmi_cmd_fmapi_get_multiheaded_info_req *in,
+			 struct cxlmi_cmd_fmapi_get_multiheaded_info_rsp *ret);
+  ```
 
 # DCD Management (56h)
 

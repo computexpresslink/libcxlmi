@@ -457,8 +457,9 @@ static int build_tunnel_req(struct cxlmi_endpoint *ep, int port_or_ld,
 
 	t_req = (struct cxlmi_cmd_fmapi_tunnel_command_req *)req->payload;
 	*t_req = (struct cxlmi_cmd_fmapi_tunnel_command_req) {
-		.target_type = TUNNEL_TARGET_TYPE_PORT_OR_LD,
-		.id = port_or_ld,
+		.target_type = port_or_ld == -1 ?
+		TUNNEL_TARGET_TYPE_LD_POOL_CCI : TUNNEL_TARGET_TYPE_PORT_OR_LD,
+		.id = port_or_ld, /* ignored if type=1 */
 		.command_size = payload_in_sz,
 	};
 	if (payload_in_sz)
