@@ -317,6 +317,69 @@ static int get_device_logs(struct cxlmi_endpoint *ep)
 	return rc;
 }
 
+static int get_log_capabilities(struct cxlmi_endpoint *ep)
+{
+	int rc;
+	struct cxlmi_cmd_get_log_capabilities_req req;
+	memcpy(req.uuid, cel_uuid, sizeof(cel_uuid));
+
+	struct cxlmi_cmd_get_log_capabilities_rsp *rsp;
+	rsp = calloc(1, sizeof(*rsp));
+	if (!rsp)
+		return -1;
+
+	rc = cxlmi_cmd_get_log_capabilities(ep, NULL, &req, rsp);
+	if(rc)
+		goto done;
+
+	printf("Supported Log Capabilities: %s%s%s%s\n",
+		rsp->parameter_flags & 0x01? "clear_log_supported " : "",
+		rsp->parameter_flags & 0x02? "populate_log_supported " : "",
+		rsp->parameter_flags & 0x04? "auto_populate_log_supported " : "",
+		rsp->parameter_flags & 0x08? "persistent_across_cold_reset" : "");
+done:
+	free(rsp);
+	return rc;
+}
+
+static int clear_log(struct cxlmi_endpoint *ep)
+{
+	int rc;
+	struct cxlmi_cmd_clear_log *cl;
+	cl = calloc(1, sizeof(*cl));
+	if (!cl)
+		return -1;
+
+	memcpy(cl->uuid, cel_uuid, sizeof(cel_uuid));
+	rc = cxlmi_cmd_clear_log(ep, NULL, cl);
+	if(rc)
+		goto done;
+
+	printf("clear_log successfully executed\n");
+done:
+	free(cl);
+	return rc;
+}
+
+static int populate_log(struct cxlmi_endpoint *ep)
+{
+	int rc;
+	struct cxlmi_cmd_populate_log *pl;
+	pl = calloc(1, sizeof(*pl));
+	if (!pl)
+		return -1;
+
+	memcpy(pl->uuid, cel_uuid, sizeof(cel_uuid));
+	rc = cxlmi_cmd_populate_log(ep, NULL, pl);
+	if(rc)
+		goto done;
+
+	printf("populate_log successfully executed\n");
+done:
+	free(pl);
+	return rc;
+}
+
 static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 {
 	const int num_poisons = 3;
@@ -416,6 +479,12 @@ int main(int argc, char **argv)
 	rc = play_with_poison_mgmt(ep);
 
 	rc = get_device_logs(ep);
+
+	rc = get_log_capabilities(ep);
+
+	rc = clear_log(ep);
+
+	rc = populate_log(ep);
 
 	rc = toggle_abort(ep);
 
