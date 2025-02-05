@@ -11,6 +11,21 @@
 
 #include <libcxlmi.h>
 
+#define CXL_LUPWT 70U
+#define CXL_DOTPWT 10U
+#define CXL_DUTPWT 30U
+#define CXL_CVMEPWT 50U
+#define CXL_CPMEPWT 50U
+
+enum CXLAlertActions {
+        LUPWT = (1 << 0),
+        DOTPWT = (1 << 1),
+        DUTPWT = (1 << 2),
+        CVMEPWT = (1 << 3),
+        CPMEPWT = (1 << 4),
+        MAXALERT = (1 << 5)
+};
+
 static int show_memdev_info(struct cxlmi_endpoint *ep)
 {
 	int rc;
@@ -380,6 +395,78 @@ done:
 	return rc;
 }
 
+static int get_alert_config(struct cxlmi_endpoint *ep)
+{
+        struct cxlmi_cmd_memdev_get_alert_config *rsp;
+        int rc;
+
+        rsp = calloc(1, sizeof(*rsp));
+        if(!rsp)
+                return -1;
+
+        rc = cxlmi_cmd_memdev_get_alert_config(ep, NULL, rsp);
+        if(rc)
+                goto exit;
+
+        printf("valid_alerts:%d\n",rsp->valid_alerts);
+        printf("programmable_alerts:%d\n",rsp->programmable_alerts);
+        printf("life_used_critical_alert_threshold:%d\n",rsp->life_used_critical_alert_threshold);
+        printf("life_used_programmable_warning_threshold:%d\n",rsp->life_used_programmable_warning_threshold);
+        printf("device_over_temperature_critical_alert_threshold:%d\n",rsp->device_over_temperature_critical_alert_threshold);
+        printf("device_under_temperature_critical_alert_threshold:%d\n",rsp->device_under_temperature_critical_alert_threshold);
+        printf("device_over_temperature_programmable_warning_threshold:%d\n",rsp->device_over_temperature_programmable_warning_threshold);
+        printf("device_under_temperature_programmable_warning_threshold:%d\n",rsp->device_under_temperature_programmable_warning_threshold);
+        printf("corrected_volatile_mem_error_programmable_warning_threshold:%d\n",rsp->corrected_volatile_mem_error_programmable_warning_threshold);
+        printf("corrected_persistent_mem_error_programmable_warning_threshold:%d\n",rsp->corrected_persistent_mem_error_programmable_warning_threshold);
+
+exit:
+        free(rsp);
+        return rc;
+}
+
+static int set_alert_config(struct cxlmi_endpoint *ep)
+{
+        struct cxlmi_cmd_memdev_set_alert_config *req;
+        int rc;
+        uint8_t alert_value = LUPWT;
+        enum CXLAlertActions actions = LUPWT | DOTPWT | DUTPWT | CVMEPWT | CPMEPWT;
+        req = calloc(1, sizeof(*req));
+        if(!req)
+                return -1;
+
+        req->valid_alert_actions = actions;
+        req->enable_alert_actions = actions;
+        while(alert_value < MAXALERT) {
+                if(actions & alert_value) {
+                        switch (alert_value) {
+                                case LUPWT:
+                                        req->life_used_programmable_warning_threshold = CXL_LUPWT;
+                                        break;
+                                case DOTPWT:
+                                        req->device_over_temperature_programmable_warning_threshold = CXL_DOTPWT;
+                                        break;
+                                case DUTPWT:
+                                        req->device_under_temperature_programmable_warning_threshold = CXL_DUTPWT;
+                                        break;
+                                case CVMEPWT:
+                                        req->corrected_volatile_mem_error_programmable_warning_threshold = CXL_CVMEPWT;
+                                        break;
+                                case CPMEPWT:
+                                        req->corrected_persistent_mem_error_programmable_warning_threshold = CXL_CPMEPWT;
+                                        break;
+                                default:
+                                        printf("Invalid alert config\n");
+                                        return -1;
+                        }
+                }
+                alert_value <<=  1;
+        }
+        rc = cxlmi_cmd_memdev_set_alert_config(ep, NULL, req);
+
+        free(req);
+        return rc;
+}
+
 static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 {
 	const int num_poisons = 3;
@@ -485,6 +572,10 @@ int main(int argc, char **argv)
 	rc = clear_log(ep);
 
 	rc = populate_log(ep);
+
+	rc = get_alert_config(ep);
+
+	rc = set_alert_config(ep);
 
 	rc = toggle_abort(ep);
 
