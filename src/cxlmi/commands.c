@@ -2781,12 +2781,14 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_initiate_dc_add(struct cxlmi_endpoint *ep,
 	int i, ext_list_sz;
 
 	ext_list_sz = in->ext_count * sizeof(*in->extents);
-	req_sz = sizeof(*req) + sizeof(*in) + ext_list_sz;
+	size_t req_pl_size = sizeof(*req_pl) + ext_list_sz;
+	req_sz = sizeof(*req) + req_pl_size;
+
 	req = calloc(1, req_sz);
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(*in), DCD_MANAGEMENT, INITIATE_DC_ADD);
+	arm_cci_request(ep, req, req_pl_size, DCD_MANAGEMENT, INITIATE_DC_ADD);
 	req_pl = (struct cxlmi_cmd_fmapi_initiate_dc_add_req *)req->payload;
 	req_pl->host_id = cpu_to_le16(in->host_id);
 	req_pl->selection_policy = in->selection_policy;
@@ -2798,7 +2800,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_initiate_dc_add(struct cxlmi_endpoint *ep,
 	for (i = 0; i < in->ext_count; i++) {
 		req_pl->extents[i].start_dpa = cpu_to_le64(in->extents[i].start_dpa);
 		req_pl->extents[i].len = cpu_to_le64(in->extents[i].len);
-		memcpy(req_pl->tag, in->tag, 0x10);
+		memcpy(req_pl->extents[i].tag, in->extents[i].tag, 0x10);
 		req_pl->extents[i].shared_seq = cpu_to_le16(in->extents[i].shared_seq);
 	}
 
@@ -2820,12 +2822,14 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep,
 	int i, ext_list_sz;
 
 	ext_list_sz = in->ext_count * sizeof(*in->extents);
-	req_sz = sizeof(*req) + sizeof(*in) + ext_list_sz;
+	req_sz = sizeof(*req) + sizeof(*req_pl) + ext_list_sz;
+	size_t req_pl_size = sizeof(*req_pl) + ext_list_sz;
+
 	req = calloc(1, req_sz);
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(*in), DCD_MANAGEMENT, INITIATE_DC_RELEASE);
+	arm_cci_request(ep, req, req_pl_size, DCD_MANAGEMENT, INITIATE_DC_RELEASE);
 	req_pl = (struct cxlmi_cmd_fmapi_initiate_dc_release_req *)req->payload;
 	req_pl->host_id = cpu_to_le16(in->host_id);
 	req_pl->flags = in->flags;
@@ -2836,7 +2840,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep,
 	for (i = 0; i < in->ext_count; i++) {
 		req_pl->extents[i].start_dpa = cpu_to_le64(in->extents[i].start_dpa);
 		req_pl->extents[i].len = cpu_to_le64(in->extents[i].len);
-		memcpy(req_pl->tag, in->tag, 0x10);
+		memcpy(req_pl->extents[i].tag, in->extents[i].tag, 0x10);
 		req_pl->extents[i].shared_seq = cpu_to_le16(in->extents[i].shared_seq);
 	}
 
