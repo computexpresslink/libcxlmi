@@ -71,6 +71,55 @@ static int show_switch_info(struct cxlmi_endpoint *ep)
 	return 0;
 }
 
+static int get_physical_port_state(struct cxlmi_endpoint *ep)
+{
+	int rc, rc_p, i;
+	struct cxlmi_cmd_fmapi_get_phys_port_state_req *req_pps;
+	struct cxlmi_cmd_fmapi_identify_sw_device swid;
+	struct cxlmi_cmd_fmapi_get_phys_port_state_rsp *rsp_pps;
+
+	rc_p = cxlmi_cmd_fmapi_identify_sw_device(ep, NULL, &swid);
+	if (rc_p)
+		return rc_p;
+
+	req_pps = calloc(1, sizeof(struct cxlmi_cmd_fmapi_get_phys_port_state_req) +
+				   swid.num_physical_ports * sizeof(uint8_t));
+
+	req_pps->num_ports = swid.num_physical_ports;
+	for(int i = 0; i < req_pps->num_ports; i++) {
+		req_pps->ports[i] = i;
+	}
+
+	rsp_pps = calloc(1, sizeof(struct cxlmi_cmd_fmapi_get_phys_port_state_rsp) +
+				   req_pps->num_ports * sizeof(struct cxlmi_cmd_fmapi_port_state_info_block));
+
+	rc = cxlmi_cmd_fmapi_get_phys_port_state(ep, NULL, req_pps, rsp_pps);
+	if (rc)
+		goto done;
+
+	printf("Port_Info:\n");
+	for (i = 0; i < rsp_pps->num_ports; i++) {
+		printf("\tPort_Id: %d\n", rsp_pps->ports[i].port_id);
+		printf("\tPort_config_state: %d\n", rsp_pps->ports[i].config_state);
+		printf("\tConnected_device_mode: %d\n", rsp_pps->ports[i].conn_dev_cxl_ver);
+		printf("\tConnected_device_type: %d\n", rsp_pps->ports[i].conn_dev_type);
+		printf("\tPort_cxl_version_bitmask: %d\n", rsp_pps->ports[i].port_cxl_ver_bitmask);
+		printf("\tMax_link_width: %d\n", rsp_pps->ports[i].max_link_width);
+		printf("\tNegotiated_link_width: %d\n", rsp_pps->ports[i].negotiated_link_width);
+		printf("\tSupported_link_speeds_vector: %d\n", rsp_pps->ports[i].supported_link_speeds_vector);
+		printf("\tMax_link_speed: %d\n", rsp_pps->ports[i].max_link_speed);
+		printf("\tCurrent_link_speed: %d\n", rsp_pps->ports[i].current_link_speed);
+		printf("\tLTSSM_state: %d\n", rsp_pps->ports[i].ltssm_state);
+		printf("\tFirst_lane_num: %d\n", rsp_pps->ports[i].first_lane_num);
+		printf("\tLink_state: %d\n", rsp_pps->ports[i].link_state);
+		printf("\tSupported_ld_count: %d\n\n", rsp_pps->ports[i].supported_ld_count);
+	}
+done:
+	free(req_pps);
+	free(rsp_pps);
+	return rc;
+}
+
 static int show_device_info(struct cxlmi_endpoint *ep)
 {
 	int rc = 0;
@@ -89,6 +138,7 @@ static int show_device_info(struct cxlmi_endpoint *ep)
 		printf("VID:%04x DID:%04x\n", id.vendor_id, id.device_id);
 
 		show_switch_info(ep);
+		get_physical_port_state(ep);
 		break;
 	case 0x03:
 		printf("device type: CXL Type3 Device\n");
