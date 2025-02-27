@@ -2070,8 +2070,8 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_unbind_vppb(struct cxlmi_endpoint *ep,
 	arm_cci_request(ep, req, sizeof(req_pl), VIRTUAL_SWITCH, UNBIND_VPPB);
 
 	req_pl = (struct cxlmi_cmd_fmapi_unbind_vppb *)req->payload;
-	req_pl->vppb_id = in->vcs_id;
-	req_pl->vcs_id = in->vppb_id;
+	req_pl->vcs_id = in->vcs_id;
+	req_pl->vppb_id = in->vppb_id;
 	req_pl->option = in->option;
 
 	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
