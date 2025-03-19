@@ -15,3 +15,10 @@ executable(
     dependencies: libcxlmi_dep,
     include_directories: [inc]
 )
+
+executable(
+    'fmapi-mctp',
+    ['fmapi-mctp.c'],
+    dependencies: libcxlmi_dep,
+    include_directories: [inc]
+)
