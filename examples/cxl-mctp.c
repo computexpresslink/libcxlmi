@@ -575,7 +575,7 @@ static int test_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep)
 {
 	struct cxlmi_cmd_fmapi_set_dc_region_config req = {
 		.region_id = 0,
-		.block_sz = 128,
+		.block_sz = 128 * MiB,
 		.sanitize_on_release = 0,
 	};
 
@@ -631,7 +631,6 @@ static int print_ext_list(struct cxlmi_endpoint *ep,
 free_out:
 	free(rsp);
 	return rc;
-
 }
 
 static int test_fmapi_get_dc_region_extent_list(struct cxlmi_endpoint *ep)
@@ -640,10 +639,32 @@ static int test_fmapi_get_dc_region_extent_list(struct cxlmi_endpoint *ep)
 	return print_ext_list(ep, 0, 2, 0);
 }
 
+/* Returns number of dc extents or -1 if error */
+static int get_num_dc_extents(struct cxlmi_endpoint *ep)
+{
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req req = {
+		.host_id = 0,
+		.extent_count = 0,
+		.start_ext_index = 0
+	};
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *rsp;
+
+	rsp = calloc(1, sizeof(*rsp));
+	if (!rsp) {
+		return -1;
+	}
+
+	if (cxlmi_cmd_fmapi_get_dc_region_ext_list(ep, NULL, &req, rsp)) {
+		return -1;
+	}
+
+	return rsp->total_extents;
+}
+
 static int test_fmapi_initiate_dc_add(struct cxlmi_endpoint *ep)
 {
-	int rc;
-	struct cxlmi_cmd_fmapi_initiate_dc_add_req* req;
+	int rc, curr_num_extents;
+	struct cxlmi_cmd_fmapi_initiate_dc_add_req* req = NULL;
 
 	printf("0x5604: FMAPI Initiate DC Add \n");
 	req = calloc(1, sizeof(*req) + 1 * sizeof(req->extents[0]));
@@ -652,15 +673,23 @@ static int test_fmapi_initiate_dc_add(struct cxlmi_endpoint *ep)
 	}
 
 	req->host_id = 0;
-	req->selection_policy = CXL_EXTENT_SELECTION_POLICY_PRESCRIPTIVE;// only policy currently supported in QEMU
+	req->selection_policy = CXL_EXTENT_SELECTION_POLICY_PRESCRIPTIVE;
 	req->length = 0;
 	req->ext_count = 1;
 
-	req->extents[0].start_dpa = 0;	// grabbed from printing reg_1.base and len in qemu.log
-	req->extents[0].len = 128;
+	req->extents[0].start_dpa = 0;
+	req->extents[0].len = 128 * MiB;
 
+	printf("Sending Request to add 1 extent\n");
 	rc = cxlmi_cmd_fmapi_initiate_dc_add(ep, NULL, req);
 	if (rc) {
+		rc = -1;
+		goto cleanup;
+	}
+
+	/* Loop until device/host finish processing. Number of extents should be 1 */
+	while ((curr_num_extents = get_num_dc_extents(ep)) == 0);
+	if (curr_num_extents != 1) {
 		rc = -1;
 		goto cleanup;
 	}
@@ -677,25 +706,24 @@ cleanup:
 
 static int test_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep)
 {
-	int rc;
+	int rc, curr_num_extents;
 	struct cxlmi_cmd_fmapi_initiate_dc_release_req* rls_req = NULL;
 	struct cxlmi_cmd_fmapi_initiate_dc_add_req* add_req = NULL;
 
 	printf("0x5605: FMAPI Initiate DC Release \n");
 
 	rls_req = calloc(1, sizeof(*rls_req) + 2 * sizeof(rls_req->extents[0]));
-
 	if (!rls_req) {
 		return -1;
 	}
 
-	/* First try to release an extent that is not backed by DPA */
+	printf("Attempt to release extent not backed by DPA\n");
 	rls_req->host_id = 0;
 	rls_req->flags = CXL_EXTENT_REMOVAL_POLICY_PRESCRIPTIVE;
 	rls_req->length = 0;
 	rls_req->ext_count = 1;
-	rls_req->extents[0].start_dpa = 128;
-	rls_req->extents[0].len = 256;
+	rls_req->extents[0].start_dpa = 128 * MiB;
+	rls_req->extents[0].len = 256 * MiB;
 
 	rc = cxlmi_cmd_fmapi_initiate_dc_release(ep, NULL, rls_req);
 
@@ -706,13 +734,13 @@ static int test_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep)
 		goto cleanup;
 	}
 
-	/* Try to release misaligned block */
+	printf("Attempt to release misaligned extent\n");
 	rls_req->host_id = 0;
 	rls_req->flags = CXL_EXTENT_REMOVAL_POLICY_PRESCRIPTIVE;
 	rls_req->length = 0;
 	rls_req->ext_count = 1;
-	rls_req->extents[0].start_dpa = 56;
-	rls_req->extents[0].len = 7;
+	rls_req->extents[0].start_dpa = 56 * MiB;
+	rls_req->extents[0].len = 7 * MiB;
 
 	rc = cxlmi_cmd_fmapi_initiate_dc_release(ep, NULL, rls_req);
 
@@ -723,15 +751,15 @@ static int test_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep)
 		goto cleanup;
 	}
 
-	/* Try to release overlapping extents */
+	printf("Attempt to release overlapping extents\n");
 	rls_req->host_id = 0;
 	rls_req->flags = CXL_EXTENT_REMOVAL_POLICY_PRESCRIPTIVE;
 	rls_req->length = 0;
 	rls_req->ext_count = 2;
 	rls_req->extents[0].start_dpa = 0;
-	rls_req->extents[0].len = 128;
-	rls_req->extents[1].start_dpa = 56;
-	rls_req->extents[1].len = 184;
+	rls_req->extents[0].len = 128 * MiB;
+	rls_req->extents[1].start_dpa = 56 * MiB;
+	rls_req->extents[1].len = 184 * MiB;
 
 	rc = cxlmi_cmd_fmapi_initiate_dc_release(ep, NULL, rls_req);
 
@@ -749,27 +777,34 @@ static int test_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep)
 		goto cleanup;
 	}
 
-	/* Now release the valid extent added previously from testing initiate add */
+	printf("Release extent\n");
 	rls_req->host_id = 0;
 	rls_req->flags = CXL_EXTENT_REMOVAL_POLICY_PRESCRIPTIVE;
 	rls_req->length = 0;
 	rls_req->ext_count = 1;
 	rls_req->extents[0].start_dpa = 0;
-	rls_req->extents[0].len = 128;
+	rls_req->extents[0].len = 128 * MiB;
 
 	rc = cxlmi_cmd_fmapi_initiate_dc_release(ep, NULL, rls_req);
 
 	/* Extent list should be empty */
+	while ((curr_num_extents = get_num_dc_extents(ep)) == 1);
+	if (curr_num_extents != 0) {
+		rc = -1;
+		goto cleanup;
+	}
 	printf("Show Extents --\n");
 	if (print_ext_list(ep, 0, 2, 0)) {
 		rc = -1;
 		goto cleanup;
 	}
 
-	/* Add one extent (3 blocks long) and release the middle block
+	/*
+	 * Add one extent (3 blocks long) and release the middle block
 	 * Ext_0 = {[0 - 127] [128 - 255] [256 - 384]}
 	 */
-	add_req = calloc(1, sizeof(*add_req));
+	printf("Add an extent that is 3 blocks long\n");
+	add_req = calloc(1, sizeof(*add_req) + 1 * sizeof(add_req->extents[0]));
 	if (!add_req) {
 		rc = -1;
 		goto cleanup;
@@ -780,7 +815,7 @@ static int test_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep)
 	add_req->length = 0;
 	add_req->ext_count = 1;
 	add_req->extents[0].start_dpa = 0;
-	add_req->extents[0].len = 384;
+	add_req->extents[0].len = 384 * MiB;
 
 	rc = cxlmi_cmd_fmapi_initiate_dc_add(ep, NULL, add_req);
 	if (rc) {
@@ -789,18 +824,24 @@ static int test_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep)
 	}
 
 	/* Should have 1 extent [0 - 384]*/
+	while ((curr_num_extents = get_num_dc_extents(ep)) == 0);
+	if (curr_num_extents != 1) {
+		rc = -1;
+		goto cleanup;
+	}
 	printf("Show Extents --\n");
 	if (print_ext_list(ep, 0, 2, 0)) {
 		rc = -1;
 		goto cleanup;
 	}
 
+	printf("Sending release req for middle block. Should clear entire extent\n");
 	rls_req->host_id = 0;
 	rls_req->flags = CXL_EXTENT_REMOVAL_POLICY_PRESCRIPTIVE;
 	rls_req->length = 0;
 	rls_req->ext_count = 1;
-	rls_req->extents[0].start_dpa = 128;
-	rls_req->extents[0].len = 128;
+	rls_req->extents[0].start_dpa = 128 * MiB;
+	rls_req->extents[0].len = 128 * MiB;
 
 	rc = cxlmi_cmd_fmapi_initiate_dc_release(ep, NULL, rls_req);
 
@@ -809,11 +850,14 @@ static int test_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep)
 		goto cleanup;
 	}
 
-	/* Releasing middle block should result in 2 extents.
-	 * [0 - 127] [256 - 384]
-	 */
+	/* Entire should have been released. We should now have 0 extents. */
+	while ((curr_num_extents = get_num_dc_extents(ep)) == 1);
+	if (curr_num_extents != 0) {
+		rc = -1;
+		goto cleanup;
+	}
 	printf("Show Extents --\n");
-	if (print_ext_list(ep, 0, 4, 0)) {
+	if (print_ext_list(ep, 0, 2, 0)) {
 		rc = -1;
 		goto cleanup;
 	}
@@ -821,9 +865,9 @@ static int test_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep)
 	printf("FMAPI Initiate DC Release Success\n");
 
 cleanup:
-	free(rls_req);
-	if (add_req) {
-		free(add_req);
+	free(add_req);
+	if (rls_req) {
+		free(rls_req);
 	}
 	return rc;
 }
