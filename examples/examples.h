@@ -8,6 +8,7 @@
 #include <libcxlmi.h>
 
 #define MiB (1024 * 1024)
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 
 const uint8_t cel_uuid[0x10] = { 0x0d, 0xa9, 0xc0, 0xb5,
     0xbf, 0x41,
