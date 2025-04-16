@@ -661,27 +661,28 @@ static int get_num_dc_extents(struct cxlmi_endpoint *ep)
 	return rsp->total_extents;
 }
 
-static int test_fmapi_initiate_dc_add(struct cxlmi_endpoint *ep)
+static int test_fmapi_initiate_dc_add_and_release(struct cxlmi_endpoint *ep)
 {
 	int rc, curr_num_extents;
-	struct cxlmi_cmd_fmapi_initiate_dc_add_req* req = NULL;
+	struct cxlmi_cmd_fmapi_initiate_dc_add_req* add_req = NULL;
+	struct cxlmi_cmd_fmapi_initiate_dc_release_req* rls_req = NULL;
 
-	printf("0x5604: FMAPI Initiate DC Add \n");
-	req = calloc(1, sizeof(*req) + 1 * sizeof(req->extents[0]));
-	if (!req) {
+	printf("0x5604/0x5605: FMAPI Initiate DC Add/Release\n");
+	add_req = calloc(1, sizeof(*add_req) + 1 * sizeof(add_req->extents[0]));
+	if (!add_req) {
 		return -1;
 	}
 
-	req->host_id = 0;
-	req->selection_policy = CXL_EXTENT_SELECTION_POLICY_PRESCRIPTIVE;
-	req->length = 0;
-	req->ext_count = 1;
+	add_req->host_id = 0;
+	add_req->selection_policy = CXL_EXTENT_SELECTION_POLICY_PRESCRIPTIVE;
+	add_req->length = 0;
+	add_req->ext_count = 1;
 
-	req->extents[0].start_dpa = 0;
-	req->extents[0].len = 128 * MiB;
+	add_req->extents[0].start_dpa = 0;
+	add_req->extents[0].len = 128 * MiB;
 
 	printf("Sending Request to add 1 extent\n");
-	rc = cxlmi_cmd_fmapi_initiate_dc_add(ep, NULL, req);
+	rc = cxlmi_cmd_fmapi_initiate_dc_add(ep, NULL, add_req);
 	if (rc) {
 		rc = -1;
 		goto cleanup;
@@ -693,28 +694,15 @@ static int test_fmapi_initiate_dc_add(struct cxlmi_endpoint *ep)
 		rc = -1;
 		goto cleanup;
 	}
-	printf("FMAPI Initiate DC Add Success\n");
 	printf("Show Extents --\n");
 	if (print_ext_list(ep, 0, 2, 0)) {
 		rc = -1;
 	}
 
-cleanup:
-	free(req);
-	return rc;
-}
-
-static int test_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep)
-{
-	int rc, curr_num_extents;
-	struct cxlmi_cmd_fmapi_initiate_dc_release_req* rls_req = NULL;
-	struct cxlmi_cmd_fmapi_initiate_dc_add_req* add_req = NULL;
-
-	printf("0x5605: FMAPI Initiate DC Release \n");
-
 	rls_req = calloc(1, sizeof(*rls_req) + 2 * sizeof(rls_req->extents[0]));
 	if (!rls_req) {
-		return -1;
+		rc = -1;
+		goto cleanup;
 	}
 
 	printf("Attempt to release extent not backed by DPA\n");
@@ -804,12 +792,6 @@ static int test_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep)
 	 * Ext_0 = {[0 - 127] [128 - 255] [256 - 384]}
 	 */
 	printf("Add an extent that is 3 blocks long\n");
-	add_req = calloc(1, sizeof(*add_req) + 1 * sizeof(add_req->extents[0]));
-	if (!add_req) {
-		rc = -1;
-		goto cleanup;
-	}
-
 	add_req->host_id = 0;
 	add_req->selection_policy = CXL_EXTENT_SELECTION_POLICY_PRESCRIPTIVE;
 	add_req->length = 0;
@@ -862,7 +844,7 @@ static int test_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep)
 		goto cleanup;
 	}
 
-	printf("FMAPI Initiate DC Release Success\n");
+	printf("FMAPI Initiate DC Add/Release Success\n");
 
 cleanup:
 	free(add_req);
@@ -936,8 +918,7 @@ static int play_with_fmapi_dcd_management(struct cxlmi_endpoint *ep)
 		|| test_fmapi_get_host_dc_region_config(ep)
 		|| test_fmapi_set_dc_region_config(ep)
 		|| test_fmapi_get_dc_region_extent_list(ep)
-		|| test_fmapi_initiate_dc_add(ep)
-		|| test_fmapi_initiate_dc_release(ep)
+		|| test_fmapi_initiate_dc_add_and_release(ep)
 		|| test_fmapi_dc_add_reference(ep)
 		|| test_fmapi_dc_remove_reference(ep)
 		|| test_fmapi_dc_list_tags(ep)
