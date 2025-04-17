@@ -16,11 +16,11 @@ struct cxlmi_ctx;
 struct cxlmi_endpoint;
 
 /**
- * cxlmi_new_ctx() - Create top-level MI context handle.
+ * cxlmi_new_ctx() - Create top-level context handle.
  * @fp:		File descriptor for logging messages
  * @log_level:	Logging level to use (standard syslog)
  *
- * Create the top-level library handle for creating subsequent
+ * Create the top-level library handle for tracking subsequent
  * endpoint objects.
  *
  * Return: new context object, or NULL on failure.
@@ -43,7 +43,7 @@ void cxlmi_free_ctx(struct cxlmi_ctx *ctx);
  * @netid: MCTP network ID on this system
  * @eid: MCTP endpoint ID
  *
- * Transport-specific endpoint initialization for MI-connected endpoints.
+ * Transport-specific endpoint initialization for connected endpoints.
  *
  * Return: New endpoint object for @netid & @eid, or NULL on failure.
  *
@@ -53,11 +53,11 @@ struct cxlmi_endpoint *cxlmi_open_mctp(struct cxlmi_ctx *ctx,
 				       unsigned int net, uint8_t eid);
 
 /**
- * cxlmi_scan_mctp() - look for MCTP-connected CXL-MI endpoints.
+ * cxlmi_scan_mctp() - look for MCTP-connected CXL endpoints.
  * @ctx: library context object to create under
  *
  * Description: This function queries the system MCTP daemon ("mctpd") over
- * D-Bus, to find MCTP endpoints that report support for CXL-MI over MCTP.
+ * D-Bus, to find MCTP endpoints that report support for CXL over MCTP.
  *
  * This requires libcxlmi to be compiled with D-Bus support; if not, this
  * will return -1.
@@ -103,18 +103,18 @@ void cxlmi_close(struct cxlmi_endpoint *ep);
 void cxlmi_set_probe_enabled(struct cxlmi_ctx *ctx, bool enabled);
 
 /**
- * cxlmi_endpoint_get_timeout - get the current timeout value for CXL-MI
+ * cxlmi_endpoint_get_timeout - get the current timeout value for CXL
  * responses
- * @ep: MI endpoint object
+ * @ep: endpoint object
  *
  * Returns the current timeout value, in milliseconds, for this endpoint.
  */
 unsigned int cxlmi_endpoint_get_timeout(struct cxlmi_endpoint *ep);
 
 /**
- * cxlmi_endpoint_set_timeout - set a timeout for CXL-MI responses
- * @ep: MI endpoint object
- * @timeout_ms: Timeout for MI responses, given in milliseconds
+ * cxlmi_endpoint_set_timeout - set a timeout for CXL responses
+ * @ep: endpoint object
+ * @timeout_ms: Timeout for responses, given in milliseconds
  */
 int cxlmi_endpoint_set_timeout(struct cxlmi_endpoint *ep,
 			       unsigned int timeout_ms);
@@ -122,7 +122,7 @@ int cxlmi_endpoint_set_timeout(struct cxlmi_endpoint *ep,
 /**
  * cxlmi_endpoint_has_fmapi - determine whether or not the underlying
  * the library can send FM-API commands.
- * @ep: MI endpoint object
+ * @ep: endpoint object
  *
  * Returns true if the FM-API commands are accepted/supported by this
  * device (and is opened by the lib). Otherwise, false.
@@ -131,7 +131,7 @@ bool cxlmi_endpoint_has_fmapi(struct cxlmi_endpoint *ep);
 
 /**
  * cxlmi_endpoint_enable_fmapi - attempt to enable FM-API command set.
- * @ep: MI endpoint object
+ * @ep: endpoint object
  *
  * Allows FM-API commands to be used if supported by the underlying CXL
  * component. Only makes sense to use if probing was disabled previously.
@@ -142,7 +142,7 @@ bool cxlmi_endpoint_enable_fmapi(struct cxlmi_endpoint *ep);
 
 /**
  * cxlmi_endpoint_disable_fmapi - disable the FM-API command set.
- * @ep: MI endpoint object
+ * @ep: endpoint object
  *
  * Returns true if the FM-API commands are disabled, or false otherwise.
  **/
@@ -153,7 +153,7 @@ bool cxlmi_endpoint_disable_fmapi(struct cxlmi_endpoint *ep);
  * cxlmi_first_endpoint - Start endpoint iterator
  * @ctx: &cxlmi_ctx object
  *
- * Return: first MI endpoint object under this context, or NULL if no endpoints
+ * Return: first endpoint object under this context, or NULL if no endpoints
  *         are present. This library does not guarantee any order upon endpoint
  *         enumeration.
  *
@@ -166,7 +166,7 @@ struct cxlmi_endpoint *cxlmi_first_endpoint(struct cxlmi_ctx *ctx);
  * @ctx: &cxlmi_ctx object
  * @ep: &cxlmi_endpoint current position of iterator
  *
- * Return: next endpoint MI endpoint object after @e under this root, or NULL
+ * Return: next endpoint object after @e under this root, or NULL
  *         if no further endpoints are present.
  *
  * See: &cxlmi_first_endpoint, &cxlmi_for_each_endpoint
@@ -174,7 +174,7 @@ struct cxlmi_endpoint *cxlmi_first_endpoint(struct cxlmi_ctx *ctx);
  struct cxlmi_endpoint *cxlmi_next_endpoint(struct cxlmi_ctx *ctx,
 					    struct cxlmi_endpoint *ep);
 /**
- * cxlmi_for_each_endpoint - Iterator for CXL-MI endpoints.
+ * cxlmi_for_each_endpoint - Iterator for endpoints.
  * @m: &cxlmi_ctx containing endpoints
  * @e: &cxlmi_endpoint object, set on each iteration
  */
@@ -183,7 +183,7 @@ struct cxlmi_endpoint *cxlmi_first_endpoint(struct cxlmi_ctx *ctx);
 	     e = cxlmi_next_endpoint(m, e))
 
 /**
- * cxlmi_for_each_endpoint_safe - Iterator for CXL-MI endpoints, allowing
+ * cxlmi_for_each_endpoint_safe - Iterator for endpoints, allowing
  * deletion during traversal
  * @m: &cxlmi_ctx containing endpoints
  * @e: &cxlmi_endpoint object, set on each iteration
