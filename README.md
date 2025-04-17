@@ -98,7 +98,7 @@ information - otherwise, direct calls can simply pass NULL. The possible tunnel
 targets can be armed with the respective helper: `DEFINE_CXLMI_TUNNEL_SWITCH()`,
 which needs the port number to be passed, `DEFINE_CXLMI_TUNNEL_MLD()` which needs
 the LD id and `DEFINE_CXLMI_TUNNEL_SWITCH_MLD()`, which needs both for the
-respective inner and outter tunnels as arguments.
+respective inner and outer tunnels as arguments.
 
 1. Tunneling Commands to an MLD through a CXL Switch.
 
@@ -312,13 +312,16 @@ FAQ
 ===
 
 - How is this library different from ndctl's libcxl?
-`libcxlmi` aims to be a CXL swiss army knife to interact with CXL component(s)
+`libcxlmi` aims to be a CXL Swiss army knife to interact with CXL component(s)
 through CCI command(s), both in and out of band transports. The user is given
 full freedom to send any command to any device. `libcxl`, on the other hand,
 is very much tied to Linux, acting as wrappers for sysfs and ioctl interfaces,
 and hence provides more safety by the CXL driver itself.
 
-- What CXL version does this library support? Latest 3.1 version.
+- What CXL version does this library support? Similar to how qemu and the kernel
+driver work, libcxlmi loosely supports all versions of the CXL specification.
+While originally developed against 3.1, it also supports functionality from
+earlier (2.0) and later versions of CXL.
 
 
 Requirements
@@ -355,10 +358,34 @@ Alternatively, to configure for static libraries:
 ```
 meson setup --default-library=static build
 ```
-Also, to configure with dbus support  to enable MCTP scanning:
+Also, to configure with dbus support to enable MCTP scanning:
 ```
 meson setup -Dlibdbus=enabled build
 ```
+
+To configure a build for debugging purposes (i.e. optimization turned
+off and debug symbols enabled):
+
+```bash
+meson setup build --buildtype=debug
+```
+
+To enable address sanitizer (advanced debugging of memory issues):
+
+```bash
+meson setup build -Db_sanitize=address
+```
+
+This option adds `-fsanitize=address` to the gcc options.
+
+Note that when using the sanitize feature, the library `libasan.so` must be available and must be the very first library loaded when running an executable. If experiencing linking issues, you can ensure that `libasan.so` gets loaded first with the `LD_PRELOAD` environment variable as follows:
+
+```
+meson setup build -Db_sanitize=address && LD_PRELOAD=/lib64/libasan.so.6 ninja -C .build test
+```
+
+It's also possible to enable the undefined behavior sanitizer with `-Db_sanitize=undefined`. To enable both, use `-Db_sanitize=address,undefined`.
+
 
 2. Then compile it:
 ```
@@ -368,7 +395,10 @@ meson compile -C build
 ```
 meson install -C build
 ```
-
+4. To purge everything::
+```
+rm -rf build
+```
 
 Linking
 =======
@@ -380,10 +410,12 @@ and link with `-lcxlmi`.
 References
 ==========
 - This library has been influenced by cxl-fmapi-tests and libnvme(-mi).
-- CXL 3.1 Specification.
+- CXL Specifications.
 - CXL Type3 Device Component Command Interface over MCTP Binding Specification (DSP0281).
 - CXL Fabric Manager API over MCTP Binding Specification (DSP0324).
 
 Resources
 =========
 - [libcxlmi: CXL Management Interface library (LPC24)](https://lpc.events/event/18/contributions/1876/attachments/1441/3072/lpc24-dbueso-libcxlmi.pdf)
+
+- [How To Add a Command with an FMAPI DCD Example](https://github.com/computexpresslink/libcxlmi/blob/main/docs/How-To-Add-A-Command.md)
