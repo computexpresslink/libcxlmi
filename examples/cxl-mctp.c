@@ -592,41 +592,53 @@ static int test_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep)
 }
 
 static int print_ext_list(struct cxlmi_endpoint *ep,
-						uint16_t host_id,
-						uint32_t ext_cnt,
-						uint32_t start_ext_ind)
+                          uint16_t host_id,
+                          uint32_t ext_cnt,
+                          uint32_t start_ext_ind)
 {
-	int i, rc;
-	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req req;
-	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *rsp;
+    struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req req;
+    struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *rsp;
+    int i, rc, exts_returned = 0;
+    bool first = true;
 
-	req.host_id = host_id;
-	req.extent_count = ext_cnt;
-	req.start_ext_index = start_ext_ind;
+    req.host_id = host_id;
+    req.extent_count = ext_cnt;
+    req.start_ext_index = start_ext_ind;
 
-	rsp = calloc(1, sizeof(*rsp) + req.extent_count * sizeof(rsp->extents[0]));
+    rsp = calloc(1, sizeof(*rsp) + req.extent_count * sizeof(rsp->extents[0]));
 
-	if (!rsp) {
-		return -1;
-	}
+    if (!rsp) {
+        return -1;
+    }
 
-	rc = cxlmi_cmd_fmapi_get_dc_region_ext_list(ep, NULL, &req, rsp);
-	if (rc) {
-		rc = -1;
-		goto free_out;
-	}
+    do {
+        rc = cxlmi_cmd_fmapi_get_dc_region_ext_list(ep, NULL, &req, rsp);
+        if (rc) {
+            rc = -1;
+            goto free_out;
+        }
 
-	printf("\tHost Id: %hu\n", rsp->host_id);
-	printf("\tStarting Extent Index: %u\n", rsp->start_ext_index);
-	printf("\tNumber of Extents Returned: %u\n", rsp->extents_returned);
-	printf("\tTotal Extents: %u\n", rsp->total_extents);
-	printf("\tExtent List Generation Number: %u\n", rsp->list_generation_num);
+        if (first) {
+            ext_cnt = MIN(ext_cnt, rsp->total_extents);
+            printf("\tHost Id: %hu\n", rsp->host_id);
+            printf("\tStarting Extent Index: %u\n", rsp->start_ext_index);
+            printf("\tNumber of Extents Returned: %u\n", rsp->extents_returned);
+            printf("\tTotal Extents: %u\n", rsp->total_extents);
+            printf("\tExtent List Generation Number: %u\n", rsp->list_generation_num);
 
-	for (i = 0; i < rsp->extents_returned; i++) {
-		printf("\t\tExtent %d Info:\n", i);
-		printf("\t\t\tStart DPA: %lu\n", rsp->extents[i].start_dpa);
-		printf("\t\t\tLength: %lu\n", rsp->extents[i].len);
-	}
+            first = false;
+        }
+
+        for (i = 0; i < rsp->extents_returned; i++) {
+            printf("\t\tExtent %d Info:\n", rsp->start_ext_index + i);
+            printf("\t\t\tStart DPA: %lu\n", rsp->extents[i].start_dpa);
+            printf("\t\t\tLength: %lu\n", rsp->extents[i].len);
+        }
+
+        exts_returned += rsp->extents_returned;
+        req.start_ext_index += rsp->extents_returned;;
+        req.extent_count -= rsp->extents_returned;;
+    } while (exts_returned < ext_cnt);
 
 free_out:
 	free(rsp);
