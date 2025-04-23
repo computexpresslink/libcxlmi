@@ -314,7 +314,7 @@ struct cxlmi_endpoint {
 	bool has_fmapi;
 
 	struct list_node entry;
-	unsigned int timeout_ms;
+	int timeout_ms;
 	unsigned long quirks;
 
 	/* inter-command delay, for CXLMI_QUIRK_MIN_INTER_COMMAND_TIME */

@@ -191,13 +191,13 @@ static struct cxlmi_endpoint *init_endpoint(struct cxlmi_ctx *ctx)
 }
 
 static int mctp_check_timeout(struct cxlmi_endpoint *ep,
-			      unsigned int timeout_ms)
+			      int timeout_ms)
 {
 	return timeout_ms > MCTP_MAX_TIMEOUT;
 }
 
 CXLMI_EXPORT int cxlmi_endpoint_set_timeout(struct cxlmi_endpoint *ep,
-					    unsigned int timeout_ms)
+					    int timeout_ms)
 {
 	if (ep->transport_data) {
 		int rc;
@@ -241,17 +241,20 @@ CXLMI_EXPORT bool cxlmi_endpoint_enable_fmapi(struct cxlmi_endpoint *ep)
 		};
 
 		mctp->fmapi_sd = socket(AF_MCTP, SOCK_DGRAM, 0);
+		if (mctp->fmapi_sd < 0)
+			goto err;
 		if (bind(mctp->fmapi_sd, (struct sockaddr *)&fmapi_addr,
-			 sizeof(fmapi_addr))) {
-			cxlmi_msg(ep->ctx, LOG_INFO, "FM-API unsupported\n");
-			return false;
-		}
+			 sizeof(fmapi_addr)))
+			goto err;
 
 		mctp->fmapi_addr = fmapi_addr;
 	}
 
 	ep->has_fmapi = true;
 	return true;
+err:
+	cxlmi_msg(ep->ctx, LOG_INFO, "FM-API unsupported\n");
+	return false;
 }
 
 CXLMI_EXPORT bool cxlmi_endpoint_disable_fmapi(struct cxlmi_endpoint *ep)
@@ -286,7 +289,8 @@ CXLMI_EXPORT void cxlmi_close(struct cxlmi_endpoint *ep)
 		mctp_close(ep);
 		free(ep->transport_data);
 	} else {
-		close(ep->fd);
+		if (ep->fd > 0)
+			close(ep->fd);
 		if (ep->devname)
 			free(ep->devname);
 	}
@@ -1307,7 +1311,7 @@ static int handle_mctp_endpoint(struct cxlmi_ctx *ctx, const char* objpath,
 {
 	bool have_eid = false, have_net = false, have_cxlmi = false;
 	mctp_eid_t eid;
-	int net, rc;
+	int net, rc = 0;
 
 	/* for each property */
 	for (;;) {
