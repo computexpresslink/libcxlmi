@@ -144,12 +144,15 @@ static int test_ep_duplicates_mctp(unsigned int nid, int8_t eid)
 	int rc = 0, nerr = 0;
 
 	ctx = cxlmi_new_ctx(stdout, DEFAULT_LOGLEVEL);
-	if (!ctx)
+	if (!ctx) {
 		fprintf(stderr, "cannot create new context object\n");
+		return -1;
+	}
 
 	ep1 = cxlmi_open_mctp(ctx, nid, eid);
 	if (!ep1) {
 		fprintf(stderr, "cannot open endpoint\n");
+		goto free_ctx;
 	}
 
 	ep2 = cxlmi_open_mctp(ctx, nid, eid);
