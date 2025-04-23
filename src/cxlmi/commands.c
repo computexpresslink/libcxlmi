@@ -2186,7 +2186,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_ld_allocations(struct cxlmi_endpoint *ep,
 	req_pl->number_ld = in->number_ld;
 	req_pl->start_ld_id = in->start_ld_id;
 
-	for (i = 0; i < ret->number_ld; i++) {
+	for (i = 0; i < req_pl->number_ld; i++) {
 		req_pl->ld_allocation_list[i].range_1_allocation_mult =
 			cpu_to_le64(in->ld_allocation_list[i].range_1_allocation_mult);
 		req_pl->ld_allocation_list[i].range_2_allocation_mult =
