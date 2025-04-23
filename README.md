@@ -2,6 +2,8 @@
 
 CXL Management Interface library (libcxlmi).
 
+[<img src="https://scan.coverity.com/projects/31615/badge.svg">](https://scan.coverity.com/projects/computexpresslink-libcxlmi)
+
 CXL Management Interface utility library provides type definitions
 for CXL specification structures, enumerations and helper functions to
 construct, send and decode CCI commands and payloads over both
