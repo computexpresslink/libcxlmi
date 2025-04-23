@@ -427,7 +427,7 @@ exit:
 static int set_alert_config(struct cxlmi_endpoint *ep)
 {
         struct cxlmi_cmd_memdev_set_alert_config *req;
-        int rc;
+        int rc = -1;
         uint8_t alert_value = LUPWT;
         enum CXLAlertActions actions = LUPWT | DOTPWT | DUTPWT | CVMEPWT | CPMEPWT;
         req = calloc(1, sizeof(*req));
@@ -439,30 +439,30 @@ static int set_alert_config(struct cxlmi_endpoint *ep)
         while(alert_value < MAXALERT) {
                 if(actions & alert_value) {
                         switch (alert_value) {
-                                case LUPWT:
-                                        req->life_used_programmable_warning_threshold = CXL_LUPWT;
-                                        break;
-                                case DOTPWT:
-                                        req->device_over_temperature_programmable_warning_threshold = CXL_DOTPWT;
-                                        break;
-                                case DUTPWT:
-                                        req->device_under_temperature_programmable_warning_threshold = CXL_DUTPWT;
-                                        break;
-                                case CVMEPWT:
-                                        req->corrected_volatile_mem_error_programmable_warning_threshold = CXL_CVMEPWT;
-                                        break;
-                                case CPMEPWT:
-                                        req->corrected_persistent_mem_error_programmable_warning_threshold = CXL_CPMEPWT;
-                                        break;
-                                default:
-                                        printf("Invalid alert config\n");
-                                        return -1;
+			case LUPWT:
+				req->life_used_programmable_warning_threshold = CXL_LUPWT;
+				break;
+			case DOTPWT:
+				req->device_over_temperature_programmable_warning_threshold = CXL_DOTPWT;
+				break;
+			case DUTPWT:
+				req->device_under_temperature_programmable_warning_threshold = CXL_DUTPWT;
+				break;
+			case CVMEPWT:
+				req->corrected_volatile_mem_error_programmable_warning_threshold = CXL_CVMEPWT;
+				break;
+			case CPMEPWT:
+				req->corrected_persistent_mem_error_programmable_warning_threshold = CXL_CPMEPWT;
+				break;
+			default:
+				printf("Invalid alert config\n");
+				goto err;
                         }
                 }
                 alert_value <<=  1;
         }
         rc = cxlmi_cmd_memdev_set_alert_config(ep, NULL, req);
-
+err:
         free(req);
         return rc;
 }
