@@ -80,7 +80,7 @@ static int parse_supported_logs(struct cxlmi_cmd_get_supported_logs *pl,
 		if (j == 0x10)
 			printf("\tComponent State Dump Log available\n");
 	}
-	if (cel_size == 0) {
+	if (*cel_size == 0) {
 		return -1;
 	}
 	return 0;
@@ -116,7 +116,7 @@ done:
 	return rc;
 }
 
-static bool ep_supports_op(struct cxlmi_endpoint *ep, uint16_t opcode)
+static inline bool ep_supports_op(struct cxlmi_endpoint *ep, uint16_t opcode)
 {
 	int rc;
 	size_t cel_size;
