@@ -1372,6 +1372,92 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_secure_erase(struct cxlmi_endpoint *ep,
 			    &rsp, sizeof(rsp), sizeof(rsp));
 }
 
+CXLMI_EXPORT
+int cxlmi_cmd_memdev_media_operations_discovery(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_memdev_media_operations_discovery_req *in,
+			struct cxlmi_cmd_memdev_media_operations_discovery_rsp *ret)
+{
+	struct cxlmi_cmd_memdev_media_operations_discovery_req *req_pl;
+	struct cxlmi_cmd_memdev_media_operations_discovery_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int i, rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 12);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), SANITIZE, MEDIA_OPERATIONS);
+
+	req_pl = (struct cxlmi_cmd_memdev_media_operations_discovery_req *)req->payload;
+	req_pl->media_operation_class = in->media_operation_class;
+	req_pl->media_operation_subclass = in->media_operation_subclass;
+	req_pl->dpa_range_count = cpu_to_le32(in->dpa_range_count);
+	req_pl->discovery_osa.start_index = cpu_to_le16(in->discovery_osa.start_index);
+	req_pl->discovery_osa.num_ops = cpu_to_le16(in->discovery_osa.num_ops);
+
+	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_memdev_media_operations_discovery_rsp *)rsp->payload;
+	memset(ret, 0, sizeof(*ret));
+
+	ret->dpa_range_granularity = le64_to_cpu(rsp_pl->dpa_range_granularity);
+	ret->total_supported_ops = le16_to_cpu(rsp_pl->total_supported_ops);
+	ret->num_supported_ops = le16_to_cpu(rsp_pl->num_supported_ops);
+
+	for (i = 0; i < ret->num_supported_ops; i++) {
+		ret->entry[i].media_op_class = rsp_pl->entry[i].media_op_class;
+		ret->entry[i].media_op_subclass = rsp_pl->entry[i].media_op_subclass;
+	}
+
+	return rc;
+}
+
+CXLMI_EXPORT
+int cxlmi_cmd_memdev_media_operations_sanitize(struct cxlmi_endpoint *ep,
+			       struct cxlmi_tunnel_info *ti,
+			       struct cxlmi_cmd_memdev_media_operations_sanitize *in)
+{
+	struct cxlmi_cmd_memdev_media_operations_sanitize *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz;
+	int i;
+
+	req_sz = sizeof(*req) + sizeof(*in);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*in), SANITIZE, MEDIA_OPERATIONS);
+
+	req_pl = (struct cxlmi_cmd_memdev_media_operations_sanitize *)req->payload;
+	req_pl->media_operation_class = in->media_operation_class;
+	req_pl->media_operation_subclass = in->media_operation_subclass;
+	req_pl->dpa_range_count = cpu_to_le32(in->dpa_range_count);
+
+	for (i = 0; i < in->dpa_range_count; i++) {
+		req_pl->dpa_range_list[i].starting_dpa =
+			cpu_to_le64(in->dpa_range_list[i].starting_dpa);
+		req_pl->dpa_range_list[i].length =
+			cpu_to_le64(in->dpa_range_list[i].length);
+	}
+
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_get_security_state(struct cxlmi_endpoint *ep,
 				   struct cxlmi_tunnel_info *ti,
 				   struct cxlmi_cmd_memdev_get_security_state *ret)

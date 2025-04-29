@@ -396,6 +396,43 @@ struct cxlmi_cmd_get_scan_media_results {
 	struct cxlmi_media_error_record record[];
 } __attribute__((packed));
 
+/* CXL r3.2 Section 8.2.10.9.5.3 Media Operations (Opcode 4402h) */
+struct cxlmi_cmd_memdev_media_operations_discovery_req {
+	uint8_t media_operation_class;
+	uint8_t media_operation_subclass;
+	uint8_t rsvd[2];
+	uint32_t dpa_range_count;
+	struct {
+		uint16_t start_index;
+		uint16_t num_ops;
+	} __attribute__((packed)) discovery_osa;
+} __attribute__((packed));
+
+struct cxlmi_cmd_memdev_media_ops_supported_list_entry {
+	uint8_t media_op_class;
+	uint8_t media_op_subclass;
+} __attribute__((packed));
+
+struct cxlmi_cmd_memdev_media_operations_discovery_rsp {
+	uint64_t dpa_range_granularity;
+	uint16_t total_supported_ops;
+	uint16_t num_supported_ops;
+	struct cxlmi_cmd_memdev_media_ops_supported_list_entry entry[];
+} __attribute__((packed));
+
+struct cxlmi_cmd_memdev_media_ops_dpa_range_list_entry {
+    uint64_t starting_dpa;
+    uint64_t length;
+} __attribute__((packed));
+
+struct cxlmi_cmd_memdev_media_operations_sanitize {
+	uint8_t media_operation_class;
+	uint8_t media_operation_subclass;
+	uint8_t rsvd[2];
+	uint32_t dpa_range_count;
+	struct cxlmi_cmd_memdev_media_ops_dpa_range_list_entry dpa_range_list[];
+} __attribute__((packed));
+
 /* CXL r3.1 Section 8.2.9.9.6.1: Get Security State (Opcode 4500h) */
 struct cxlmi_cmd_memdev_get_security_state {
 	uint32_t security_state;

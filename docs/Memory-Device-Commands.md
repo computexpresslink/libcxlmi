@@ -25,6 +25,7 @@ command set, as per the latest specification.
 * [Sanitize and Media Operations (44h)](#sanitize-and-media-operations-44h)
    * [Sanitize (4400h)](#sanitize-4400h)
    * [Secure Erase (4401h)](#secure-erase-4401h)
+   * [Media Operations (4402h)](#media-operations-4402h)
 * [Persistent Memory Data-at-rest Security (45h)](#persistent-memory-data-at-rest-security-45h)
    * [Get Security State (4500h)](#get-security-state-4500h)
    * [Set Passphrase (4501h)](#set-passphrase-4501h)
@@ -46,7 +47,7 @@ command set, as per the latest specification.
    * [Release Dynamic Capacity (4803h)](#release-dynamic-capacity-4803h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Tue Apr 29 12:35:50 PM PDT 2025 -->
+<!-- Added by: dave, at: Tue Apr 29 02:00:20 PM PDT 2025 -->
 
 <!--te-->
 
@@ -458,6 +459,77 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_secure_erase(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti);
+   ```
+
+## Media Operations (4402h)
+
+The correct class and subclass must be passed as payload inputs for the corresponding
+discovery or sanitize operations, otherwise the payloads will not correspond to what
+the hardware expects.
+
+Discovery Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_media_operations_discovery_req {
+	uint8_t media_operation_class;
+	uint8_t media_operation_subclass;
+	uint8_t rsvd[2];
+	uint32_t dpa_range_count;
+	struct {
+		uint16_t start_index;
+		uint16_t num_ops;
+	} discovery_osa;
+};
+   ```
+
+Discovery Return payload:
+
+   ```C
+struct cxlmi_cmd_memdev_media_ops_supported_list_entry {
+	uint8_t media_op_class;
+	uint8_t media_op_subclass;
+};
+
+struct cxlmi_cmd_memdev_media_operations_discovery_rsp {
+	uint64_t dpa_range_granularity;
+	uint16_t total_supported_ops;
+	uint16_t num_supported_ops;
+	struct cxlmi_cmd_memdev_media_ops_supported_list_entry entry[];
+};
+   ```
+
+Discovery Command name:
+
+   ```C
+int cxlmi_cmd_memdev_media_operations_discovery(struct cxlmi_endpoint *ep,
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_memdev_media_operations_discovery_req *in,
+			struct cxlmi_cmd_memdev_media_operations_discovery_rsp *ret);
+   ```
+
+Sanitize Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_media_ops_dpa_range_list_entry {
+    uint64_t starting_dpa;
+    uint64_t length;
+};
+
+struct cxlmi_cmd_memdev_media_operations_sanitize {
+	uint8_t media_operation_class;
+	uint8_t media_operation_subclass;
+	uint8_t rsvd[2];
+	uint32_t dpa_range_count;
+	struct cxlmi_cmd_memdev_media_ops_dpa_range_list_entry dpa_range_list[];
+};
+   ```
+
+Sanitize Command name:
+
+   ```C
+int cxlmi_cmd_memdev_media_operations_sanitize(struct cxlmi_endpoint *ep,
+			       struct cxlmi_tunnel_info *ti,
+			       struct cxlmi_cmd_memdev_media_operations_sanitize *in);
    ```
 
 # Persistent Memory Data-at-rest Security (45h)
