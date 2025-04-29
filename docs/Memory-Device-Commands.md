@@ -19,6 +19,9 @@ command set, as per the latest specification.
    * [Get Poison List (4300h)](#get-poison-list-4300h)
    * [Inject Poison (4301h)](#inject-poison-4301h)
    * [Clear Poison (4302h)](#clear-poison-4302h)
+   * [Get Scan Media Capabilities (4303h)](#get-scan-media-capabilities-4303h)
+   * [Scan Media (4304h)](#scan-media-4304h)
+   * [Get Scan Media Results (4305h)](#get-scan-media-results-4305h)
 * [Sanitize and Media Operations (44h)](#sanitize-and-media-operations-44h)
    * [Sanitize (4400h)](#sanitize-4400h)
    * [Secure Erase (4401h)](#secure-erase-4401h)
@@ -29,17 +32,21 @@ command set, as per the latest specification.
    * [Unlock (4503h)](#unlock-4503h)
    * [Freeze Security State (4504h)](#freeze-security-state-4504h)
    * [Passphrase Secure Erase (4505h)](#passphrase-secure-erase-4505h)
+* [Security Passthrough (46h)](#security-passthrough-46h)
+   * [Security Send (4600h)](#security-send-4600h)
+   * [Security Receive (4601h)](#security-receive-4601h)
 * [SLD QoS Telemetry (47h)](#sld-qos-telemetry-47h)
    * [Get SLD QoS Control (4700h)](#get-sld-qos-control-4700h)
    * [Set SLD QoS Control (4701h)](#set-sld-qos-control-4701h)
    * [Get SLD QoS Status (4702h)](#get-sld-qos-status-4702h)
 * [Dynamic Capacity (48h)](#dynamic-capacity-48h)
+   * [Get Dynamic Capacity Configuration (4800h)](#get-dynamic-capacity-configuration-4800h)
    * [Get Dynamic Capacity Extent List (4801h)](#get-dynamic-capacity-extent-list-4801h)
    * [Add Dynamic Capacity Response (4802h)](#add-dynamic-capacity-response-4802h)
    * [Release Dynamic Capacity (4803h)](#release-dynamic-capacity-4803h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Thu Nov  7 02:09:25 PM PST 2024 -->
+<!-- Added by: dave, at: Tue Apr 29 12:35:50 PM PDT 2025 -->
 
 <!--te-->
 
@@ -561,6 +568,55 @@ Command name:
 int cxlmi_cmd_memdev_passphrase_secure_erase(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,
 			     struct cxlmi_cmd_memdev_passphrase_secure_erase *in);
+   ```
+
+# Security Passthrough (46h)
+
+The library currently supports only discovery Security Protocol per SFSC, and allows
+a maximum of 256 maximum protocols to be retrieved for each receive.
+
+## Security Send (4600h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_security_send {
+       uint8_t security_protocol;
+       uint16_t sp_specific;
+       uint8_t rsvd[0x5];
+       uint8_t data[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_security_send(struct cxlmi_endpoint *ep,
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_security_send *in);
+   ```
+
+## Security Receive (4601h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_memdev_security_receive {
+       uint8_t security_protocol;
+       uint16_t sp_specific;
+       uint8_t rsvd[0x5];
+};
+   ```
+
+Output payload: Generic pointer to the Security Protocol specific output data.
+
+Command name:
+
+   ```C
+int cxlmi_cmd_memdev_security_receive(struct cxlmi_endpoint *ep,
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_security_receive_req *in,
+			      void *ret);
    ```
 
 # SLD QoS Telemetry (47h)

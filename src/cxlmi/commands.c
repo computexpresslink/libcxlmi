@@ -4,6 +4,7 @@
  */
 #include <stdlib.h>
 
+#include <ccan/array_size/array_size.h>
 #include <ccan/endian/endian.h>
 
 #include <libcxlmi.h>
@@ -1517,6 +1518,106 @@ cxlmi_cmd_memdev_passphrase_secure_erase(struct cxlmi_endpoint *ep,
 	memcpy(req_pl->passphrase, in->passphrase, sizeof(in->passphrase));
 
 	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+CXLMI_EXPORT int
+cxlmi_cmd_memdev_security_send(struct cxlmi_endpoint *ep,
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_security_send *in)
+{
+       struct cxlmi_cmd_memdev_security_send *req_pl;
+       _cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+       struct cxlmi_cci_msg rsp;
+       size_t req_sz;
+       size_t in_data_size;
+       size_t full_in_payload_size;
+
+       in_data_size = struct_size(in, data, 0);
+
+       full_in_payload_size = sizeof(*in) + in_data_size;
+
+       req_sz = sizeof(*req) + full_in_payload_size;
+       req = calloc(1, req_sz);
+       if (!req)
+	       return -1;
+
+       arm_cci_request(ep, req, full_in_payload_size, SECURITY, SECURITY_SEND);
+
+       req_pl = (struct cxlmi_cmd_memdev_security_send *)req->payload;
+
+       req_pl->security_protocol = in->security_protocol;
+       req_pl->sp_specific = cpu_to_le16(in->sp_specific);
+       memcpy(req_pl->data, in->data, in_data_size);
+
+       return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+/*
+ * Security Passthrough is beyond the scope of this library and
+ * will not export supported protos to users.
+ * See Security Features for SCSI Commands (SFSC).
+ */
+static const struct {
+	uint8_t id;
+	const char *name;
+	size_t size;
+} sec_protos[] = {
+	{ 0x00, "Security protocol information",
+	  6 /* rsvd */ + 2 /* len */ + 256 /* arbitrary nr protos */},
+	/* { 0xea, "NVMe" }, */
+	/* { 0xec, "JEDEC Universal Flash Storage" }, */
+	/* { 0xed, "SDCard TrustedFlash Security" }, */
+	/* { 0xee, "IEEE 1667" }, */
+	/* { 0xef, "ATA Device Server Password Security" }, */
+};
+
+CXLMI_EXPORT int
+cxlmi_cmd_memdev_security_receive(struct cxlmi_endpoint *ep,
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_security_receive_req *in,
+			      void *ret)
+{
+	struct cxlmi_cmd_memdev_security_receive_req *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int i, rc = -1;
+	size_t proto_size = 0;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 8);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), SECURITY, SECURITY_RECEIVE);
+	req_pl = (struct cxlmi_cmd_memdev_security_receive_req *)req->payload;
+
+	req_pl->security_protocol = in->security_protocol;
+	req_pl->sp_specific = cpu_to_le16(in->sp_specific);
+
+	for (i = 0; i < ARRAY_SIZE(sec_protos); i++) {
+		if (sec_protos[i].id == req_pl->security_protocol) {
+			proto_size = sec_protos[i].size;
+			break;
+		}
+	}
+	if (!proto_size) /* unsupported */
+		return -1;
+
+	rsp_sz = sizeof(*rsp) + proto_size;
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	memcpy(ret, (void *)rsp->payload, proto_size);
+
+	return rc;
 }
 
 CXLMI_EXPORT int cxlmi_cmd_memdev_get_sld_qos_control(struct cxlmi_endpoint *ep,

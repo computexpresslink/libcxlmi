@@ -428,6 +428,21 @@ struct cxlmi_cmd_memdev_passphrase_secure_erase {
 	uint8_t passphrase[0x20];
 } __attribute__((packed));
 
+/* CXL r3.2 Section 8.2.10.9.7.1: Security Send Input Payload (Opcode 4600h) */
+struct cxlmi_cmd_memdev_security_send {
+       uint8_t security_protocol;
+       uint16_t sp_specific;
+       uint8_t rsvd[0x5];
+       uint8_t data[];
+} __attribute__((packed));
+
+/* CXL r3.2 Section 8.2.10.9.7.2: Security Receive Input Payload (Opcode 4601h) */
+struct cxlmi_cmd_memdev_security_receive_req {
+       uint8_t security_protocol;
+       uint16_t sp_specific;
+       uint8_t rsvd[0x5];
+} __attribute__((packed));
+
 /* CXL r3.1 Section 8.2.9.9.8.1: Get SLD QoS Control (Opcode 4700h) */
 struct cxlmi_cmd_memdev_get_sld_qos_control {
 	uint8_t qos_telemetry_control;

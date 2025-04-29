@@ -534,6 +534,14 @@ int cxlmi_cmd_memdev_sanitize(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_memdev_secure_erase(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti);
 
+int cxlmi_cmd_memdev_security_send(struct cxlmi_endpoint *ep,
+				   struct cxlmi_tunnel_info *ti,
+				   struct cxlmi_cmd_memdev_security_send *in);
+int cxlmi_cmd_memdev_security_receive(struct cxlmi_endpoint *ep,
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_security_receive_req *in,
+			      void *ret);
+
 int cxlmi_cmd_memdev_get_security_state(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
 				struct cxlmi_cmd_memdev_get_security_state *ret);
