@@ -441,6 +441,7 @@ static int build_tunnel_req(struct cxlmi_endpoint *ep, int port_or_ld,
 	struct cxlmi_cci_msg *req;
 	size_t t_req_sz = sizeof(*t_req) + payload_in_sz;
 	size_t req_sz = sizeof(*req) + t_req_sz;
+	int tag = 0x10; /* can start anywhere when not tracking */
 
 	req = calloc(1, req_sz);
 	if (!req)
@@ -448,7 +449,7 @@ static int build_tunnel_req(struct cxlmi_endpoint *ep, int port_or_ld,
 
 	*req = (struct cxlmi_cci_msg) {
 		.category = CXL_MCTP_CATEGORY_REQ,
-		.tag = mctp->tag++,
+		.tag = mctp ? mctp->tag++ : tag,
 		.command = MANAGEMENT_COMMAND,
 		.command_set = TUNNEL,
 		.vendor_ext_status = 0xabcd,
