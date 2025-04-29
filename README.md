@@ -85,11 +85,15 @@ for in each case, accessing particular structure members, for example.
 The names of both the functions to send commands and the CXL-defined payload
 data structures are the same, using a `cxlmi_cmd_[memdev|fmapi_]<cmdname>()`
 format. When there are input *and* output payloads, the `_req` and `_rsp`
-suffixes are needed, respectively, for the payload names. Naturally, `memdev`
-and `fmapi` corresponds to the respective command set, otherwise the command
-belongs to the Generic Component set. Vendor-specific commands can use
-`cxlmi_cmd_vendor_specific()` passing the opcode, along with any input and/or
-output buffers, with their respective sizes.
+suffixes are needed, respectively, for the payload names. When command payloads
+are generic such as for Logs and Security Passthrough, the payload return is
+simply a generic pointer, for which the user is expected to handle the buffer
+accordingly.
+
+Naturally, `memdev` and `fmapi` corresponds to the respective command set,
+otherwise the command belongs to the Generic Component set. Vendor-specific
+commands can use `cxlmi_cmd_vendor_specific()` passing the opcode, along with
+any input and/or output buffers, with their respective sizes.
 
 When sending any CXL command, the passed parameters, in addition to the
 corresponding endpoint and respective payload information, must indicate the
@@ -169,8 +173,8 @@ that is accessible through an MLD port of a CXL Switch.
 
    err = cxlmi_cmd_fmapi_get_multiheaded_info(ep, &ti, &req, rsp);
    if (!err) {
-           for (i = 0; i < rsp->ld_map_len; i++)
-	           /* do something with rsp->map[i] */
+	   for (i = 0; i < rsp->ld_map_len; i++)
+		   /* do something with rsp->map[i] */
    }
    ```
 
@@ -256,6 +260,9 @@ verify, when appropriate, against the `CXLMI_RET_BACKGROUND` value.
    }
    ```
 
+Note that CXL does not specify background contexts, so users polling for
+bg command completions can race with hardware starting a new command.
+
 FM-API Management
 -----------------
 By default, an endpoint will allow FM-API commands, *if* supported by the
@@ -292,8 +299,7 @@ the pieces.
 - Commands initiated on MCTP-based CCIs are not tracked across any component state
 change, such as Conventional Resets.
 
-- G-FAM devices (GFD) and multiple hosts are beyond the scope of this library,
-and therefore, unsupported.
+- G-FAM devices (GFD) and multiple hosts are currently unsupported.
 
 - CXL r3.1 + DMTF binding specs are not clear on what Message type is used for the
 generic command set - these can be issued to either a switch or a type 3 device.
@@ -381,10 +387,6 @@ meson setup build -Db_sanitize=address
 This option adds `-fsanitize=address` to the gcc options.
 
 Note that when using the sanitize feature, the library `libasan.so` must be available and must be the very first library loaded when running an executable. If experiencing linking issues, you can ensure that `libasan.so` gets loaded first with the `LD_PRELOAD` environment variable as follows:
-
-```
-meson setup build -Db_sanitize=address && LD_PRELOAD=/lib64/libasan.so.6 ninja -C .build test
-```
 
 It's also possible to enable the undefined behavior sanitizer with `-Db_sanitize=undefined`. To enable both, use `-Db_sanitize=address,undefined`.
 
