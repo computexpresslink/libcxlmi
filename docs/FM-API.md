@@ -6,6 +6,7 @@ command set, as per the latest specification.
    * [Identify Switch Device (5100h)](#identify-switch-device-5100h)
    * [Get Physical Port State (5101h)](#get-physical-port-state-5101h)
    * [Physical Port Control (5102h)](#physical-port-control-5102h)
+   * [Send PPB CXL.io Configuration Request (5103)](#send-ppb-cxlio-configuration-request-5103)
    * [Get Domain Validation SV State (5104h)](#get-domain-validation-sv-state-5104h)
    * [Set Domain Validation SV (5105h)](#set-domain-validation-sv-5105h)
    * [Get VCS Domain Validation SV State (5106h)](#get-vcs-domain-validation-sv-state-5106h)
@@ -15,6 +16,8 @@ command set, as per the latest specification.
    * [Unbind vPPB (5202)](#unbind-vppb-5202)
 * [MLD Port (53h)](#mld-port-53h)
    * [Tunnel Management Command (5300h)](#tunnel-management-command-5300h)
+   * [Send LD CXL.io Configuration Request (5301h)](#send-ld-cxlio-configuration-request-5301h)
+   * [Send LD CXL.io Memory Request (5302h)](#send-ld-cxlio-memory-request-5302h)
 * [MLD Components (54h)](#mld-components-54h)
    * [Get LD Info (5400h)](#get-ld-info-5400h)
    * [Get LD Allocations (5401h)](#get-ld-allocations-5401h)
@@ -41,7 +44,7 @@ command set, as per the latest specification.
    * [DC List Tags (5608h)](#dc-list-tags-5608h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Wed Apr 30 01:31:16 PM PDT 2025 -->
+<!-- Added by: dave, at: Wed Apr 30 05:02:19 PM PDT 2025 -->
 
 <!--te-->
 
@@ -138,6 +141,35 @@ Command name:
 int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
 				 struct cxlmi_cmd_fmapi_phys_port_control *in);
+   ```
+
+## Send PPB CXL.io Configuration Request (5103)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_req {
+	uint8_t ppb_id;
+	uint8_t field_1[0x3];
+	uint32_t transaction_data;
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_rsp {
+	uint32_t return_data;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_send_ppb_cxlio_config_request(struct cxlmi_endpoint *ep,
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_req *in,
+				  struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_rsp *ret);
    ```
 
 ## Get Domain Validation SV State (5104h)
@@ -321,6 +353,71 @@ DEFINE_CXLMI_TUNNEL_SWITCH_MLD(name, port, ld)
  * @name: tunnel variable name
  */
 DEFINE_CXLMI_TUNNEL_MHD(name)
+   ```
+
+## Send LD CXL.io Configuration Request (5301h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_req {
+	uint8_t ppb_id;
+	uint8_t field_1[0x3];
+	uint16_t ld_id;
+	uint8_t rsvd[0x2];
+	uint32_t transaction_data;
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_rsp {
+	uint32_t return_data;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_send_ld_cxlio_config_request(struct cxlmi_endpoint *ep,
+			 struct cxlmi_tunnel_info *ti,
+			 struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_req *in,
+			 struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_rsp *ret);
+   ```
+
+## Send LD CXL.io Memory Request (5302h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_req {
+	uint8_t port_id;
+	uint8_t field_1[0x2];
+	uint16_t ld_id;
+	uint16_t transaction_len;
+	uint16_t transaction_addr;
+	uint8_t transaction_data[];
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_rsp {
+	uint16_t return_size;
+	uint8_t rsvd[0x2];
+	uint8_t return_data[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_send_ld_cxlio_mem_request(struct cxlmi_endpoint *ep,
+			 struct cxlmi_tunnel_info *ti,
+			 struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_req *in,
+			 struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_rsp *ret);
    ```
 
 # MLD Components (54h)

@@ -606,6 +606,10 @@ int cxlmi_cmd_fmapi_get_phys_port_state(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_phys_port_control *in);
+int cxlmi_cmd_fmapi_send_ppb_cxlio_config_request(struct cxlmi_endpoint *ep,
+			  struct cxlmi_tunnel_info *ti,
+			  struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_req *in,
+			  struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_rsp *ret);
 int cxlmi_cmd_fmapi_get_domain_validation_sv_state(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_domain_validation_sv_state *ret);
@@ -626,6 +630,16 @@ int cxlmi_cmd_fmapi_bind_vppb(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_fmapi_unbind_vppb(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_unbind_vppb *in);
+
+int cxlmi_cmd_fmapi_send_ld_cxlio_config_request(struct cxlmi_endpoint *ep,
+			 struct cxlmi_tunnel_info *ti,
+			 struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_req *in,
+			 struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_rsp *ret);
+int cxlmi_cmd_fmapi_send_ld_cxlio_mem_request(struct cxlmi_endpoint *ep,
+			 struct cxlmi_tunnel_info *ti,
+			 struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_req *in,
+			 struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_rsp *ret);
+
 int cxlmi_cmd_fmapi_get_ld_info(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_ld_info *ret);

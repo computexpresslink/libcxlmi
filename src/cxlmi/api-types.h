@@ -620,6 +620,17 @@ struct cxlmi_cmd_fmapi_phys_port_control {
 	uint8_t port_opcode;
 } __attribute__((packed));
 
+/* CXL r3.2 Section 7.6.7.1.4: Send PPB CXL.io Configuration Request (Opcode 5103h) */
+struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_req {
+	uint8_t ppb_id;
+	uint8_t field_1[0x3];
+	uint32_t transaction_data;
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_rsp {
+	uint32_t return_data;
+} __attribute__((packed));
+
 /* CXL r3.1 Section 7.6.7.1.5: Get Domain Validation SV State (Opcode 5104h) */
 struct cxlmi_cmd_fmapi_get_domain_validation_sv_state {
 	uint8_t secret_value_state;
@@ -662,6 +673,35 @@ struct cxlmi_cmd_fmapi_unbind_vppb {
 	uint8_t vcs_id;
 	uint8_t vppb_id;
 	uint8_t option;
+} __attribute__((packed));
+
+/* CXL r3.2 Section 7.6.7.3.2: Send LD CXL.io Configuration Request (Opcode 5301h) */
+struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_req {
+	uint8_t ppb_id;
+	uint8_t field_1[0x3];
+	uint16_t ld_id;
+	uint8_t rsvd[0x2];
+	uint32_t transaction_data;
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_rsp {
+	uint32_t return_data;
+} __attribute__((packed));
+
+/* CXL r3.2 Section 7.6.7.3.3: Send LD CXL.io Memory Request (Opcode 5302h) */
+struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_req {
+	uint8_t port_id;
+	uint8_t field_1[0x2];
+	uint16_t ld_id;
+	uint16_t transaction_len;
+	uint16_t transaction_addr;
+	uint8_t transaction_data[];
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_rsp {
+	uint16_t return_size;
+	uint8_t rsvd[0x2];
+	uint8_t return_data[];
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.4.1: Get LD Info (Opcode 5400h) */

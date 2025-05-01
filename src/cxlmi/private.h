@@ -255,6 +255,7 @@ enum {
 	#define IDENTIFY_SWITCH_DEVICE      0x0
 	#define GET_PHYSICAL_PORT_STATE     0x1
 	#define PHYSICAL_PORT_CONTROL       0x2
+	#define SEND_PPB_CXLIO_CONFIG_REQ   0x3
 	#define GET_DOMAIN_VALIDATION_SV_STATE     0x4
 	#define SET_DOMAIN_VALIDATION_SV           0x5
 	#define GET_VCS_DOMAIN_VALIDATION_SV_STATE 0x6
@@ -262,8 +263,10 @@ enum {
 	VIRTUAL_SWITCH = 0x52,
 	#define BIND_VPPB     0x1
 	#define UNBIND_VPPB   0x2
-    TUNNEL = 0x53,
-	#define MANAGEMENT_COMMAND     0x0
+    MLD_PORT = 0x53,
+	#define TUNNEL_MANAGEMENT_COMMAND     0x0
+	#define SEND_LD_CXLIO_CONFIG_REQ      0x1
+	#define SEND_LD_CXLIO_MEM_REQ         0x2
     MLD_COMPONENTS = 0x54,
 	#define GET_LD_INFO            0x0
 	#define GET_LD_ALLOCATIONS     0x1

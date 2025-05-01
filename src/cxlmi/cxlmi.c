@@ -450,8 +450,8 @@ static int build_tunnel_req(struct cxlmi_endpoint *ep, int port_or_ld,
 	*req = (struct cxlmi_cci_msg) {
 		.category = CXL_MCTP_CATEGORY_REQ,
 		.tag = mctp ? mctp->tag++ : tag,
-		.command = MANAGEMENT_COMMAND,
-		.command_set = TUNNEL,
+		.command = TUNNEL_MANAGEMENT_COMMAND,
+		.command_set = MLD_PORT,
 		.vendor_ext_status = 0xabcd,
 		.pl_length = {
 			t_req_sz & 0xff,
@@ -1040,7 +1040,7 @@ static bool cxlmi_cmd_is_fmapi(int cmdset)
 {
 	switch(cmdset) {
 	case PHYSICAL_SWITCH:
-	case TUNNEL:
+	case MLD_PORT:
 	case MHD:
 	case DCD_MANAGEMENT:
 		return true;

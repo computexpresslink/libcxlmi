@@ -5,6 +5,7 @@
 #include <stdlib.h>
 
 #include <ccan/array_size/array_size.h>
+#include <ccan/minmax/minmax.h>
 #include <ccan/endian/endian.h>
 
 #include <libcxlmi.h>
@@ -2062,6 +2063,50 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
 	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
 }
 
+CXLMI_EXPORT
+int cxlmi_cmd_fmapi_send_ppb_cxlio_config_request(struct cxlmi_endpoint *ep,
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_req *in,
+				  struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_req *req_pl;
+	struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 8);
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 4);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl),
+			PHYSICAL_SWITCH, SEND_PPB_CXLIO_CONFIG_REQ);
+	req_pl = (struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_req *)req->payload;
+
+	req_pl->ppb_id = in->ppb_id;
+	memcpy(req_pl->field_1, in->field_1, sizeof(in->field_1));
+	req_pl->transaction_data = cpu_to_le32(in->transaction_data);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_rsp *)rsp->payload;
+	ret->return_data = le32_to_cpu(rsp_pl->return_data);
+
+	return rc;
+}
+
 CXLMI_EXPORT int
 cxlmi_cmd_fmapi_get_domain_validation_sv_state(struct cxlmi_endpoint *ep,
 			    struct cxlmi_tunnel_info *ti,
@@ -2262,6 +2307,98 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_unbind_vppb(struct cxlmi_endpoint *ep,
 	req_pl->option = in->option;
 
 	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+}
+
+CXLMI_EXPORT
+int cxlmi_cmd_fmapi_send_ld_cxlio_config_request(struct cxlmi_endpoint *ep,
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_req *in,
+				  struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_req *req_pl;
+	struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	int rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 12);
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 4);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), MLD_PORT, SEND_LD_CXLIO_CONFIG_REQ);
+	req_pl = (struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_req *)req->payload;
+
+	req_pl->ppb_id = in->ppb_id;
+	memcpy(req_pl->field_1, in->field_1, sizeof(in->field_1));
+	req_pl->ld_id = cpu_to_le16(in->ld_id);
+	req_pl->transaction_data = cpu_to_le32(in->transaction_data);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_send_ld_cxlio_config_request_rsp *)rsp->payload;
+	ret->return_data = le32_to_cpu(rsp_pl->return_data);
+
+	return rc;
+}
+
+CXLMI_EXPORT
+int cxlmi_cmd_fmapi_send_ld_cxlio_mem_request(struct cxlmi_endpoint *ep,
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_req *in,
+				  struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_rsp *ret)
+{
+	struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_req *req_pl;
+	struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+	uint16_t datalen;
+	int rc = -1;
+
+	/* 4KB maximum */
+	datalen = min(in->transaction_len, 0x1000);
+
+	req_sz = sizeof(*req_pl) + sizeof(*req) + datalen;
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), MLD_PORT, SEND_LD_CXLIO_MEM_REQ);
+	req_pl = (struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_req *)req->payload;
+
+	req_pl->port_id = in->port_id;
+	memcpy(req_pl->field_1, in->field_1, sizeof(in->field_1));
+	req_pl->ld_id = cpu_to_le16(in->ld_id);
+	req_pl->transaction_len = cpu_to_le16(in->transaction_len);
+	req_pl->transaction_addr = cpu_to_le16(in->transaction_addr);
+	memcpy(req_pl->transaction_data, in->transaction_data, datalen);
+
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) + datalen;
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_rsp *)rsp->payload;
+	ret->return_size = le16_to_cpu(rsp_pl->return_size);
+	memcpy(ret->return_data, rsp_pl->return_data, ret->return_size);
+
+	return rc;
 }
 
 CXLMI_EXPORT int cxlmi_cmd_fmapi_get_ld_info(struct cxlmi_endpoint *ep,
