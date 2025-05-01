@@ -2271,7 +2271,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_bind_vppb(struct cxlmi_endpoint *ep,
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(req_pl), VIRTUAL_SWITCH, BIND_VPPB);
+	arm_cci_request(ep, req, sizeof(*req_pl), VIRTUAL_SWITCH, BIND_VPPB);
 
 	req_pl = (struct cxlmi_cmd_fmapi_bind_vppb *)req->payload;
 	req_pl->vcs_id = in->vcs_id;
@@ -2299,7 +2299,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_unbind_vppb(struct cxlmi_endpoint *ep,
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(req_pl), VIRTUAL_SWITCH, UNBIND_VPPB);
+	arm_cci_request(ep, req, sizeof(*req_pl), VIRTUAL_SWITCH, UNBIND_VPPB);
 
 	req_pl = (struct cxlmi_cmd_fmapi_unbind_vppb *)req->payload;
 	req_pl->vcs_id = in->vcs_id;
