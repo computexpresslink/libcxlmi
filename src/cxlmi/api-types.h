@@ -784,6 +784,30 @@ struct cxlmi_cmd_fmapi_get_multiheaded_info_rsp {
 	uint8_t ld_map[];
 } __attribute__((packed));
 
+/* CXL r3.2 Section 7.6.7.5.2: Get Head Info (Opcode 5501h) */
+struct cxlmi_cmd_fmapi_get_head_info_req {
+	uint8_t start_head;
+	uint8_t num_heads;
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_get_head_info_blkfmt {
+	uint8_t port_num;
+	uint8_t field_1; /* max link width */
+	uint8_t field_2; /* negotiated link width */
+	uint8_t field_3; /* supported link speed vector */
+	uint8_t field_4; /* max link speed */
+	uint8_t field_5; /* current link speed */
+	uint8_t ltssm_state;
+	uint8_t first_negotiated_lane_num;
+	uint8_t link_state_flags;
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_get_head_info_rsp {
+	uint8_t num_heads;
+	uint8_t rsvd[0x3];
+	struct cxlmi_cmd_fmapi_get_head_info_blkfmt head_info_list[];
+} __attribute__((packed));
+
 /* CXL r3.2 Section 7.6.7.6.1: Get DCD Info (Opcode 5600h) */
 struct cxlmi_cmd_fmapi_get_dcd_info {
 	uint8_t num_hosts;

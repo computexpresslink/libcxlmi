@@ -277,6 +277,7 @@ enum {
 	#define SET_QOS_BW_LIMIT       0x9
     MHD = 0x55,
 	#define GET_MHD_INFO 0x0
+	#define GET_HEAD_INFO 0x1
     DCD_MANAGEMENT = 0x56,
 	#define GET_DCD_INFO                0x0
 	#define GET_HOST_DC_REGION_CONFIG   0x1

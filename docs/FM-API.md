@@ -28,6 +28,7 @@ command set, as per the latest specification.
    * [Set QoS BW Limit (5409h)](#set-qos-bw-limit-5409h)
 * [Multi-Headed Devices (55h)](#multi-headed-devices-55h)
    * [Get Multi-Headed Info (5500h)](#get-multi-headed-info-5500h)
+   * [Get Head Info (5501h)](#get-head-info-5501h)
 * [DCD Management (56h)](#dcd-management-56h)
    * [Get DCD Info (5600h)](#get-dcd-info-5600h)
    * [Get Host DC Region Config (5601h)](#get-host-dc-region-config-5601h)
@@ -40,7 +41,7 @@ command set, as per the latest specification.
    * [DC List Tags (5608h)](#dc-list-tags-5608h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
-<!-- Added by: dave, at: Mon Jan 27 09:31:27 PM PST 2025 -->
+<!-- Added by: dave, at: Wed Apr 30 01:31:16 PM PDT 2025 -->
 
 <!--te-->
 
@@ -615,6 +616,48 @@ int cxlmi_cmd_fmapi_get_multiheaded_info(struct cxlmi_endpoint *ep,
 			 struct cxlmi_tunnel_info *ti,
 			 struct cxlmi_cmd_fmapi_get_multiheaded_info_req *in,
 			 struct cxlmi_cmd_fmapi_get_multiheaded_info_rsp *ret);
+  ```
+
+## Get Head Info (5501h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_head_info_req {
+       uint8_t start_head;
+       uint8_t num_heads;
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_head_info_blkfmt {
+	uint8_t port_num;
+	uint8_t field_1; /* max link width */
+	uint8_t field_2; /* negotiated link width */
+	uint8_t field_3; /* supported link speed vector */
+	uint8_t field_4; /* max link speed */
+	uint8_t field_5; /* current link speed */
+	uint8_t ltssm_state;
+	uint8_t first_negotiated_lane_num;
+	uint8_t link_state_flags;
+};
+
+struct cxlmi_cmd_fmapi_get_head_info_rsp {
+	uint8_t num_heads;
+	uint8_t rsvd[0x3];
+	struct cxlmi_cmd_fmapi_get_head_info_blkfmt head_info_list[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_head_info(struct cxlmi_endpoint *ep,
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_fmapi_get_head_info_req *in,
+				  struct cxlmi_cmd_fmapi_get_head_info_rsp *ret)
   ```
 
 # DCD Management (56h)
