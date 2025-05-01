@@ -1,4 +1,5 @@
 name: CI-Coverity-Scan
+
 on:
   push:
     branches: [ main ]
@@ -8,18 +9,26 @@ on:
 
 jobs:
   build:
-    runs-on: [ ubuntu-latest ]
+    runs-on: ubuntu-latest
+
+    # Permissions for the GITHUB_TOKEN
     permissions:
-      contents: read          # allow actions/checkout to read the repo
-      pull-requests: write    # allow the scan action to post PR comments
+      contents: read          # Allow actions/checkout to read the repo
+      pull-requests: write    # Allow the scan action to post PR comments
+
     steps:
+      # Step 1: Check out the repository code
       - name: Checkout Source
-	uses: actions/checkout@v4
+        uses: actions/checkout@v4
+
+      # Step 2: Run the Coverity Security Scan
       - name: Coverity Security Scan
-  	uses: blackduck-inc/black-duck-security-scan@v2.1.1      
-	with:
-	  coverity_url: ${{ vars.COVERITY_URL }}
-	  coverity_user: ${{ vars.COVERITY_USER }}
-	  coverity_passphrase: ${{ secrets.COVERITY_PASSPHRASE }}
-	  coverity_prComment_enabled: true
-	  github_token: ${{ secrets.GITHUB_TOKEN }}
+        uses: blackduck-inc/black-duck-security-scan@v2.1.1
+        with:
+          coverity_url: ${{ vars.COVERITY_URL }}
+          coverity_user: ${{ vars.COVERITY_USER }}
+          coverity_passphrase: ${{ secrets.COVERITY_PASSPHRASE }}
+
+          # Enable posting comments on Pull Requests
+          coverity_prComment_enabled: true
+          github_token: ${{ secrets.GITHUB_TOKEN }}
