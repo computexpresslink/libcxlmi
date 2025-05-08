@@ -662,6 +662,7 @@ static int get_num_dc_extents(struct cxlmi_endpoint *ep)
 		.start_ext_index = 0
 	};
 	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *rsp;
+	int rc;
 
 	rsp = calloc(1, sizeof(*rsp));
 	if (!rsp) {
@@ -669,10 +670,15 @@ static int get_num_dc_extents(struct cxlmi_endpoint *ep)
 	}
 
 	if (cxlmi_cmd_fmapi_get_dc_region_ext_list(ep, NULL, &req, rsp)) {
-		return -1;
+		rc = -1;
+		goto free_out;
 	}
 
-	return rsp->total_extents;
+	rc = rsp->total_extents;
+
+free_out:
+	free(rsp);
+	return rc;
 }
 
 static int test_fmapi_initiate_dc_add_and_release(struct cxlmi_endpoint *ep)
