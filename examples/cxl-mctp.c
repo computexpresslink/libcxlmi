@@ -561,9 +561,11 @@ static int test_fmapi_get_host_dc_region_config(struct cxlmi_endpoint *ep)
 
 	for (i = 0; i < dc_region_config_rsp->regions_returned; i++) {
 		printf("\t\tRegion %d:\n", i);
-		printf("\t\t\tBase: %lu\n", dc_region_config_rsp->region_configs->base);
-		printf("\t\t\tBlk_sz: %lu\n", dc_region_config_rsp->region_configs->block_size);
-		printf("\t\t\tLen: %lu\n", dc_region_config_rsp->region_configs->region_len);
+		printf("\t\t\tBase: %lu\n", dc_region_config_rsp->region_configs[i].base);
+		printf("\t\t\tBlk_sz: %lu\n", dc_region_config_rsp->region_configs[i].block_size);
+		printf("\t\t\tLen: %lu\n", dc_region_config_rsp->region_configs[i].region_len);
+		printf("\t\t\tDecode_len: %lu\n", dc_region_config_rsp->region_configs[i].decode_len);
+		printf("\t\t\tFlags: %hhu\n", dc_region_config_rsp->region_configs[i].flags);
 	}
 
 free_out:
