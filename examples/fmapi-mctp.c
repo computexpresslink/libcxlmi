@@ -290,6 +290,7 @@ static int split_cmd_to_argv(char* cmd, char*** argvp)
             for (i = 0; i < argc; i++) {
                 free(argv[argc]);
             }
+            free(cmd_cpy);
             free(argv);
             return -1;
         }
