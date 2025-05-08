@@ -876,7 +876,9 @@ cleanup:
 
 static int test_fmapi_dc_add_reference(struct cxlmi_endpoint *ep)
 {
-	struct cxlmi_cmd_fmapi_dc_add_ref req;
+	struct cxlmi_cmd_fmapi_dc_add_ref req = {
+		.tag = {0}
+	};
 
 	printf("0x5606: FMAPI DC Add Reference\n");
 	if (cxlmi_cmd_fmapi_dc_add_reference(ep, NULL, &req)) {
