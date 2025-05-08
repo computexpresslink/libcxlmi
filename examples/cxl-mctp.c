@@ -892,7 +892,9 @@ static int test_fmapi_dc_add_reference(struct cxlmi_endpoint *ep)
 
 static int test_fmapi_dc_remove_reference(struct cxlmi_endpoint *ep)
 {
-	struct cxlmi_cmd_fmapi_dc_remove_ref req;
+	struct cxlmi_cmd_fmapi_dc_remove_ref req = {
+		.tag = {0}
+	};
 
 	printf("0x5607: FMAPI DC Remove Reference\n");
 	if (cxlmi_cmd_fmapi_dc_remove_reference(ep, NULL, &req)) {
