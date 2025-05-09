@@ -561,9 +561,11 @@ static int test_fmapi_get_host_dc_region_config(struct cxlmi_endpoint *ep)
 
 	for (i = 0; i < dc_region_config_rsp->regions_returned; i++) {
 		printf("\t\tRegion %d:\n", i);
-		printf("\t\t\tBase: %lu\n", dc_region_config_rsp->region_configs->base);
-		printf("\t\t\tBlk_sz: %lu\n", dc_region_config_rsp->region_configs->block_size);
-		printf("\t\t\tLen: %lu\n", dc_region_config_rsp->region_configs->region_len);
+		printf("\t\t\tBase: %lu\n", dc_region_config_rsp->region_configs[i].base);
+		printf("\t\t\tBlk_sz: %lu\n", dc_region_config_rsp->region_configs[i].block_size);
+		printf("\t\t\tLen: %lu\n", dc_region_config_rsp->region_configs[i].region_len);
+		printf("\t\t\tDecode_len: %lu\n", dc_region_config_rsp->region_configs[i].decode_len);
+		printf("\t\t\tFlags: %hhu\n", dc_region_config_rsp->region_configs[i].flags);
 	}
 
 free_out:
@@ -660,6 +662,7 @@ static int get_num_dc_extents(struct cxlmi_endpoint *ep)
 		.start_ext_index = 0
 	};
 	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *rsp;
+	int rc;
 
 	rsp = calloc(1, sizeof(*rsp));
 	if (!rsp) {
@@ -667,10 +670,15 @@ static int get_num_dc_extents(struct cxlmi_endpoint *ep)
 	}
 
 	if (cxlmi_cmd_fmapi_get_dc_region_ext_list(ep, NULL, &req, rsp)) {
-		return -1;
+		rc = -1;
+		goto free_out;
 	}
 
-	return rsp->total_extents;
+	rc = rsp->total_extents;
+
+free_out:
+	free(rsp);
+	return rc;
 }
 
 static int test_fmapi_initiate_dc_add_and_release(struct cxlmi_endpoint *ep)
@@ -868,7 +876,9 @@ cleanup:
 
 static int test_fmapi_dc_add_reference(struct cxlmi_endpoint *ep)
 {
-	struct cxlmi_cmd_fmapi_dc_add_ref req;
+	struct cxlmi_cmd_fmapi_dc_add_ref req = {
+		.tag = {0}
+	};
 
 	printf("0x5606: FMAPI DC Add Reference\n");
 	if (cxlmi_cmd_fmapi_dc_add_reference(ep, NULL, &req)) {
@@ -882,7 +892,9 @@ static int test_fmapi_dc_add_reference(struct cxlmi_endpoint *ep)
 
 static int test_fmapi_dc_remove_reference(struct cxlmi_endpoint *ep)
 {
-	struct cxlmi_cmd_fmapi_dc_remove_ref req;
+	struct cxlmi_cmd_fmapi_dc_remove_ref req = {
+		.tag = {0}
+	};
 
 	printf("0x5607: FMAPI DC Remove Reference\n");
 	if (cxlmi_cmd_fmapi_dc_remove_reference(ep, NULL, &req)) {
