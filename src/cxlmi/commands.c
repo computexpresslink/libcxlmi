@@ -113,12 +113,14 @@ CXLMI_EXPORT int cxlmi_cmd_get_response_msg_limit(struct cxlmi_endpoint *ep,
 
 CXLMI_EXPORT int cxlmi_cmd_set_response_msg_limit(struct cxlmi_endpoint *ep,
 					  struct cxlmi_tunnel_info *ti,
-					  struct cxlmi_cmd_set_response_msg_limit *in)
+					  struct cxlmi_cmd_set_response_msg_limit *in,
+					  struct cxlmi_cmd_set_response_msg_limit *ret)
 {
 	struct cxlmi_cmd_get_response_msg_limit *req_pl;
+	struct cxlmi_cmd_set_response_msg_limit *rsp_pl;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
-	struct cxlmi_cci_msg rsp;
-	size_t req_sz;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	size_t req_sz, rsp_sz;
 	int rc = 0;
 
 	CXLMI_BUILD_BUG_ON(sizeof(*in) != 1);
@@ -133,7 +135,18 @@ CXLMI_EXPORT int cxlmi_cmd_set_response_msg_limit(struct cxlmi_endpoint *ep,
 	req_pl = (struct cxlmi_cmd_get_response_msg_limit *)req->payload;
 	req_pl->limit = in->limit;
 
-	rc = send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_set_response_msg_limit *)rsp->payload;
+	ret->limit = rsp_pl->limit;
 	return rc;
 }
 

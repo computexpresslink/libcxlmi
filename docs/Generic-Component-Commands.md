@@ -104,13 +104,21 @@ struct cxlmi_cmd_set_response_msg_limit {
 	uint8_t limit;
 };
    ```
+Return payload:
+
+   ```C
+struct cxlmi_cmd_set_response_msg_limit {
+	uint8_t limit;
+};
+   ```
 
 Command name:
 
    ```C
 int cxlmi_cmd_set_response_msg_limit(struct cxlmi_endpoint *ep,
 					 struct cxlmi_tunnel_info *ti,
-					 struct cxlmi_cmd_set_response_msg_limit *in);
+					 struct cxlmi_cmd_set_response_msg_limit *in,
+					 struct cxlmi_cmd_set_response_msg_limit *ret);
    ```
 
 ## Request Abort Background Operation (0005h)

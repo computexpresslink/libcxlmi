@@ -399,7 +399,8 @@ int cxlmi_cmd_get_response_msg_limit(struct cxlmi_endpoint *ep,
 			     struct cxlmi_cmd_get_response_msg_limit *ret);
 int cxlmi_cmd_set_response_msg_limit(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_set_response_msg_limit *in);
+			     struct cxlmi_cmd_set_response_msg_limit *in,
+			     struct cxlmi_cmd_set_response_msg_limit *ret);
 int cxlmi_cmd_request_bg_op_abort(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti);
 
