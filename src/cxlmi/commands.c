@@ -1861,8 +1861,8 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_extent_list(struct cxlmi_endpoint *ep,
 	 */
 	if (req_pl->extent_cnt  == 0 || req_pl->extent_cnt > 8)
 		req_pl->extent_cnt = cpu_to_le32(8);
-	rsp_sz = sizeof(rsp) + sizeof(rsp_pl) + 8 * sizeof(rsp_pl->extents[0]);
-	rsp_sz_min = sizeof(rsp) + sizeof(rsp_pl);
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) + 8 * sizeof(rsp_pl->extents[0]);
+	rsp_sz_min = sizeof(*rsp) + sizeof(*rsp_pl);
 
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
