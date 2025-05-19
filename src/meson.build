@@ -14,7 +14,8 @@ cxlmi = library('cxlmi', # defaults to shared lib
 		sources,
 		include_directories : inc,
 		dependencies : deps,
-		install : true)
+		install : true,
+		link_with: libccan)
 
 libcxlmi_dep = declare_dependency(
     include_directories: ['.'],
