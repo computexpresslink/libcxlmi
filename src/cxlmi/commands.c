@@ -817,6 +817,71 @@ cxlmi_cmd_get_supported_logs_sublist(struct cxlmi_endpoint *ep,
 }
 
 
+CXLMI_EXPORT int cxlmi_cmd_get_supported_features(struct cxlmi_endpoint *ep,
+	struct cxlmi_tunnel_info *ti,
+	struct cxlmi_cmd_get_supported_features_req *in,
+	struct cxlmi_cmd_get_supported_features_rsp *ret)
+{
+	struct cxlmi_cmd_get_supported_features_req *req_pl;
+	struct cxlmi_cmd_get_supported_features_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz_min, rsp_sz;
+	int i, rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 8);
+
+	req_sz = sizeof(*req) + sizeof(*req_pl);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	arm_cci_request(ep, req, sizeof(*req_pl), FEATURES, GET_SUPPORTED_FEATURES);
+	req_pl = (struct cxlmi_cmd_get_supported_features_req *)req->payload;
+	req_pl->count = cpu_to_le32(in->count);
+	req_pl->starting_feature_index = cpu_to_le16(in->starting_feature_index);
+
+	/*
+	 * Per CXL r3.2: in->count = # bytes of the supported Feature data to return
+	 * in the output payload, NOT # of supported_feature_entries to return.
+	 */
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) + in->count;
+	rsp_sz_min = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz_min);
+	if (rc)
+		return rc;
+
+	rsp_pl = (struct cxlmi_cmd_get_supported_features_rsp *)rsp->payload;
+
+	ret->num_supported_feature_entries = le32_to_cpu(rsp_pl->num_supported_feature_entries);
+	ret->device_supported_features = le16_to_cpu(rsp_pl->device_supported_features);
+
+	for (i = 0; i < ret->num_supported_feature_entries; i++) {
+		memcpy(&ret->supported_feature_entries[i].feature_id,
+			   &rsp_pl->supported_feature_entries[i].feature_id,
+			   sizeof(rsp_pl->supported_feature_entries[i].feature_id));
+		ret->supported_feature_entries[i].feature_index =
+			le16_to_cpu(rsp_pl->supported_feature_entries[i].feature_index);
+		ret->supported_feature_entries[i].get_feature_size =
+			le16_to_cpu(rsp_pl->supported_feature_entries[i].get_feature_size);
+		ret->supported_feature_entries[i].set_feature_size =
+			le16_to_cpu(rsp_pl->supported_feature_entries[i].set_feature_size);
+		ret->supported_feature_entries[i].attribute_flags =
+			le32_to_cpu(rsp_pl->supported_feature_entries[i].attribute_flags);
+		ret->supported_feature_entries[i].get_feature_version =
+			(rsp_pl->supported_feature_entries[i].get_feature_version);
+		ret->supported_feature_entries[i].set_feature_version =
+			(rsp_pl->supported_feature_entries[i].set_feature_version);
+		ret->supported_feature_entries[i].set_feature_effects =
+			le16_to_cpu(rsp_pl->supported_feature_entries[i].set_feature_effects);
+	}
+	return rc;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_identify(struct cxlmi_endpoint *ep,
 				   struct cxlmi_tunnel_info *ti,
 				   struct cxlmi_cmd_memdev_identify *ret)
