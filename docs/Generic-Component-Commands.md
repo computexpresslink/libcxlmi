@@ -29,6 +29,8 @@ command set, as per the latest specification.
    * [Clear Log (0403h)](#clear-log-0403h)
    * [Populate Log (0404h)](#populate-log-0404h)
    * [Get Supported Logs Sub-List (0405h)](#get-supported-logs-sub-list-0405h)
+* [Features (05h)](#features-05h)
+	* [Get Supported Features (0500h)](#get-supported-features-0500h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 <!-- Added by: dave, at: Tue May 21 04:42:32 PM PDT 2024 -->
@@ -579,4 +581,48 @@ int cxlmi_cmd_get_supported_logs_sublist(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
 			  struct cxlmi_cmd_get_supported_logs_sublist_req *in,
 			  struct cxlmi_cmd_get_supported_logs_sublist_rsp *ret);
+   ```
+
+# Features (05h)
+
+## Get Supported Features (0500h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_get_supported_features_req {
+	uint32_t count;
+	uint16_t starting_feature_index;
+	uint8_t rsvd[2];
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_get_supported_features_rsp {
+	uint32_t num_supported_feature_entries;
+	uint16_t device_supported_features;
+	uint8_t rsvd[4];
+	struct {
+		uint8_t feature_id[0x10];
+		uint16_t feature_index;
+		uint16_t get_feature_size;
+		uint16_t set_feature_size;
+		uint32_t attribute_flags;
+		uint8_t get_feature_version;
+		uint8_t set_feature_version;
+		uint16_t set_feature_effects;
+		uint8_t rsvd[18];
+	} supported_feature_entries[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_get_supported_features(struct cxlmi_endpoint *ep,
+	struct cxlmi_tunnel_info *ti,
+	struct cxlmi_cmd_get_supported_features_req *in,
+	struct cxlmi_cmd_get_supported_features_rsp *ret);
    ```
