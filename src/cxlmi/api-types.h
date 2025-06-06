@@ -257,6 +257,19 @@ struct cxlmi_cmd_get_supported_features_rsp {
 	} __attribute__((packed)) supported_feature_entries[];
 } __attribute__((packed));
 
+/* CXL r3.2 Section 8.2.10.6.2: Get Feature (Opcode 0501h) */
+struct cxlmi_cmd_get_feature_req {
+	uint8_t feature_id[0x10];
+	uint16_t offset;
+	uint16_t count;
+	uint8_t selection;
+} __attribute__((packed));
+
+#define MAX_FEATURE_SIZE 2048
+struct cxlmi_cmd_get_feature_rsp {
+	uint8_t feature_data[MAX_FEATURE_SIZE];
+} __attribute__((packed));
+
 /* CXL r3.1 Section 8.2.9.9.1.1: Identify Memory Device (Opcode 4000h) */
 struct cxlmi_cmd_memdev_identify {
 	char fw_revision[0x10];
