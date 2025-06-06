@@ -210,6 +210,7 @@ enum {
 	#define GET_SUPPORTED_SUBLIST  0x5
 	FEATURES	= 0x05,
 	#define GET_SUPPORTED_FEATURES 0x0
+	#define GET_FEATURE 0x1
     IDENTIFY    = 0x40,
 	#define MEMORY_DEVICE 0x0
     CCLS        = 0x41,

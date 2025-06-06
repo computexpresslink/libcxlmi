@@ -31,6 +31,7 @@ command set, as per the latest specification.
    * [Get Supported Logs Sub-List (0405h)](#get-supported-logs-sub-list-0405h)
 * [Features (05h)](#features-05h)
 	* [Get Supported Features (0500h)](#get-supported-features-0500h)
+	* [Get Feature (0501h)](#get-feature-0501h)
 
 <!-- Created by https://github.com/ekalinin/github-markdown-toc -->
 <!-- Added by: dave, at: Tue May 21 04:42:32 PM PDT 2024 -->
@@ -625,4 +626,34 @@ int cxlmi_cmd_get_supported_features(struct cxlmi_endpoint *ep,
 	struct cxlmi_tunnel_info *ti,
 	struct cxlmi_cmd_get_supported_features_req *in,
 	struct cxlmi_cmd_get_supported_features_rsp *ret);
+   ```
+
+## Get Feature (0501h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_get_feature_req {
+	uint8_t feature_id[0x10];
+	uint16_t offset;
+	uint16_t count;
+	uint8_t selection;
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_get_feature_rsp {
+	uint8_t *feature_data;
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_get_feature(struct cxlmi_endpoint *ep,
+	struct cxlmi_tunnel_info *ti,
+	struct cxlmi_cmd_get_feature_req *in,
+	struct cxlmi_cmd_get_feature_rsp *ret);
    ```

@@ -882,6 +882,46 @@ CXLMI_EXPORT int cxlmi_cmd_get_supported_features(struct cxlmi_endpoint *ep,
 	return rc;
 }
 
+CXLMI_EXPORT int cxlmi_cmd_get_feature(struct cxlmi_endpoint *ep,
+	struct cxlmi_tunnel_info *ti,
+	struct cxlmi_cmd_get_feature_req *in,
+	struct cxlmi_cmd_get_feature_rsp *ret)
+{
+	struct cxlmi_cmd_get_feature_req *req_pl;
+	struct cxlmi_cmd_get_feature_rsp *rsp_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz_min, rsp_sz;
+	int rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 21);
+
+	req_sz = sizeof(*req) + sizeof(*req_pl);
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+
+	req_pl = (struct cxlmi_cmd_get_feature_req *)req->payload;
+	memcpy(req_pl->feature_id, in->feature_id, 0x10);
+	req_pl->offset = cpu_to_le16(in->offset);
+	req_pl->count = cpu_to_le16(in->count);
+	req_pl->selection = in->selection;
+	arm_cci_request(ep, req, req_sz, FEATURES, GET_FEATURE);
+
+	rsp_sz_min = sizeof(*rsp);
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz_min);
+	if (rc)
+		return rc;
+
+	memcpy(ret->feature_data, rsp->payload, in->count);
+	return rc;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_identify(struct cxlmi_endpoint *ep,
 				   struct cxlmi_tunnel_info *ti,
 				   struct cxlmi_cmd_memdev_identify *ret)
