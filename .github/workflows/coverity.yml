@@ -23,7 +23,7 @@ jobs:
 
       # Step 2: Run the Coverity Security Scan
       - name: Coverity Security Scan
-        uses: blackduck-inc/black-duck-security-scan@v2.1.1
+        uses: blackduck-inc/black-duck-security-scan@v2.2.1
         with:
           coverity_url: ${{ vars.COVERITY_URL }}
           coverity_user: ${{ vars.COVERITY_USER }}
