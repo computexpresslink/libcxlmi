@@ -1,0 +1,24 @@
+<root>
+    <command opcode="0500">
+        <request>
+            <count>64</count>
+            <starting_feature_index>0</starting_feature_index>
+        </request>
+        <response>
+            <num_supported_feature_entries>1</num_supported_feature_entries>
+            <device_supported_features>2</device_supported_features>
+            <!-- Skipping actual feature_data check -->
+        </response>
+    </command>
+    <command opcode="0501">
+        <request>
+            <feature_id type="uuid"> 0x96dad7d6, 0xfde8, 0x482b, 0xa7, 0x33, 0x75, 0x77, 0x4e, 0x06, 0xdb, 0x8a </feature_id>
+            <offset> 0 </offset>
+            <count> 64 </count>
+            <selection> 0 </selection>
+        </request>
+        <response>
+            <!-- Skipping actual feature_data check -->
+        </response>
+    </command>
+</root>
