@@ -1,0 +1,69 @@
+<root>
+    <command opcode="0001">
+        <response>
+            <vendor_id>32902</vendor_id>
+            <device_id >3475</device_id>
+            <subsys_vendor_id>6900</subsys_vendor_id>
+            <subsys_id>4352</subsys_id>
+            <serial_num>43981</serial_num>
+            <max_msg_size>11</max_msg_size>
+            <component_type>3</component_type>
+        </response>
+    </command>
+    <command opcode="0004">
+        <request>
+            <limit>10</limit>
+        </request>
+        <response>
+            <limit>10</limit>
+        </response>
+    </command>
+    <command opcode="0500">
+        <request>
+            <count>5</count>
+            <starting_feature_index>0</starting_feature_index>
+        </request>
+        <response>
+            <num_supported_feature_entries>1</num_supported_feature_entries>
+            <device_supported_features>2</device_supported_features>
+            <supported_feature_entries>
+                <supported_feature_entry>
+                    <feature_id> 48392938 </feature_id>
+                    <feature_index> 0 </feature_index>
+                    <get_feature_size> 64 </get_feature_size>
+                    <set_feature_size> 64 </set_feature_size>
+                    <attribute_flags> 0 </attribute_flags>
+                    <get_feature_version> 1 </get_feature_version>
+                    <set_feature_version> 2 </set_feature_version>
+                    <set_feature_effects> 6 </set_feature_effects>
+                </supported_feature_entry>
+                <supported_feature_entry>
+                    <feature_id> 67452 </feature_id>
+                    <feature_index> 1 </feature_index>
+                    <get_feature_size> 64 </get_feature_size>
+                    <set_feature_size> 64 </set_feature_size>
+                    <attribute_flags> 0 </attribute_flags>
+                    <get_feature_version> 1 </get_feature_version>
+                    <set_feature_version> 2 </set_feature_version>
+                    <set_feature_effects> 6 </set_feature_effects>
+                </supported_feature_entry>
+            </supported_feature_entries>
+        </response>
+    </command>
+    <command opcode="0501">
+        <request>
+            <feature_id> 234 </feature_id>
+            <offset> 12 </offset>
+            <count> 1 </count>
+            <selection> 4 </selection>
+        </request>
+        <response>
+            <!-- feature_data not checked as it depends on the specific feature -->
+        </response>
+    </command>
+    <command opcode="0502">
+        <request>
+            <feature_data> 3948902 </feature_data>
+        </request>
+    </command>
+</root>

@@ -1,0 +1,32 @@
+<root>
+    <command opcode="5601">
+        <request>
+            <host_id>0</host_id>
+            <region_cnt>2</region_cnt>
+            <start_region_id>0</start_region_id>
+        </request>
+        <response>
+            <host_id>0</host_id>
+            <num_regions>2</num_regions>
+            <regions_returned>2</regions_returned>
+            <region_configs>
+                <region_config>
+                    <base>0</base>
+                    <decode_len>2147483648</decode_len>
+                    <region_len>2147483648</region_len>
+                    <block_size>2097152 </block_size>
+                    <flags>0</flags>
+                    <sanitize_on_release>0</sanitize_on_release>
+                </region_config>
+                <region_config>
+                    <base>2147483648</base>
+                    <decode_len>2147483648</decode_len>
+                    <region_len>2147483648</region_len>
+                    <block_size>2097152 </block_size>
+                    <flags>0</flags>
+                    <sanitize_on_release>0</sanitize_on_release>
+                </region_config>
+            </region_configs>
+        </response>
+    </command>
+</root>

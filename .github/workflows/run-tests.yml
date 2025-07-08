@@ -1,0 +1,112 @@
+name: Run Tests
+
+env:
+  KERNEL_URL: https://github.com/anisa-su993/anisa-linux-kernel/releases/download/v1
+  VM_PORT: 2025
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the current repo
+      - name: Checkout current repo
+        uses: actions/checkout@v4
+        with:
+          # Make sure to include cxl_test_tool submodule
+          submodules: true
+
+      # Download Kernel Image
+      - name: Download bzImage
+        run: |
+            URL="${KERNEL_URL}/bzImage"
+            KERNEL_DIR=~/linux/arch/x86/boot/bzImage
+            mkdir -p ~/linux/arch/x86/boot
+            curl -L -o $KERNEL_DIR $URL
+            ls -l $KERNEL_DIR
+
+      # Download Kernel Modules
+      - name: Download Kernel Modules
+        run: |
+            TAR=6.13.0-rc2+.tar.gz
+            URL="${KERNEL_URL}/${TAR}"
+            mkdir -p /lib/modules
+            curl -L -o $TAR $URL
+            sudo tar -xzf $TAR -C /lib/modules/
+            ls /lib/modules/6.13.0-rc2+
+
+      # Clone cxl-test-tool and create symlink to it
+      - name: Clone cxl-test-tool
+        run: |
+          URL="https://github.com/anisa-su993/anisa-cxl-test-tool.git"
+          git clone --single-branch --branch libcxlmi-testing https://github.com/anisa-su993/anisa-cxl-test-tool.git cxl-test-tool
+          sudo ln -s "$PWD/cxl-test-tool/cxl-tool.py" /usr/local/bin/cxl-tool
+
+      # Install dependencies for QEMU and cxl_test_tool
+      - name: Install Deps
+        # moreutils used for logging timestamps
+        run: |
+          pip install psutil tomli sphinx
+          sudo apt-get update
+          sudo apt-get install -y moreutils meson libdbus-1-dev git cmake locales rsync
+
+      # Clone & Build QEMU & Create Disk Image for VM
+      - name: Build QEMU and Create Image
+        run: |
+          sudo apt-get update
+          cxl-tool --set-vars cxl-test-tool/.vars.config
+          yes "" | cxl-tool --setup-qemu
+          yes "" | cxl-tool --build-qemu
+          yes "" | cxl-tool --create-image
+        timeout-minutes: 10
+
+      # Create directory for filesharing between VM and host
+      - name: Create host share dirs
+        run: |
+          sudo mkdir -p /opt/lib/modules
+          sudo mkdir -p $HOME/homeshare
+          sudo chmod -R 777 /opt/lib/modules $HOME/homeshare
+
+      # Test VM Startup & SSH Connection
+      - name: Test VM SSH
+      # echo 'cxl-tool --cmd "cat ~/.ssh/known_hosts"' && cxl-tool --cmd "cat ~/.ssh/known_hosts"
+        run: |
+          echo "cxl-tool --run -T RP1" && cxl-tool --run -T RP1
+          echo "sleep 60" && sleep 60
+          echo "ssh-keyscan -p $VM_PORT 127.0.0.1  | sed 's/\[127\.0\.0\.1\]/[localhost]/' >> ~/.ssh/known_hosts"
+          ssh-keyscan -p $VM_PORT 127.0.0.1  | sed 's/\[127\.0\.0\.1\]/[localhost]/' >> ~/.ssh/known_hosts
+          echo "cat ~/.ssh/known_hosts" && cat ~/.ssh/known_hosts
+          echo 'ssh -v -p 2025 root@localhost "ls"' && ssh -v -p 2025 root@localhost "ls"
+          echo "cxl-tool --shutdown" && cxl-tool --shutdown
+
+      # Run All Tests
+      - name: Run Tests
+        run: |
+            python tests/qemu-tests/run_tests.py
+        shell: bash
+        timeout-minutes: 5
+
+      # Ensure logging directories exist
+      - name: Ensure logs directory exists
+        run: |
+          mkdir -p ~/logs/
+          mkdir -p tests/qemu-tests/output
+
+      # Upload logs from the VM
+      - name: Upload VM Logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: logs
+          path: ~/logs/
+
+      # Upload test files generated and their output
+      - name: Upload Generated Test Files & Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-files
+          path: tests/qemu-tests/output/
