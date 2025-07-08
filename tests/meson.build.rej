@@ -1,0 +1,7 @@
+diff a/tests/meson.build b/tests/meson.build	(rejected hunks)
+@@ -8,3 +8,5 @@ executable(
+     dependencies: libcxlmi_dep,
+     include_directories: [inc]
+ )
++
++subdir('qemu-tests')
