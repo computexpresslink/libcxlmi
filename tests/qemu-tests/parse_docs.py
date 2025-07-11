@@ -91,3 +91,9 @@ def parse_markdown_for_opcode_map(file_path):
                     }
 
     return opcode_map
+
+def main():
+    log_opcode_map(generate_default_opcode_map())
+
+if __name__ == "__main__":
+    main()

@@ -1,7 +1,10 @@
 import sys
-import topo
+import os
+import suites
 from parse_docs import generate_default_opcode_map
 import xml.etree.ElementTree as ET
+
+CURR_DIR = os.path.dirname(os.path.abspath(__file__))
 
 PREFIX = """#include <stdio.h>
 #include <stdlib.h>
@@ -27,14 +30,18 @@ ASSERT_MACRO = """
     }
 """
 
-MAIN = """
-int main() {
+RSP_BUF = "rsp"
+EXPECTED_BUF = "expected"
+
+MAIN = f"""
+int main() {{
     struct cxlmi_ctx *ctx;
     struct cxlmi_endpoint *ep;
-    void *buf = calloc(1, MAX_PAYLOAD_SIZE);
+    _cleanup_free_ void *{RSP_BUF} = calloc(1, MAX_PAYLOAD_SIZE);
+    _cleanup_free_ void *{EXPECTED_BUF} = calloc(1, MAX_PAYLOAD_SIZE);
     int rc = EXIT_FAILURE;
 
-    assert(buf != NULL);
+    assert(rsp != NULL);
     ctx = cxlmi_new_ctx(stdout, DEFAULT_LOGLEVEL);
     assert(ctx != NULL);
 """
@@ -44,7 +51,6 @@ cleanup:
     cxlmi_close(ep);
 
 exit_free_ctx:
-    free(buf);
     cxlmi_free_ctx(ctx);
     if (rc != 0) {
         fprintf(stdout, "Failed.\\n");
@@ -56,7 +62,7 @@ exit_free_ctx:
 """
 
 G_COUNT = 1
-G_INDENT_LEVEL = 2
+G_INDENT_LEVEL = 1
 ASSERT_INDENT = "    " * G_INDENT_LEVEL
 ASSERT_TYPE = "ASSERT_EQUAL"
 TUNNEL_INFO = "NULL"
@@ -150,8 +156,7 @@ def generate_struct_code(var_name, struct_name, element, indent_level=0):
                                                    indent_level,
                                                    expected_name=get_expected_str(),
                                                    actual_name=get_actual_str())
-    indent = "    " * indent_level
-    code = f"{indent}{struct_name} {var_name} = {struct_body};\n\n"
+    code = f"{struct_name} {var_name} = {struct_body};\n\n"
     return code, assertions
 
 # Generate code for 1 command (create req payload, send the command, then check rsp payload)
@@ -191,8 +196,9 @@ def generate_c_code(command, opcode_map):
     function_call = ""
     cast_rsp = ""
 
+    # Handle case for different method signatures
     if response is not None:
-        cast_rsp = f"{rsp_struct} *{actual} = ({rsp_struct} *) buf;"
+        cast_rsp = f"{rsp_struct} *{actual} = ({rsp_struct} *) {RSP_BUF};"
         if request is not None:
             function_call = f"{func}(ep, {TUNNEL_INFO}, &{req_str}, {actual})"
         else:
@@ -203,16 +209,20 @@ def generate_c_code(command, opcode_map):
         function_call = f"{func}(ep, {TUNNEL_INFO})"
 
     # Allocate and call the function
-    alloc_and_call = f"""\
-        {cast_rsp}
+    alloc_and_call = f"""
+    {cast_rsp}
 
-        rc = {function_call};
-        if (rc != 0) {{
-            fprintf(stdout, "Error: Function {func} ({opcode}h) returned non-zero rc: %d\\n", rc);
-            goto cleanup;
-        }}
+    rc = {function_call};
+    if (rc != 0) {{
+        fprintf(stdout, "Error: Function {func} ({opcode}h) returned non-zero rc: %d\\n", rc);
+        goto cleanup;
+    }}
 
     """
+    # Cast expected buf to the rsp_type too
+    expected_rsp_code = f"""
+    {cast_rsp.replace(actual, expected).replace(RSP_BUF, EXPECTED_BUF)}
+    {expected_rsp_code}"""
 
     return req_code + expected_rsp_code + alloc_and_call + assertions +"\n"
 
@@ -221,7 +231,7 @@ def generate_ioctl_code(devname='mem0'):
     ep = cxlmi_open(ctx, "{devname}");
     if (!ep) {{
         fprintf(stdout, "Failed to open device %s\\n", "{devname}");
-        goto cleanup;
+        goto exit_free_ctx;
     }}
 
     printf("Opened endpoint on device %s\\n", "{devname}");
@@ -234,7 +244,7 @@ def generate_mctp_code(nid=0, eid=0):
 
     if (!ep) {{
         printf("Failed to open MCTP EP with NID:EID =  %d:%d\\n", {nid}, {eid});
-        goto cleanup;
+        goto exit_free_ctx;
     }}
 
     printf("Opened MCTP EP with NID:EID =  %d:%d\\n", {nid}, {eid});
@@ -246,7 +256,7 @@ def generate_test_file(output_file, command, suite_info, opcode_map):
     if not opcode_map:
         opcode_map = generate_default_opcode_map()
 
-    with open(output_file, 'a', newline='') as f:
+    with open(output_file, 'w', newline='') as f:
         # Write the prefix (C file header) to the file
         f.write(PREFIX + "\n")
 
@@ -268,14 +278,13 @@ def generate_test_file(output_file, command, suite_info, opcode_map):
 
         # Write the footer to the file
         f.write(FOOTER)
-        G_COUNT = 1  # Reset the global counter for the next topo
+        G_COUNT = 1  # Reset the global counter for the next suites
 
 def load_xml(file_path):
     tree = ET.parse(file_path)
     return tree.getroot()
 
 def generate_build_file(build_file, test_file):
-
     with open(build_file, 'a') as f:
         f.write(f"""
 executable(
@@ -291,10 +300,11 @@ if __name__ == "__main__":
         print("Usage: python generate_tests.py <suite>")
         sys.exit(1)
 
-    suite = topo.SUITES[sys.argv[1].upper()]
-    root = load_xml(suite['input'])
+    suite = suites.SUITES[sys.argv[1].upper()]
+    root = load_xml(CURR_DIR + '/' + suite['input'])
     opcode_map = generate_default_opcode_map()
 
     for command in root:
         output = f'test-{command.get("opcode")}.c'
+        print(f'Generating {output}')
         generate_test_file(output, command, suite, opcode_map)

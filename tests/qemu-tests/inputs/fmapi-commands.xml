@@ -1,4 +1,15 @@
 <root>
+    <command opcode="0001">
+        <response>
+            <vendor_id>32902</vendor_id>
+            <device_id >3475</device_id>
+            <subsys_vendor_id>6900</subsys_vendor_id>
+            <subsys_id>4352</subsys_id>
+            <serial_num>43981</serial_num>
+            <max_msg_size>11</max_msg_size>
+            <component_type>3</component_type>
+        </response>
+    </command>
     <command opcode="5601">
         <request>
             <host_id>0</host_id>
