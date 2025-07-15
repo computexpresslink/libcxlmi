@@ -52,7 +52,9 @@ static int show_switch_info(struct cxlmi_endpoint *ep)
 
 static int get_physical_port_state(struct cxlmi_endpoint *ep)
 {
-	int rc, rc_p, i;
+	int rc, rc_p;
+	int port_index = 0;
+	uint8_t port_number = 0;
 	struct cxlmi_cmd_fmapi_get_phys_port_state_req *req_pps;
 	struct cxlmi_cmd_fmapi_identify_sw_device swid;
 	struct cxlmi_cmd_fmapi_get_phys_port_state_rsp *rsp_pps;
@@ -65,8 +67,14 @@ static int get_physical_port_state(struct cxlmi_endpoint *ep)
 				   swid.num_physical_ports * sizeof(uint8_t));
 
 	req_pps->num_ports = swid.num_physical_ports;
-	for(int i = 0; i < req_pps->num_ports; i++) {
-		req_pps->ports[i] = i;
+	for (int byte_index = 0; byte_index < 32; byte_index++) {
+		unsigned char byte = swid.active_port_bitmask[byte_index];
+		for (int bit_index = 0; bit_index < 8; bit_index++, port_number++) {
+			if (((byte) & (1 << bit_index)) != 0) {
+				req_pps->ports[port_index] = port_number;
+				port_index++;
+			}
+		}
 	}
 
 	rsp_pps = calloc(1, sizeof(struct cxlmi_cmd_fmapi_get_phys_port_state_rsp) +
@@ -77,26 +85,57 @@ static int get_physical_port_state(struct cxlmi_endpoint *ep)
 		goto done;
 
 	printf("Port_Info:\n");
-	for (i = 0; i < rsp_pps->num_ports; i++) {
-		printf("\tPort_Id: %d\n", rsp_pps->ports[i].port_id);
-		printf("\tPort_config_state: %d\n", rsp_pps->ports[i].config_state);
-		printf("\tConnected_device_mode: %d\n", rsp_pps->ports[i].conn_dev_cxl_ver);
-		printf("\tConnected_device_type: %d\n", rsp_pps->ports[i].conn_dev_type);
-		printf("\tPort_cxl_version_bitmask: %d\n", rsp_pps->ports[i].port_cxl_ver_bitmask);
-		printf("\tMax_link_width: %d\n", rsp_pps->ports[i].max_link_width);
-		printf("\tNegotiated_link_width: %d\n", rsp_pps->ports[i].negotiated_link_width);
-		printf("\tSupported_link_speeds_vector: %d\n", rsp_pps->ports[i].supported_link_speeds_vector);
-		printf("\tMax_link_speed: %d\n", rsp_pps->ports[i].max_link_speed);
-		printf("\tCurrent_link_speed: %d\n", rsp_pps->ports[i].current_link_speed);
-		printf("\tLTSSM_state: %d\n", rsp_pps->ports[i].ltssm_state);
-		printf("\tFirst_lane_num: %d\n", rsp_pps->ports[i].first_lane_num);
-		printf("\tLink_state: %d\n", rsp_pps->ports[i].link_state);
-		printf("\tSupported_ld_count: %d\n\n", rsp_pps->ports[i].supported_ld_count);
+	for (int k = 0; k < rsp_pps->num_ports; k++) {
+		printf("\tPort_id: %d\n", rsp_pps->ports[k].port_id);
+		printf("\tPort_config_state: %d\n", rsp_pps->ports[k].config_state);
+		printf("\tConnected_device_mode: %d\n", rsp_pps->ports[k].conn_dev_cxl_ver);
+		printf("\tConnected_device_type: %d\n", rsp_pps->ports[k].conn_dev_type);
+		printf("\tPort_cxl_version_bitmask: %d\n", rsp_pps->ports[k].port_cxl_ver_bitmask);
+		printf("\tMax_link_width: %d\n", rsp_pps->ports[k].max_link_width);
+		printf("\tNegotiated_link_width: %d\n", rsp_pps->ports[k].negotiated_link_width);
+		printf("\tSupported_link_speeds_vector: %d\n", rsp_pps->ports[k].supported_link_speeds_vector);
+		printf("\tMax_link_speed: %d\n", rsp_pps->ports[k].max_link_speed);
+		printf("\tCurrent_link_speed: %d\n", rsp_pps->ports[k].current_link_speed);
+		printf("\tLTSSM_state: %d\n", rsp_pps->ports[k].ltssm_state);
+		printf("\tFirst_lane_num: %d\n", rsp_pps->ports[k].first_lane_num);
+		printf("\tLink_state: %d\n", rsp_pps->ports[k].link_state);
+		printf("\tSupported_ld_count: %d\n\n", rsp_pps->ports[k].supported_ld_count);
 	}
 done:
 	free(req_pps);
 	free(rsp_pps);
 	return rc;
+}
+
+static int physical_port_control(struct cxlmi_endpoint *ep)
+{
+	int rc, rc_p;
+	uint8_t port_number = 0;
+	struct cxlmi_cmd_fmapi_phys_port_control *ppc;
+	struct cxlmi_cmd_fmapi_identify_sw_device swid;
+
+	rc_p = cxlmi_cmd_fmapi_identify_sw_device(ep, NULL, &swid);
+	if (rc_p)
+		return rc_p;
+
+	ppc = calloc(1, sizeof(struct cxlmi_cmd_fmapi_phys_port_control));
+	for (int byte_index = 0; byte_index < 32; byte_index++) {
+		unsigned char byte = swid.active_port_bitmask[byte_index];
+		for (int bit_index = 0; bit_index < 8; bit_index++, port_number++) {
+			if (((byte) & (1 << bit_index)) != 0) {
+				ppc->ppb_id = port_number;
+				for (int op = ASSERT_PERST; op < MAX_PPC_OPCODE; op++) {
+					ppc->port_opcode = op;
+					rc = cxlmi_cmd_fmapi_phys_port_control(ep, NULL, ppc);
+					if (rc)
+						return rc;
+					printf("request for port:%d and opcode:%d sent successfully\n",port_number,op);
+				}
+			}
+		}
+	}
+	free(ppc);
+	return 0;
 }
 
 static int show_device_info(struct cxlmi_endpoint *ep)
@@ -118,6 +157,7 @@ static int show_device_info(struct cxlmi_endpoint *ep)
 
 		show_switch_info(ep);
 		get_physical_port_state(ep);
+		physical_port_control(ep);
 		break;
 	case 0x03:
 		printf("device type: CXL Type3 Device\n");

@@ -49,6 +49,13 @@ typedef struct {
     uint64_t len;
 } extent;
 
+typedef enum physical_port_control_opcode {
+    ASSERT_PERST = 0x00,
+    DEASSERT_PERST = 0x01,
+    RESET_PPB = 0x02,
+    MAX_PPC_OPCODE
+} physical_port_control_opcode;
+
 static int parse_supported_logs(struct cxlmi_cmd_get_supported_logs *pl,
 				size_t *cel_size)
 {
