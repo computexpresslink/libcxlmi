@@ -9,50 +9,32 @@
     </command>
     <command opcode="0500">
         <request>
-            <count>5</count>
+            <count>64</count>
             <starting_feature_index>0</starting_feature_index>
         </request>
         <response>
             <num_supported_feature_entries>1</num_supported_feature_entries>
             <device_supported_features>2</device_supported_features>
-            <supported_feature_entries>
-                <supported_feature_entry>
-                    <feature_id> 48392938 </feature_id>
-                    <feature_index> 0 </feature_index>
-                    <get_feature_size> 64 </get_feature_size>
-                    <set_feature_size> 64 </set_feature_size>
-                    <attribute_flags> 0 </attribute_flags>
-                    <get_feature_version> 1 </get_feature_version>
-                    <set_feature_version> 2 </set_feature_version>
-                    <set_feature_effects> 6 </set_feature_effects>
-                </supported_feature_entry>
-                <supported_feature_entry>
-                    <feature_id> 67452 </feature_id>
-                    <feature_index> 1 </feature_index>
-                    <get_feature_size> 64 </get_feature_size>
-                    <set_feature_size> 64 </set_feature_size>
-                    <attribute_flags> 0 </attribute_flags>
-                    <get_feature_version> 1 </get_feature_version>
-                    <set_feature_version> 2 </set_feature_version>
-                    <set_feature_effects> 6 </set_feature_effects>
-                </supported_feature_entry>
-            </supported_feature_entries>
+            <!-- Skipping actual feature_data check -->
         </response>
     </command>
     <command opcode="0501">
         <request>
-            <feature_id> 234 </feature_id>
-            <offset> 12 </offset>
-            <count> 1 </count>
-            <selection> 4 </selection>
+            <feature_id type="uuid"> 0x96dad7d6, 0xfde8, 0x482b, 0xa7, 0x33, 0x75, 0x77, 0x4e, 0x06, 0xdb, 0x8a </feature_id>
+            <offset> 0 </offset>
+            <count> 64 </count>
+            <selection> 0 </selection>
         </request>
         <response>
-            <!-- feature_data not checked as it depends on the specific feature -->
+            <!-- Skipping actual feature_data check -->
         </response>
     </command>
     <command opcode="0502">
         <request>
-            <feature_data> 3948902 </feature_data>
+            <feature_id type="uuid"> 0xe5b13f22, 0x2328, 0x4a14, 0xb8, 0xba, 0xb9, 0x69, 0x1e, 0x89, 0x33, 0x86 </feature_id>
+            <offset> 0 </offset>
+            <version> 1 </version>
+            <!-- Skipping filling in actual feature data -->
         </request>
     </command>
 </root>

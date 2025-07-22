@@ -18,18 +18,30 @@ static inline void freep(void *p)
 	free(*(void **)p);
 }
 #define _cleanup_free_ __attribute__((cleanup(freep)))
+
+#define UUID(time_low, time_mid, time_hi_and_version,                    \\
+  clock_seq_hi_and_reserved, clock_seq_low, node0, node1, node2,         \\
+  node3, node4, node5)                                                   \\
+  { ((time_low) >> 24) & 0xff, ((time_low) >> 16) & 0xff,                \\
+    ((time_low) >> 8) & 0xff, (time_low) & 0xff,                         \\
+    ((time_mid) >> 8) & 0xff, (time_mid) & 0xff,                         \\
+    ((time_hi_and_version) >> 8) & 0xff, (time_hi_and_version) & 0xff,   \\
+    (clock_seq_hi_and_reserved), (clock_seq_low),                        \\
+    (node0), (node1), (node2), (node3), (node4), (node5)                 \\
+  }
 """
 
 ASSERT_MACRO = """
-#define ASSERT_EQUAL(expected, actual, field) \\
-    if ((expected).field != (actual)->field) { \\
+#define ASSERT_EQUAL(expected, actual) \\
+    if (expected != actual) { \\
         printf("Assertion failed: %s.%s = %llu, %s->%s = %llu\\n", \\
-               #expected, #field, (expected).field, \\
-               #actual, #field, (actual)->field); \\
+               #expected, expected, \\
+               #actual, actual); \\
         rc = EXIT_FAILURE; \\
     }
 """
 
+REQ_BUF = "req"
 RSP_BUF = "rsp"
 EXPECTED_BUF = "expected"
 
@@ -37,11 +49,14 @@ MAIN = f"""
 int main() {{
     struct cxlmi_ctx *ctx;
     struct cxlmi_endpoint *ep;
+    _cleanup_free_ void *{REQ_BUF} = calloc(1, MAX_PAYLOAD_SIZE);
     _cleanup_free_ void *{RSP_BUF} = calloc(1, MAX_PAYLOAD_SIZE);
     _cleanup_free_ void *{EXPECTED_BUF} = calloc(1, MAX_PAYLOAD_SIZE);
     int rc = EXIT_FAILURE;
 
-    assert(rsp != NULL);
+    assert({REQ_BUF} != NULL);
+    assert({RSP_BUF} != NULL);
+    assert({EXPECTED_BUF} != NULL);
     ctx = cxlmi_new_ctx(stdout, DEFAULT_LOGLEVEL);
     assert(ctx != NULL);
 """
@@ -76,7 +91,7 @@ def get_actual_str():
 def get_req_str():
     return 'request_' + str(G_COUNT)
 
-def generate_struct_body(element, indent_level=0, expected_name="expected_rsp", actual_name="actual"):
+def generate_struct_body(element, indent_level=0, expected_name="expected_rsp", actual_name="actual", ptr=True):
     indent = "    " * indent_level
     struct_body = "{\n"
     assertions = ""
@@ -84,16 +99,25 @@ def generate_struct_body(element, indent_level=0, expected_name="expected_rsp", 
     for child in element:
         field_name = child.tag
         child_elements = list(child)
+        has_grandchildren = any(list(grandchild) for grandchild in child_elements)
+
+        # Skip flex array memebers, which can't be initialized in this format:
+        # struct X = {.field = Y, .field1 = Z}...
+        node_type = child.attrib.get('type', '').lower()
+        if node_type == 'flex':
+            # Flex array members must be handled separately
+            continue
 
         # Case: Array of structs
-        if len(child_elements) > 1 and all(e.tag == child_elements[0].tag for e in child_elements):
+        if len(child_elements) > 0 and has_grandchildren:
             struct_body += f"{indent}    .{field_name} = {{\n"
             for i, entry in enumerate(child_elements):
                 nested_body, nested_assertions = generate_struct_body(
                     entry,
                     indent_level + 2,
-                    f"{expected_name}.{field_name}[{i}]",
-                    f"&{actual_name}->{field_name}[{i}]"
+                    f"{expected_name}->{field_name}[{i}]",
+                    f"{actual_name}->{field_name}[{i}]",
+                    ptr=False
                 )
                 struct_body += f"{indent}        {nested_body},\n"
                 assertions += nested_assertions
@@ -105,15 +129,27 @@ def generate_struct_body(element, indent_level=0, expected_name="expected_rsp", 
                 child,
                 indent_level + 1,
                 f"{expected_name}.{field_name}",
-                f"{actual_name}->{field_name}"
+                f"{actual_name}.{field_name}"
             )
             struct_body += f"{indent}    .{field_name} = {nested_body},\n"
             assertions += nested_assertions
 
         # Case: Scalar field
         else:
-            struct_body += f"{indent}    .{field_name} = {child.text},\n"
-            assertions += f"{ASSERT_INDENT}{ASSERT_TYPE}({expected_name}, {actual_name}, {field_name});\n"
+            if node_type == 'uuid':
+                # UUID() generated from 11 elements
+                uuid_elements = [e.strip for e in child.text.split(",")]
+                if len(uuid_elements) != 11:
+                    print(f"UUID WRONG USAGE: expected 11 elements, but got {len(uuid_elements)} while generating {child.tag}")
+                    continue
+
+                struct_body += f"{indent}    .{field_name} = UUID({child.text}),\n"
+                assertions += f"{ASSERT_INDENT}{ASSERT_TYPE}(memcmp({expected_name}->{field_name}, {actual_name}->{field_name}, 11), 0);\n"
+
+            else:
+                ref = '->' if ptr else '.'
+                struct_body += f"{indent}    .{field_name} = {child.text},\n"
+                assertions += f"{ASSERT_INDENT}{ASSERT_TYPE}({expected_name}{ref}{field_name}, {actual_name}{ref}{field_name});\n"
 
     struct_body += f"{indent}}}"
     return struct_body, assertions
@@ -156,7 +192,7 @@ def generate_struct_code(var_name, struct_name, element, indent_level=0):
                                                    indent_level,
                                                    expected_name=get_expected_str(),
                                                    actual_name=get_actual_str())
-    code = f"{struct_name} {var_name} = {struct_body};\n\n"
+    code = f"*{var_name} = ({struct_name}) {struct_body};\n\n"
     return code, assertions
 
 # Generate code for 1 command (create req payload, send the command, then check rsp payload)
@@ -218,10 +254,18 @@ def generate_c_code(command, opcode_map):
         goto cleanup;
     }}
 
-    """
-    # Cast expected buf to the rsp_type too
-    expected_rsp_code = f"""
-    {cast_rsp.replace(actual, expected).replace(RSP_BUF, EXPECTED_BUF)}
+"""
+
+    # Cast request buf to req_type
+    if request is not None:
+        req_code = f"""
+    {req_struct} *{req_str} = ({req_struct} *){REQ_BUF};
+    {req_code}
+"""
+    # Cast expected buf to rsp_type
+    if response is not None:
+        expected_rsp_code = f"""
+    {rsp_struct} *{expected} = ({rsp_struct} *) {EXPECTED_BUF};
     {expected_rsp_code}"""
 
     return req_code + expected_rsp_code + alloc_and_call + assertions +"\n"
@@ -296,15 +340,29 @@ executable(
 """)
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python generate_tests.py <suite>")
+    # Default Generate All
+    if len(sys.argv) == 1:
+        print("Default: Generating All Test Code")
+        opcode_map = generate_default_opcode_map()
+        for suite, suite_info in suites.SUITES.items():
+            root = load_xml(CURR_DIR + '/' + suite_info['input'])
+
+            for command in root:
+                output = f'test-{command.get("opcode")}.c'
+                print(f'Generating {output}')
+                generate_test_file(output, command, suite_info, opcode_map)
+
+    elif len(sys.argv) == 2:
+        suite = sys.argv[1].upper()
+        suite_info = suites.SUITES[sys.argv[1].upper()]
+        print(f"Generating Test Code for Suite {suite}")
+        root = load_xml(CURR_DIR + '/' + suite_info['input'])
+        opcode_map = generate_default_opcode_map()
+
+        for command in root:
+            output = f'test-{command.get("opcode")}.c'
+            print(f'Generating {output}')
+            generate_test_file(output, command, suite_info, opcode_map)
+    else:
+        print("Usage: python generate_tests.py || python generate_tests.py <suite>")
         sys.exit(1)
-
-    suite = suites.SUITES[sys.argv[1].upper()]
-    root = load_xml(CURR_DIR + '/' + suite['input'])
-    opcode_map = generate_default_opcode_map()
-
-    for command in root:
-        output = f'test-{command.get("opcode")}.c'
-        print(f'Generating {output}')
-        generate_test_file(output, command, suite, opcode_map)
