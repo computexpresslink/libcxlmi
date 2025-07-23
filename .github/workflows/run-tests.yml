@@ -90,8 +90,8 @@ jobs:
             SHUTDOWN='reboot: Power down'
             timeout=60
 
-            echo "cxl-tool --shutdown"
-            cxl-tool --shutdown
+            echo "cxl-tool --cmd 'sync && poweroff'"
+            cxl-tool --cmd 'sync && poweroff'
             start=$(date +%s)
 
             echo "🟡 Waiting for $SHUTDOWN in $QEMU_LOG..."
@@ -111,6 +111,11 @@ jobs:
 
             sleep 1
             done
+
+      # Cat QEMU Logs
+      - name: cat Test VM Logs
+        run: |
+            cat ~/logs/qemu0.log
 
       # Run All Tests
       - name: Run Tests
@@ -137,6 +142,7 @@ jobs:
       - name: cat output
         if: always()
         run: |
+            mkdir -p tests/qemu-tests/output
             find tests/qemu-tests/output/ -type f | while read -r file; do
                 echo "==> $file <=="
                 cat "$file"

@@ -27,7 +27,7 @@ log_opcode_map(opcode_map)
 
 def monitor(file_path):
     """Generator that yields new lines as they are written to the file."""
-    with open(file_path, 'r') as f:
+    with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
         f.seek(0, os.SEEK_END)  # Move to EOF
         while True:
             line = f.readline()
@@ -52,7 +52,7 @@ def wait_for_boot(log_path, timeout=90):
 def wait_for_shutdown(log_path, timeout=60):
     """Wait until the guest shuts down (power off message)."""
     print('Shutting down VM...')
-    run_shell_cmd('cxl-tool --shutdown')
+    run_on_vm('sync && poweroff')
     print(f"🟡 Waiting for QEMU shutdown in {log_path} (timeout: {timeout}s)...")
     start = time.time()
 
