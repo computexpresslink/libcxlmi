@@ -37,13 +37,13 @@ def monitor(file_path):
                 time.sleep(0.1)
                 yield None
 
-def wait_for_boot(log_path, timeout=60):
+def wait_for_boot(log_path, timeout=90):
     """Wait until the guest OS shows the login prompt."""
     print(f"🟡 Waiting for QEMU boot in {log_path} (timeout: {timeout}s)...")
     start = time.time()
     for line in monitor(log_path):
         if line and "login:" in line:
-            print("✅ QEMU Guest Booted!")
+            print(f"✅ QEMU Guest Booted in {time.time() - start} seconds!")
             return
         if time.time() - start > timeout:
             print("❌ Timeout waiting for QEMU guest to boot.")
@@ -54,6 +54,7 @@ def wait_for_shutdown(log_path, timeout=60):
     print('Shutting down VM...')
     run_shell_cmd('cxl-tool --shutdown')
     print(f"🟡 Waiting for QEMU shutdown in {log_path} (timeout: {timeout}s)...")
+    start = time.time()
 
     # Check last 10 lines of qemu_log for shut down before scanning in new lines
     last_lines = ""
@@ -61,15 +62,15 @@ def wait_for_shutdown(log_path, timeout=60):
         last_lines =  list(deque(f, maxlen=10))
 
     if any("reboot: Power down" in line for line in last_lines):
-        print("✅ QEMU Guest Shut Down!")
+        print(f"✅ QEMU Guest Shut Down in {time.time() - start} seconds!")
         return
+
     # Otherwise, wait for shut down message
-    start = time.time()
     for line in monitor(log_path):
         if line:
             print(line)
         if line and "reboot: Power down" in line:
-            print("✅ QEMU Guest Shut Down!")
+            print(f"✅ QEMU Guest Shut Down in {time.time() - start} seconds!")
             return
         if time.time() - start > timeout:
             print("❌ Timeout waiting for QEMU shutdown.")
@@ -114,6 +115,7 @@ def start_vm(suite):
         wait_for_boot(QEMU_LOG)
     except TimeoutError as e:
         print(f"⛔ {e}")
+        sys.exit(1)
 
     print('-------------------------------------------------')
 
@@ -249,6 +251,7 @@ def run_suite(suite) -> tuple[int, int]:
         time.sleep(5)
     except TimeoutError as e:
         print(f"⛔ {e}")
+        sys.exit(1)
 
     return (num_passed, total_tests)
 

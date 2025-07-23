@@ -51,7 +51,7 @@ jobs:
         run: |
             QEMU_LOG=~/logs/qemu0.log
             START=login:
-            timeout=60
+            timeout=90
             start=$(date +%s)
 
             echo "🟡 Waiting for '$START' in $QEMU_LOG..."
