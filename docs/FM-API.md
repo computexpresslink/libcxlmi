@@ -793,7 +793,7 @@ change of payload size in newer versions of the specification.
 
 Input Payload:
 ```C
-struct cxlmi_cmd_fmapi_get_host_dc_reg_config_req {
+struct cxlmi_cmd_fmapi_get_host_dc_region_config_req {
 	uint16_t host_id;
 	uint8_t region_cnt;
 	uint8_t start_region_id;
@@ -802,7 +802,7 @@ struct cxlmi_cmd_fmapi_get_host_dc_reg_config_req {
 Return Payload:
 
    ```C
-struct cxlmi_cmd_fmapi_get_host_dc_reg_config_rsp {
+struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp {
 	uint16_t host_id;
 	uint8_t num_regions;
 	uint8_t regions_returned;
@@ -828,8 +828,8 @@ Command name:
    ```C
 int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_get_host_dc_reg_config_req *in,
-			struct cxlmi_cmd_fmapi_get_host_dc_reg_config_rsp *ret);
+			struct cxlmi_cmd_fmapi_get_host_dc_region_config_req *in,
+			struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp *ret);
    ```
 
 ## Set Host DC Region Config (5602h)
