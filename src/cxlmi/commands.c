@@ -922,6 +922,37 @@ CXLMI_EXPORT int cxlmi_cmd_get_feature(struct cxlmi_endpoint *ep,
 	return rc;
 }
 
+CXLMI_EXPORT int cxlmi_cmd_set_feature(struct cxlmi_endpoint *ep,
+	struct cxlmi_tunnel_info *ti,
+	struct cxlmi_cmd_set_feature *in,
+	size_t feature_data_sz)
+{
+	struct cxlmi_cmd_set_feature *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	ssize_t req_sz, rsp_sz;
+
+	req_sz = sizeof(*req) + sizeof(*req_pl) + feature_data_sz;
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
+	req_pl = (struct cxlmi_cmd_set_feature *)req->payload;
+	memcpy(req_pl->feature_id, in->feature_id, 0x10);
+
+	req_pl->set_feature_flags = cpu_to_le32(in->set_feature_flags);
+	req_pl->offset = cpu_to_le16(in->offset);
+	req_pl->version = in->version;
+	memcpy(req_pl->feature_data, in->feature_data, feature_data_sz);
+	arm_cci_request(ep, req, req_sz, FEATURES, SET_FEATURE);
+
+	rsp_sz = sizeof(*rsp);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	return send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+}
+
 CXLMI_EXPORT int cxlmi_cmd_memdev_identify(struct cxlmi_endpoint *ep,
 				   struct cxlmi_tunnel_info *ti,
 				   struct cxlmi_cmd_memdev_identify *ret)
