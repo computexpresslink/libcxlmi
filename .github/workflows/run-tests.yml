@@ -1,7 +1,6 @@
 name: Run Tests
 
 env:
-  URL_BASE: https://github.com/anisa-su993/anisa-linux-kernel/releases/download/v1
   VM_PORT: 2025
   PYTHONUNBUFFERED: 1
   HOME: /root
@@ -14,7 +13,7 @@ jobs:
   qemu-tests:
     runs-on: ubuntu-latest
     container:
-      image: anisasu/cxl-qemu-image
+      image: anisasu/upstream-image
       options: --user root
 
     defaults:
