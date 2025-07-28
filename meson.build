@@ -48,6 +48,27 @@ else
 	    'tools=false',
 	],
     )
+
+    mctpd = get_option('mctpd').to_lower()
+
+    if mctpd == ''
+        mctpd = 'codeconstruct'
+    endif
+
+    valid = ['openbmc', 'codeconstruct']
+    if not(valid.contains(mctpd))
+        error('Invalid mctpd value: ' + mctpd)
+    endif
+
+    if mctpd == 'openbmc'
+        conf.set_quoted('MCTP_DBUS_PATH', '/xyz/openbmc_project/mctp')
+        conf.set_quoted('MCTP_DBUS_IFACE', 'xyz.openbmc_project.MCTP')
+        conf.set_quoted('MCTP_DBUS_IFACE_ENDPOINT', 'xyz.openbmc_project.MCTP.Endpoint')
+    else
+        conf.set_quoted('MCTP_DBUS_PATH', '/au/com/codeconstruct/mctp1')
+        conf.set_quoted('MCTP_DBUS_IFACE', 'au.com.codeconstruct.MCTP1')
+        conf.set_quoted('MCTP_DBUS_IFACE_ENDPOINT', 'xyz.openbmc_project.MCTP.Endpoint')
+    endif
 endif
 
 conf.set('CONFIG_DBUS', libdbus_dep.found(), description: 'Enable dbus support?')
