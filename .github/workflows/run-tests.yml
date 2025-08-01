@@ -1,0 +1,157 @@
+name: Run Tests
+
+env:
+  VM_PORT: 2025
+  PYTHONUNBUFFERED: 1
+  HOME: /root
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  qemu-tests:
+    runs-on: ubuntu-latest
+    container:
+      image: anisasu/dcd-v6-image
+      options: --user root
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      # Checkout the current repo
+      - name: Checkout current repo
+        uses: actions/checkout@v4
+
+      - name: Clone cxl-test-tool
+        run: |
+            CXL_TEST_TOOL_URL=https://github.com/anisa-su993/anisa-cxl-test-tool.git
+            CXL_TEST_TOOL_BRANCH=libcxlmi-testing
+            git clone --single-branch --branch $CXL_TEST_TOOL_BRANCH $CXL_TEST_TOOL_URL ~/cxl-test-tool
+            ln -s ~/cxl-test-tool/cxl-tool.py /usr/local/bin/cxl-tool
+
+      # Test VM Startup & SSH Connection
+      - name: Test Start VM
+        run: |
+          TOPO='-object memory-backend-file,id=cxl-mem1,share=on,mem-path=/tmp/cxltest.raw,size=512M -object memory-backend-file,id=cxl-lsa1,share=on,mem-path=/tmp/lsa.raw,size=1M -device pxb-cxl,bus_nr=12,bus=pcie.0,id=cxl.1,hdm_for_passthrough=true -device cxl-rp,port=0,bus=cxl.1,id=root_port13,chassis=0,slot=2 -device cxl-type3,bus=root_port13,memdev=cxl-mem1,lsa=cxl-lsa1,id=cxl-pmem0,sn=0xabcd -M cxl-fmw.0.targets.0=cxl.1,cxl-fmw.0.size=4G,cxl-fmw.0.interleave-granularity=8k'
+          echo "cxl-tool --run -A tcg --raw -T '$TOPO'" && cxl-tool --run -A tcg --raw -T "$TOPO"
+
+      - name: Wait for QEMU guest to boot
+        run: |
+            QEMU_LOG=~/logs/qemu0.log
+            START=login:
+            timeout=90
+            start=$(date +%s)
+
+            echo "🟡 Waiting for '$START' in $QEMU_LOG..."
+
+            while true; do
+            if grep -q "$START" "$QEMU_LOG"; then
+                echo "✅ QEMU Guest Booted!"
+                break
+            fi
+
+            now=$(date +%s)
+            if (( now - start > timeout )); then
+                echo "❌ Timed out waiting for guest to boot."
+                exit 1
+            fi
+
+            sleep 1
+            done
+
+      - name: Test VM SSH
+        run: |
+            echo "ssh-keyscan -p $VM_PORT 127.0.0.1" && ssh-keyscan -p $VM_PORT 127.0.0.1
+            echo "ssh-keyscan -p $VM_PORT 127.0.0.1  | sed 's/\[127\.0\.0\.1\]/[localhost]/' >> /root/.ssh/known_hosts"
+            ssh-keyscan -p $VM_PORT 127.0.0.1  | sed 's/\[127\.0\.0\.1\]/[localhost]/' >> /root/.ssh/known_hosts
+            echo "cat /root/.ssh/known_hosts" && cat /root/.ssh/known_hosts
+            echo 'ssh -v -p 2025 root@localhost "ls"' && ssh -v -p 2025 root@localhost "ls"
+
+      # Set up NDCTL on VM, to skip later when booting up actual test VMs
+      - name: Install NDCTL
+        run: |
+            cxl-tool --install-ndctl
+
+      - name: Test VM Shutdown
+        run: |
+            QEMU_LOG=~/logs/qemu0.log
+            SHUTDOWN='reboot: Power down'
+            timeout=60
+
+            echo "cxl-tool --cmd 'sync && poweroff'"
+            cxl-tool --cmd 'sync && poweroff'
+            start=$(date +%s)
+
+            echo "🟡 Waiting for $SHUTDOWN in $QEMU_LOG..."
+
+            while true; do
+            if grep -q "$SHUTDOWN" "$QEMU_LOG"; then
+                echo "✅ QEMU shut down successfully."
+                break
+            fi
+
+            now=$(date +%s)
+            if (( now - start > timeout )); then
+                echo "❌ Timed out waiting for guest to boot."
+                ps aux | '[q]emu-system-x86-64'  # show qemu processes
+                exit 1
+            fi
+
+            sleep 1
+            done
+
+      # Cat QEMU Logs
+      - name: cat Test VM Logs
+        run: |
+            cat ~/logs/qemu0.log
+
+      # Run All Tests
+      - name: Run Tests
+        run: |
+            python3 tests/qemu-tests/run_tests.py
+        shell: bash
+        timeout-minutes: 30
+
+      # Ensure logging directories exist
+      - name: Ensure logs directory exists
+        if: always()
+        run: |
+          mkdir -p ~/logs/
+
+      - name: cat logs
+        if: always()
+        run: |
+            find ~/logs -type f | while read -r file; do
+                echo "==> $file <=="
+                cat "$file"
+                echo
+            done
+
+      - name: cat output
+        if: always()
+        run: |
+            mkdir -p tests/qemu-tests/output
+            find tests/qemu-tests/output/ -type f | while read -r file; do
+                echo "==> $file <=="
+                cat "$file"
+                echo
+            done
+
+      # Upload logs from the VM
+      - name: Upload VM Logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: logs
+          path: ~/logs/
+
+      # Upload test files generated and their output
+      - name: Upload Generated Test Files & Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-files
+          path: tests/qemu-tests/output/
