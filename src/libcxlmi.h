@@ -471,7 +471,18 @@ int cxlmi_cmd_get_supported_logs_sublist(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
 			  struct cxlmi_cmd_get_supported_logs_sublist_req *in,
 			  struct cxlmi_cmd_get_supported_logs_sublist_rsp *ret);
-
+int cxlmi_cmd_get_supported_features(struct cxlmi_endpoint *ep,
+	struct cxlmi_tunnel_info *ti,
+	struct cxlmi_cmd_get_supported_features_req *in,
+	struct cxlmi_cmd_get_supported_features_rsp *ret);
+int cxlmi_cmd_get_feature(struct cxlmi_endpoint *ep,
+	struct cxlmi_tunnel_info *ti,
+	struct cxlmi_cmd_get_feature_req *in,
+	struct cxlmi_cmd_get_feature_rsp *ret);
+int cxlmi_cmd_set_feature(struct cxlmi_endpoint *ep,
+	struct cxlmi_tunnel_info *ti,
+	struct cxlmi_cmd_set_feature *in,
+	size_t feature_data_sz);
 
 /*
  * Definitions for Memory Device Commands, per CXL r3.1 Table 8-126.
