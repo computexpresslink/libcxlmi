@@ -243,9 +243,6 @@ CXLMI_EXPORT bool cxlmi_endpoint_enable_fmapi(struct cxlmi_endpoint *ep)
 		mctp->fmapi_sd = socket(AF_MCTP, SOCK_DGRAM, 0);
 		if (mctp->fmapi_sd < 0)
 			goto err;
-		if (bind(mctp->fmapi_sd, (struct sockaddr *)&fmapi_addr,
-			 sizeof(fmapi_addr)))
-			goto err;
 
 		mctp->fmapi_addr = fmapi_addr;
 	}
@@ -1139,12 +1136,6 @@ static void endpoint_probe_mctp(struct cxlmi_endpoint *ep)
 
 	/* FM-API errors are ignored and the CCI will only be available */
 	mctp->fmapi_sd = socket(AF_MCTP, SOCK_DGRAM, 0);
-	if (bind(mctp->fmapi_sd, (struct sockaddr *)&fmapi_addr,
-		 sizeof(fmapi_addr))) {
-		cxlmi_msg(ep->ctx, LOG_INFO, "FM-API unsupported\n");
-		return;
-	}
-
 	mctp->fmapi_addr = fmapi_addr;
 	ep->has_fmapi = true;
 }
@@ -1219,13 +1210,6 @@ CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_open_mctp(struct cxlmi_ctx *ctx,
 		cxlmi_msg(ctx, LOG_ERR,
 			  "cannot open socket for mctp endpoint %d:%d\n",
 			  netid, eid);
-		goto err_free_mctp;
-	}
-	rc = bind(mctp->sd, (struct sockaddr *)&cci_addr, sizeof(cci_addr));
-	if (rc) {
-		errno_save = errno;
-		cxlmi_msg(ctx, LOG_ERR,
-			  "cannot bind for mctp endpoint %d:%d\n", netid, eid);
 		goto err_free_mctp;
 	}
 
