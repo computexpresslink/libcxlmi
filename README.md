@@ -368,8 +368,10 @@ meson setup --default-library=static build
 ```
 Also, to configure with dbus support to enable MCTP scanning:
 ```
-meson setup -Dlibdbus=enabled build
+meson setup -Dlibdbus=enabled -Dmctpd=(openbmc | codeconstruct) build
 ```
+The `mctpd` option defaults to "codeconstruct", which refers to CodeConstruct's
+[mctpd v2](https://codeconstruct.com.au/docs/mctp-utils-v2-0-release/).
 
 To configure a build for debugging purposes (i.e. optimization turned
 off and debug symbols enabled):
