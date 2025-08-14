@@ -1,34 +1,35 @@
-name: CI-Coverity-Scan
+name: Coverity Scan
 
 on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * 1'  # Every Monday at 01:00 UTC
+  workflow_dispatch:     # Allow manual trigger
 
 jobs:
-  build:
+  coverity-scan:
     runs-on: ubuntu-latest
 
-    # Permissions for the GITHUB_TOKEN
-    permissions:
-      contents: read          # Allow actions/checkout to read the repo
-      pull-requests: write    # Allow the scan action to post PR comments
-
     steps:
-      # Step 1: Check out the repository code
-      - name: Checkout Source
-        uses: actions/checkout@v4
+        - uses: actions/checkout@v4
 
-      # Step 2: Run the Coverity Security Scan
-      - name: Coverity Security Scan
-        uses: blackduck-inc/black-duck-security-scan@v2.3.0
-        with:
-          coverity_url: ${{ vars.COVERITY_URL }}
-          coverity_user: ${{ vars.COVERITY_USER }}
-          coverity_passphrase: ${{ secrets.COVERITY_PASSPHRASE }}
+        - name: Check Coverity token is set
+          run: |
+            if [ -z "${{ secrets.COVERITY_TOKEN }}" ]; then
+                echo "ERROR: COVERITY_TOKEN secret is missing!"
+                exit 1
+            fi
 
-          # Enable posting comments on Pull Requests
-          coverity_prComment_enabled: true
-          github_token: ${{ secrets.GITHUB_TOKEN }}
+        - name: Install Packages
+          run: |
+            sudo apt-get install -y meson libdbus-1-dev git cmake locales
+
+        - name: Setup Build Directory
+          run: |
+            meson setup -Dlibdbus=enabled build
+
+        - uses: vapier/coverity-scan-action@v1
+          with:
+            project: computexpresslink/libcxlmi
+            email: ${{ secrets.COVERITY_EMAIL }}
+            token: ${{ secrets.COVERITY_TOKEN }}
+            command: 'meson compile -C build'
