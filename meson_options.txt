@@ -1,3 +1,4 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 option('libdbus', type : 'feature', value: 'disabled', description : 'libdbus support')
+option('mctpd', type: 'string', value: '', description: 'MCTP daemon type (openbmc or codeconstruct, case-insensitive). Option only valid if libdbus enabled.')
 option('tests', type : 'boolean', value : true, description : 'build tests')
