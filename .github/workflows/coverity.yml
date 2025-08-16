@@ -19,7 +19,7 @@ jobs:
     steps:
       # Step 1: Check out the repository code
       - name: Checkout Source
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       # Step 2: Run the Coverity Security Scan
       - name: Coverity Security Scan
