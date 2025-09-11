@@ -233,6 +233,54 @@ struct cxlmi_cmd_get_supported_logs_sublist_rsp {
 	struct cxlmi_supported_log_entry entries[];
 } __attribute__((packed));
 
+/* CXL r3.2 Section 8.2.10.6.1 Get Supported Features (Opcode 0500h) */
+struct cxlmi_cmd_get_supported_features_req {
+	uint32_t count;
+	uint16_t starting_feature_index;
+	uint8_t rsvd[2];
+} __attribute__((packed));
+
+struct cxlmi_cmd_get_supported_features_rsp {
+	uint16_t num_supported_feature_entries;
+	uint16_t device_supported_features;
+	uint8_t rsvd[4];
+	struct {
+		uint8_t feature_id[0x10];
+		uint16_t feature_index;
+		uint16_t get_feature_size;
+		uint16_t set_feature_size;
+		uint32_t attribute_flags;
+		uint8_t get_feature_version;
+		uint8_t set_feature_version;
+		uint16_t set_feature_effects;
+		uint8_t rsvd[18];
+	} __attribute__((packed)) supported_feature_entries[];
+} __attribute__((packed));
+
+/* CXL r3.2 Section 8.2.10.6.2: Get Feature (Opcode 0501h) */
+struct cxlmi_cmd_get_feature_req {
+	uint8_t feature_id[0x10];
+	uint16_t offset;
+	uint16_t count;
+	uint8_t selection;
+} __attribute__((packed));
+
+/* CXL r3.2 Figure 8-14: Mailbox Registers */
+#define CXL_MAILBOX_MAX_PAYLOAD_SIZE (1 << 11)
+struct cxlmi_cmd_get_feature_rsp {
+	uint8_t feature_data[CXL_MAILBOX_MAX_PAYLOAD_SIZE];
+} __attribute__((packed));
+
+/* CXL r3.2 Section 8.2.10.6.3 Set Feature (Opcode 0502h) */
+struct cxlmi_cmd_set_feature {
+	uint8_t feature_id[0x10];
+	uint32_t set_feature_flags;
+	uint16_t offset;
+	uint8_t version;
+	uint8_t rsvd[9];
+	uint8_t feature_data[];
+} __attribute__((packed));
+
 /* CXL r3.1 Section 8.2.9.9.1.1: Identify Memory Device (Opcode 4000h) */
 struct cxlmi_cmd_memdev_identify {
 	char fw_revision[0x10];
