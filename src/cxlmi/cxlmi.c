@@ -1171,7 +1171,7 @@ CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_open_mctp(struct cxlmi_ctx *ctx,
 {
 	struct cxlmi_endpoint *ep, *tmp;
 	struct cxlmi_transport_mctp *mctp;
-	int rc, errno_save;
+	int errno_save;
 	struct sockaddr_mctp cci_addr = {
 		.smctp_family = AF_MCTP,
 		.smctp_network = netid,
