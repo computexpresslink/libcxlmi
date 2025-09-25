@@ -503,7 +503,8 @@ int cxlmi_cmd_memdev_get_lsa(struct cxlmi_endpoint *ep,
 			     struct cxlmi_cmd_memdev_get_lsa *ret);
 int cxlmi_cmd_memdev_set_lsa(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_memdev_set_lsa *in);
+			     struct cxlmi_cmd_memdev_set_lsa *in,
+                 size_t data_sz);
 
 int cxlmi_cmd_memdev_get_health_info(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,

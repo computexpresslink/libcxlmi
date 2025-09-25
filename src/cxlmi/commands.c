@@ -1099,12 +1099,13 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_lsa(struct cxlmi_endpoint *ep,
 
 CXLMI_EXPORT int cxlmi_cmd_memdev_set_lsa(struct cxlmi_endpoint *ep,
 					  struct cxlmi_tunnel_info *ti,
-					  struct cxlmi_cmd_memdev_set_lsa *in)
+					  struct cxlmi_cmd_memdev_set_lsa *in,
+                      size_t data_sz)
 {
 	struct cxlmi_cmd_memdev_set_lsa  *req_pl;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	struct cxlmi_cci_msg rsp;
-	size_t req_sz, data_sz = struct_size(in, data, 0);
+	size_t req_sz;
 
 	req_sz = sizeof(*req) + data_sz + sizeof(*in);
 	req = calloc(1, req_sz);
