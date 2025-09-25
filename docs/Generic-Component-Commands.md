@@ -367,7 +367,8 @@ Command name:
    ```C
 int cxlmi_cmd_transfer_fw(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
-			  struct cxlmi_cmd_transfer_fw *in);
+			  struct cxlmi_cmd_transfer_fw *in,
+              size_t data_sz);
    ```
 
 ## Activate FW (0202h)
