@@ -433,7 +433,8 @@ int cxlmi_cmd_get_fw_info(struct cxlmi_endpoint *ep,
 			  struct cxlmi_cmd_get_fw_info *out);
 int cxlmi_cmd_transfer_fw(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
-			  struct cxlmi_cmd_transfer_fw *in);
+			  struct cxlmi_cmd_transfer_fw *in,
+              size_t data_sz);
 int cxlmi_cmd_activate_fw(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
 			  struct cxlmi_cmd_activate_fw *in);

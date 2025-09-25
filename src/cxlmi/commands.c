@@ -446,12 +446,13 @@ CXLMI_EXPORT int cxlmi_cmd_get_fw_info(struct cxlmi_endpoint *ep,
 
 CXLMI_EXPORT int cxlmi_cmd_transfer_fw(struct cxlmi_endpoint *ep,
 				       struct cxlmi_tunnel_info *ti,
-				       struct cxlmi_cmd_transfer_fw *in)
+				       struct cxlmi_cmd_transfer_fw *in,
+                       size_t data_sz)
 {
 	struct cxlmi_cmd_transfer_fw *req_pl;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	struct cxlmi_cci_msg rsp;
-	ssize_t req_sz, data_sz = struct_size(in, data, 0);
+	ssize_t req_sz;
 	int rc = -1;
 
 	req_sz = sizeof(*req_pl) + data_sz + sizeof(*req);
