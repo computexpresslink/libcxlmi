@@ -143,7 +143,7 @@
 %typemap(argout) void *ret {
     /* Return the output buffer as bytes */
     PyObject *bytes = PyBytes_FromStringAndSize((char*)$1, CXL_MAILBOX_MAX_PAYLOAD_SIZE);
-    $result = SWIG_Python_AppendOutput($result, bytes);
+    $result = SWIG_AppendOutput($result, bytes);
 }
 
 /* Handle variable-length input/output buffers for vendor commands */
@@ -156,7 +156,7 @@
 
 %typemap(argout) (void *ret, ssize_t ret_size) {
     PyObject *bytes = PyBytes_FromStringAndSize((char*)$1, $2);
-    $result = SWIG_Python_AppendOutput($result, bytes);
+    $result = SWIG_AppendOutput($result, bytes);
 }
 
 /* Arrays for event records and other variable-length structures */
