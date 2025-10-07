@@ -39,6 +39,8 @@ python_installation = import('python').find_installation(
     modules: ['setuptools']
 )
 
+message('Python install dir: ' + python_installation.get_path('purelib'))
+
 if not python_installation.found()
     if python_option.enabled()
         error('Python setuptools module not found but python=enabled')
@@ -109,7 +111,7 @@ if get_option('python-install')
         'sh', '-c',
         'cp @0@/cxlmi.py @0@/_cxlmi*.so @1@/'.format(
             meson.current_build_dir(),
-            python_installation.get_install_dir()
+            python_installation.get_path('purelib')
         )
     )
 endif
