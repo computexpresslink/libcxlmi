@@ -33,7 +33,7 @@
  * Users call cxlmi_cmd_get_event_records() which returns the struct, and the
  * records are accessed through the struct's fixed-size fields and length counters.
  */
-%ignore cxlmi_cmd_identify::component_specific_ident_data;
+%ignore cxlmi_cmd_identify_rsp::component_specific_ident_data;
 %ignore cxlmi_cmd_get_event_records_rsp::records;
 %ignore cxlmi_cmd_clear_event_records::handles;
 %ignore cxlmi_cmd_get_fw_info::fw_slot_info;
@@ -229,78 +229,4 @@ def endpoints(ctx):
 /* Include structure definitions from api-types.h */
 %include "cxlmi/api-types.h"
 
-/* Include additional types and constants from libcxlmi.h */
-enum cxlmi_cmd_retcode {
-	CXLMI_RET_SUCCESS = 0x0,
-	CXLMI_RET_BACKGROUND,
-	CXLMI_RET_INPUT,
-	CXLMI_RET_UNSUPPORTED,
-	CXLMI_RET_INTERNAL,
-	CXLMI_RET_RETRY,
-	CXLMI_RET_BUSY,
-	CXLMI_RET_MEDIADISABLED,
-	CXLMI_RET_FWINPROGRESS,
-	CXLMI_RET_FWOOO,
-	CXLMI_RET_FWAUTH,
-	CXLMI_RET_FWSLOT,
-	CXLMI_RET_FWROLLBACK,
-	CXLMI_RET_FWRESET,
-	CXLMI_RET_HANDLE,
-	CXLMI_RET_PADDR,
-	CXLMI_RET_POISONLMT,
-	CXLMI_RET_MEDIAFAILURE,
-	CXLMI_RET_ABORT,
-	CXLMI_RET_SECURITY,
-	CXLMI_RET_PASSPHRASE,
-	CXLMI_RET_MBUNSUPPORTED,
-	CXLMI_RET_PAYLOADLEN,
-	CXLMI_RET_LOG,
-	CXLMI_RET_INTERRUPTED,
-	CXLMI_RET_FEATUREVERSION,
-	CXLMI_RET_FEATURESELVALUE,
-	CXLMI_RET_FEATURETRANSFERIP,
-	CXLMI_RET_FEATURETRANSFEROOO,
-	CXLMI_RET_RESOURCEEXHAUSTED,
-	CXLMI_RET_EXTLIST,
-	CXLMI_RET_TRANSFEROOO,
-	CXLMI_RET_NO_BGABORT,
-};
-
-struct cxlmi_tunnel_info {
-	int port;
-	int ld;
-	int level;
-	bool mhd;
-};
-
-#define CXLMI_MAX_SUPPORTED_EVENT_RECORDS 20
-#define CXLMI_MAX_SUPPORTED_LOGS 7
-#define CXL_MAILBOX_MAX_PAYLOAD_SIZE (1 << 11)
-
-/* Manually declare key API functions to avoid conflicts with structure names
- * Note: We can't include libcxlmi.h directly because many functions have the same
- * names as structures (e.g., cxlmi_cmd_identify is both a struct and a function).
- * SWIG needs to see the structures first to create proper constructors.
- */
-
-/* Context and endpoint management */
-struct cxlmi_ctx *cxlmi_new_ctx(FILE *fp, int log_level);
-void cxlmi_free_ctx(struct cxlmi_ctx *ctx);
-struct cxlmi_endpoint *cxlmi_open_mctp(struct cxlmi_ctx *ctx, unsigned int net, uint8_t eid);
-int cxlmi_scan_mctp(struct cxlmi_ctx *ctx);
-struct cxlmi_endpoint *cxlmi_open(struct cxlmi_ctx *ctx, const char *devname);
-void cxlmi_close(struct cxlmi_endpoint *ep);
-void cxlmi_set_probe_enabled(struct cxlmi_ctx *ctx, bool enabled);
-unsigned int cxlmi_endpoint_get_timeout(struct cxlmi_endpoint *ep);
-int cxlmi_endpoint_set_timeout(struct cxlmi_endpoint *ep, int timeout_ms);
-bool cxlmi_endpoint_has_fmapi(struct cxlmi_endpoint *ep);
-bool cxlmi_endpoint_enable_fmapi(struct cxlmi_endpoint *ep);
-bool cxlmi_endpoint_disable_fmapi(struct cxlmi_endpoint *ep);
-struct cxlmi_endpoint *cxlmi_first_endpoint(struct cxlmi_ctx *ctx);
-struct cxlmi_endpoint *cxlmi_next_endpoint(struct cxlmi_ctx *ctx, struct cxlmi_endpoint *ep);
-
-/* Utility functions */
-const char *cxlmi_cmd_retcode_tostr(enum cxlmi_cmd_retcode code);
-int cxlmi_cmd_vendor_specific(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
-                               uint16_t opcode, void *in, ssize_t in_size,
-                               void *ret, ssize_t ret_size);
+%include "libcxlmi.h"
