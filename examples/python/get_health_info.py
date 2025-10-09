@@ -61,7 +61,7 @@ def main():
 
         try:
             # Get health information
-            health = cxlmi.cxlmi_cmd_memdev_get_health_info()
+            health = cxlmi.cxlmi_cmd_memdev_get_health_info_rsp()
             ret = cxlmi.cxlmi_cmd_memdev_get_health_info(ep, None, health)
 
             print("CXL Memory Device Health Information:")

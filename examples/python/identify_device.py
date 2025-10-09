@@ -44,8 +44,9 @@ def send_identify(ep):
         print(f"                      ({comp_type_str})")
 
     finally:
-        cxlmi.cxlmi_close(ep)
-
+        if ret != 0:
+            print(f"Error: rc = {ret}")
+        return ret
 
 def main():
     # Create a new context with INFO log level
@@ -68,7 +69,7 @@ def main():
             print(f"found {num_ep} endpoint(s)")
             try:
                 # Open MCTP EP
-                for ep in cxlmi.endpoints(ctx):
+                for ep in cxlmi.for_each_endpoint_safe(ctx):
                     send_identify(ep)
                     cxlmi.cxlmi_close(ep)
             finally:
@@ -84,6 +85,7 @@ def main():
                 print(f"Failed to open MCTP ep: {nid}:{eid}")
                 return 1
             send_identify(ep)
+            cxlmi.cxlmi_close(ep)
         finally:
             cxlmi.cxlmi_free_ctx(ctx)
     else:

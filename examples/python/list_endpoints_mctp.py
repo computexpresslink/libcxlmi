@@ -46,7 +46,7 @@ def main():
 
             try:
                 # Try to identify the endpoint
-                ident = cxlmi.cxlmi_cmd_identify()
+                ident = cxlmi.cxlmi_cmd_identify_rsp()
                 ret = cxlmi.cxlmi_cmd_identify(ep, None, ident)
 
                 print(f"  Vendor ID:        0x{ident.vendor_id:04x}")

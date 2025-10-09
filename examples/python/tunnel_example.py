@@ -22,7 +22,7 @@ def example_tunnel_to_mld(ep, ld_id):
     ti = cxlmi.cxlmi_tunnel_mld(ld_id)
 
     try:
-        ident = cxlmi.cxlmi_cmd_identify()
+        ident = cxlmi.cxlmi_cmd_identify_rsp()
         ret = cxlmi.cxlmi_cmd_identify(ep, ti, ident)
 
         print(f"  Vendor ID:    0x{ident.vendor_id:04x}")
@@ -43,7 +43,7 @@ def example_tunnel_to_switch_port(ep, port):
     ti = cxlmi.cxlmi_tunnel_switch(port)
 
     try:
-        ident = cxlmi.cxlmi_cmd_identify()
+        ident = cxlmi.cxlmi_cmd_identify_rsp()
         ret = cxlmi.cxlmi_cmd_identify(ep, ti, ident)
 
         print(f"  Vendor ID:    0x{ident.vendor_id:04x}")
@@ -63,7 +63,7 @@ def example_tunnel_switch_to_mld(ep, port, ld_id):
     ti = cxlmi.cxlmi_tunnel_switch_mld(port, ld_id)
 
     try:
-        ident = cxlmi.cxlmi_cmd_identify()
+        ident = cxlmi.cxlmi_cmd_identify_rsp()
         ret = cxlmi.cxlmi_cmd_identify(ep, ti, ident)
 
         print(f"  Vendor ID:    0x{ident.vendor_id:04x}")
@@ -83,7 +83,7 @@ def example_tunnel_to_mhd(ep):
     ti = cxlmi.cxlmi_tunnel_mhd()
 
     try:
-        ident = cxlmi.cxlmi_cmd_identify()
+        ident = cxlmi.cxlmi_cmd_identify_rsp()
         ret = cxlmi.cxlmi_cmd_identify(ep, ti, ident)
 
         print(f"  Vendor ID:    0x{ident.vendor_id:04x}")

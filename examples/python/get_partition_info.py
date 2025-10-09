@@ -12,6 +12,8 @@ This example demonstrates how to:
 import sys
 import cxlmi
 
+MiB = 1 << 20
+CXL_CAPACITY_MULTIPLIER = 256 * MiB
 
 def format_capacity(bytes_val):
     """Format byte capacity in human-readable format"""
@@ -47,26 +49,26 @@ def main():
 
         try:
             # Get partition information
-            part_info = cxlmi.cxlmi_cmd_memdev_get_partition_info()
+            part_info = cxlmi.cxlmi_cmd_memdev_get_partition_info_rsp()
             ret = cxlmi.cxlmi_cmd_memdev_get_partition_info(ep, None, part_info)
 
             print("CXL Memory Device Partition Information:")
             print()
             print("Active Partition:")
-            print(f"  Volatile Memory:    {format_capacity(part_info.active_vmem)}")
-            print(f"                      ({part_info.active_vmem} bytes)")
-            print(f"  Persistent Memory:  {format_capacity(part_info.active_pmem)}")
-            print(f"                      ({part_info.active_pmem} bytes)")
+            print(f"  Volatile Memory:    {format_capacity(part_info.active_vmem * CXL_CAPACITY_MULTIPLIER)}")
+            print(f"                      ({part_info.active_vmem * CXL_CAPACITY_MULTIPLIER} bytes)")
+            print(f"  Persistent Memory:  {format_capacity(part_info.active_pmem * CXL_CAPACITY_MULTIPLIER)}")
+            print(f"                      ({part_info.active_pmem * CXL_CAPACITY_MULTIPLIER} bytes)")
             print()
 
             # Check if next partition is different
             if (part_info.next_vmem != part_info.active_vmem or
                 part_info.next_pmem != part_info.active_pmem):
                 print("Next Partition (pending change):")
-                print(f"  Volatile Memory:    {format_capacity(part_info.next_vmem)}")
-                print(f"                      ({part_info.next_vmem} bytes)")
-                print(f"  Persistent Memory:  {format_capacity(part_info.next_pmem)}")
-                print(f"                      ({part_info.next_pmem} bytes)")
+                print(f"  Volatile Memory:    {format_capacity(part_info.next_vmem * CXL_CAPACITY_MULTIPLIER)}")
+                print(f"                      ({part_info.next_vmem * CXL_CAPACITY_MULTIPLIER} bytes)")
+                print(f"  Persistent Memory:  {format_capacity(part_info.next_pmem * CXL_CAPACITY_MULTIPLIER)}")
+                print(f"                      ({part_info.next_pmem * CXL_CAPACITY_MULTIPLIER} bytes)")
                 print()
                 print("Note: A device reset is required to activate the new partition")
             else:

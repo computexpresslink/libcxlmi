@@ -45,7 +45,7 @@ def main():
             print()
 
             # Identify switch device
-            sw_ident = cxlmi.cxlmi_cmd_fmapi_identify_sw_device()
+            sw_ident = cxlmi.cxlmi_cmd_fmapi_identify_sw_device_rsp()
             ret = cxlmi.cxlmi_cmd_fmapi_identify_sw_device(ep, None, sw_ident)
 
             print("CXL Switch Information:")
