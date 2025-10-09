@@ -10,7 +10,7 @@ static int show_dc_extents(struct cxlmi_endpoint *ep);
 static int show_memdev_info(struct cxlmi_endpoint *ep)
 {
 	int rc;
-	struct cxlmi_cmd_memdev_identify id;
+	struct cxlmi_cmd_memdev_identify_rsp id;
 
 	rc = cxlmi_cmd_memdev_identify(ep, NULL, &id);
 	if (rc)
@@ -31,7 +31,7 @@ static int show_memdev_info(struct cxlmi_endpoint *ep)
 static int show_switch_info(struct cxlmi_endpoint *ep)
 {
 	int rc, i;
-	struct cxlmi_cmd_fmapi_identify_sw_device swid;
+	struct cxlmi_cmd_fmapi_identify_sw_device_rsp swid;
 
 	rc = cxlmi_cmd_fmapi_identify_sw_device(ep, NULL, &swid);
 	if (rc)
@@ -56,7 +56,7 @@ static int get_physical_port_state(struct cxlmi_endpoint *ep)
 	int port_index = 0;
 	uint8_t port_number = 0;
 	struct cxlmi_cmd_fmapi_get_phys_port_state_req *req_pps;
-	struct cxlmi_cmd_fmapi_identify_sw_device swid;
+	struct cxlmi_cmd_fmapi_identify_sw_device_rsp swid;
 	struct cxlmi_cmd_fmapi_get_phys_port_state_rsp *rsp_pps;
 
 	rc_p = cxlmi_cmd_fmapi_identify_sw_device(ep, NULL, &swid);
@@ -111,14 +111,14 @@ static int physical_port_control(struct cxlmi_endpoint *ep)
 {
 	int rc, rc_p;
 	uint8_t port_number = 0;
-	struct cxlmi_cmd_fmapi_phys_port_control *ppc;
-	struct cxlmi_cmd_fmapi_identify_sw_device swid;
+	struct cxlmi_cmd_fmapi_phys_port_control_req *ppc;
+	struct cxlmi_cmd_fmapi_identify_sw_device_rsp swid;
 
 	rc_p = cxlmi_cmd_fmapi_identify_sw_device(ep, NULL, &swid);
 	if (rc_p)
 		return rc_p;
 
-	ppc = calloc(1, sizeof(struct cxlmi_cmd_fmapi_phys_port_control));
+	ppc = calloc(1, sizeof(struct cxlmi_cmd_fmapi_phys_port_control_req));
 	for (int byte_index = 0; byte_index < 32; byte_index++) {
 		unsigned char byte = swid.active_port_bitmask[byte_index];
 		for (int bit_index = 0; bit_index < 8; bit_index++, port_number++) {
@@ -141,8 +141,8 @@ static int physical_port_control(struct cxlmi_endpoint *ep)
 static int show_device_info(struct cxlmi_endpoint *ep)
 {
 	int rc = 0;
-	struct cxlmi_cmd_identify id;
-	struct cxlmi_cmd_get_fw_info fw_info;
+	struct cxlmi_cmd_identify_rsp id;
+	struct cxlmi_cmd_get_fw_info_rsp fw_info;
 
 	rc = cxlmi_cmd_identify(ep, NULL, &id);
 	if (rc)
@@ -189,7 +189,7 @@ static int show_device_info(struct cxlmi_endpoint *ep)
 static int toggle_abort(struct cxlmi_endpoint *ep)
 {
 	int rc;
-	struct cxlmi_cmd_bg_op_status sts;
+	struct cxlmi_cmd_bg_op_status_rsp sts;
 
 	rc = cxlmi_cmd_bg_op_status(ep, NULL, &sts);
 	if (rc)
@@ -224,8 +224,8 @@ static int play_with_device_timestamp(struct cxlmi_endpoint *ep)
 {
 	int rc;
 	uint64_t orig_ts;
-	struct cxlmi_cmd_get_timestamp get_ts;
-	struct cxlmi_cmd_set_timestamp set_ts = {
+	struct cxlmi_cmd_get_timestamp_rsp get_ts;
+	struct cxlmi_cmd_set_timestamp_req set_ts = {
 		.timestamp = 946684800, /* Jan 1, 2000 */
 	};
 
@@ -266,7 +266,7 @@ static int play_with_device_timestamp(struct cxlmi_endpoint *ep)
 
 static int issue_dynamic_capacity_operation(struct cxlmi_endpoint *ep, bool add)
 {
-	struct cxlmi_cmd_memdev_add_dc_response *req;
+	struct cxlmi_cmd_memdev_add_dc_response_req *req;
 	uint64_t dpa, len;
 	int i = 0, rc = -1;
 
@@ -289,8 +289,8 @@ static int issue_dynamic_capacity_operation(struct cxlmi_endpoint *ep, bool add)
 				req->updated_extent_list_size);
 		rc = cxlmi_cmd_memdev_add_dc_response(ep, NULL, req);
 	} else {
-		struct cxlmi_cmd_memdev_release_dc *in;
-		in = (struct cxlmi_cmd_memdev_release_dc *)req;
+		struct cxlmi_cmd_memdev_release_dc_req *in;
+		in = (struct cxlmi_cmd_memdev_release_dc_req *)req;
 		printf("Notify device to release %d extents\n",
 				req->updated_extent_list_size);
 		rc = cxlmi_cmd_memdev_release_dc(ep, NULL, in);
@@ -450,7 +450,7 @@ static int get_device_logs(struct cxlmi_endpoint *ep)
 {
 	int rc;
 	size_t cel_size;
-	struct cxlmi_cmd_get_supported_logs *gsl;
+	struct cxlmi_cmd_get_supported_logs_rsp *gsl;
 
 	gsl = calloc(1, sizeof(*gsl) + maxlogs * sizeof(*gsl->entries));
 	if (!gsl)
@@ -476,10 +476,10 @@ static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 {
 	const int num_poisons = 3;
 	int i, rc[num_poisons];
-	struct cxlmi_cmd_memdev_inject_poison inject_poison[num_poisons];
+	struct cxlmi_cmd_memdev_inject_poison_req inject_poison[num_poisons];
 	struct cxlmi_cmd_memdev_get_poison_list_req get_poison_list_req[num_poisons];
 	struct cxlmi_cmd_memdev_get_poison_list_rsp get_poison_list_rsp[num_poisons];
-	struct cxlmi_cmd_memdev_clear_poison clear_poison[num_poisons];
+	struct cxlmi_cmd_memdev_clear_poison_req clear_poison[num_poisons];
 	uint64_t phy_addr[num_poisons];
 	uint64_t phy_start_addr = 0x00001000;
 
@@ -541,7 +541,7 @@ static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 static int test_fmapi_get_dcd_info(struct cxlmi_endpoint *ep)
 {
 	int rc;
-	struct cxlmi_cmd_fmapi_get_dcd_info *out;
+	struct cxlmi_cmd_fmapi_get_dcd_info_rsp *out;
 
 	out = calloc(1, sizeof(*out));
 	if (!out)
@@ -615,7 +615,7 @@ free_out:
 
 static int test_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep)
 {
-	struct cxlmi_cmd_fmapi_set_dc_region_config req = {
+	struct cxlmi_cmd_fmapi_set_dc_region_config_req req = {
 		.region_id = 0,
 		.block_sz = 128 * MiB,
 		.sanitize_on_release = 0,
@@ -916,7 +916,7 @@ cleanup:
 
 static int test_fmapi_dc_add_reference(struct cxlmi_endpoint *ep)
 {
-	struct cxlmi_cmd_fmapi_dc_add_ref req = {
+	struct cxlmi_cmd_fmapi_dc_add_ref_req req = {
 		.tag = {0}
 	};
 
@@ -932,7 +932,7 @@ static int test_fmapi_dc_add_reference(struct cxlmi_endpoint *ep)
 
 static int test_fmapi_dc_remove_reference(struct cxlmi_endpoint *ep)
 {
-	struct cxlmi_cmd_fmapi_dc_remove_ref req = {
+	struct cxlmi_cmd_fmapi_dc_remove_ref_req req = {
 		.tag = {0}
 	};
 

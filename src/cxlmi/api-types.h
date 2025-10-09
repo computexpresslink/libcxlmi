@@ -24,7 +24,7 @@ struct cxlmi_cci_msg {
 } __attribute__ ((packed));
 
 /* CXL r3.1 Section 8.2.9.1.1: Identify (Opcode 0001h) */
-struct cxlmi_cmd_identify {
+struct cxlmi_cmd_identify_rsp {
 	uint16_t vendor_id;
 	uint16_t device_id;
 	uint16_t subsys_vendor_id;
@@ -35,7 +35,7 @@ struct cxlmi_cmd_identify {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.1.2: Background Operation Status (Opcode 0002h) */
-struct cxlmi_cmd_bg_op_status {
+struct cxlmi_cmd_bg_op_status_rsp {
 	uint8_t status;
 	uint8_t rsvd;
 	uint16_t opcode;
@@ -44,12 +44,16 @@ struct cxlmi_cmd_bg_op_status {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.1.3: Get Response Message Limit (Opcode 0003h) */
-struct cxlmi_cmd_get_response_msg_limit {
+struct cxlmi_cmd_get_response_msg_limit_rsp {
 	uint8_t limit;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.1.4: Set Response Message Limit (Opcode 0004h) */
-struct cxlmi_cmd_set_response_msg_limit {
+struct cxlmi_cmd_set_response_msg_limit_req {
+	uint8_t limit;
+} __attribute__((packed));
+
+struct cxlmi_cmd_set_response_msg_limit_rsp {
 	uint8_t limit;
 } __attribute__((packed));
 
@@ -87,7 +91,7 @@ struct cxlmi_cmd_get_event_records_rsp {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.2.3: Clear Event Records (Opcode 0101h) */
-struct cxlmi_cmd_clear_event_records {
+struct cxlmi_cmd_clear_event_records_req {
 	uint8_t event_log;
 	uint8_t clear_flags;
 	uint8_t nr_recs;
@@ -96,7 +100,7 @@ struct cxlmi_cmd_clear_event_records {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.2.4: Get Event Interrupt Policy (Opcode 0102h) */
-struct cxlmi_cmd_get_event_interrupt_policy {
+struct cxlmi_cmd_get_event_interrupt_policy_rsp {
 	uint8_t informational_settings;
 	uint8_t warning_settings;
 	uint8_t failure_settings;
@@ -107,7 +111,7 @@ struct cxlmi_cmd_get_event_interrupt_policy {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.2.5: Set Event Interrupt Policy (Opcode 0103h) */
-struct cxlmi_cmd_set_event_interrupt_policy {
+struct cxlmi_cmd_set_event_interrupt_policy_req {
 	uint8_t informational_settings;
 	uint8_t warning_settings;
 	uint8_t failure_settings;
@@ -118,22 +122,22 @@ struct cxlmi_cmd_set_event_interrupt_policy {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.2.6: Get MCTP Event Interrupt Policy (Opcode 0104h) */
-struct cxlmi_cmd_get_mctp_event_interrupt_policy {
+struct cxlmi_cmd_get_mctp_event_interrupt_policy_rsp {
 	uint16_t event_interrupt_settings;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.2.7: Set MCTP Event Interrupt Policy (Opcode 0105h) */
-struct cxlmi_cmd_set_mctp_event_interrupt_policy {
+struct cxlmi_cmd_set_mctp_event_interrupt_policy_req {
 	uint16_t event_interrupt_settings;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.2.8: Event Notification (Opcode 0106h) */
-struct cxlmi_cmd_event_notification {
+struct cxlmi_cmd_event_notification_req {
 	uint16_t event;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.3.1: Get FW Info (Opcode 0200h) */
-struct cxlmi_cmd_get_fw_info {
+struct cxlmi_cmd_get_fw_info_rsp {
 	uint8_t slots_supported;
 	uint8_t slot_info;
 	uint8_t caps;
@@ -145,7 +149,7 @@ struct cxlmi_cmd_get_fw_info {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.3.2: Transfer FW (Opcode 0201) */
-struct cxlmi_cmd_transfer_fw {
+struct cxlmi_cmd_transfer_fw_req {
 	uint8_t action;
 	uint8_t slot;
 	uint8_t rsvd1[2];
@@ -155,18 +159,18 @@ struct cxlmi_cmd_transfer_fw {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.3.3: Activate FW (Opcode 0202h) */
-struct cxlmi_cmd_activate_fw {
+struct cxlmi_cmd_activate_fw_req {
 	uint8_t action;
 	uint8_t slot;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.4.1: Get Timestamp (Opcode 0300h) */
-struct cxlmi_cmd_get_timestamp {
+struct cxlmi_cmd_get_timestamp_rsp {
 	uint64_t timestamp;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.4.2: Set Timestamp (Opcode 0301h) */
-struct cxlmi_cmd_set_timestamp {
+struct cxlmi_cmd_set_timestamp_req {
 	uint64_t timestamp;
 } __attribute__((packed));
 
@@ -176,7 +180,7 @@ struct cxlmi_supported_log_entry {
 	uint32_t log_size;
 } __attribute__((packed));
 
-struct cxlmi_cmd_get_supported_logs {
+struct cxlmi_cmd_get_supported_logs_rsp {
 	uint16_t num_supported_log_entries;
 	uint8_t reserved[6];
 	struct cxlmi_supported_log_entry entries[];
@@ -209,12 +213,12 @@ struct cxlmi_cmd_get_log_capabilities_rsp {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.5.4: Clear Log (Opcode 0403h) */
-struct cxlmi_cmd_clear_log {
+struct cxlmi_cmd_clear_log_req {
 	uint8_t uuid[0x10];
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.5.4: Populate Log (Opcode 0404h) */
-struct cxlmi_cmd_populate_log {
+struct cxlmi_cmd_populate_log_req {
 	uint8_t uuid[0x10];
 } __attribute__((packed));
 
@@ -272,7 +276,7 @@ struct cxlmi_cmd_get_feature_rsp {
 } __attribute__((packed));
 
 /* CXL r3.2 Section 8.2.10.6.3 Set Feature (Opcode 0502h) */
-struct cxlmi_cmd_set_feature {
+struct cxlmi_cmd_set_feature_req {
 	uint8_t feature_id[0x10];
 	uint32_t set_feature_flags;
 	uint16_t offset;
@@ -282,7 +286,7 @@ struct cxlmi_cmd_set_feature {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.1.1: Identify Memory Device (Opcode 4000h) */
-struct cxlmi_cmd_memdev_identify {
+struct cxlmi_cmd_memdev_identify_rsp {
 	char fw_revision[0x10];
 	uint64_t total_capacity;
 	uint64_t volatile_capacity;
@@ -303,7 +307,7 @@ struct cxlmi_cmd_memdev_identify {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.2.1: Get Partition Info (Opcode 4100h) */
-struct cxlmi_cmd_memdev_get_partition_info {
+struct cxlmi_cmd_memdev_get_partition_info_rsp {
 	uint64_t active_vmem;
 	uint64_t active_pmem;
 	uint64_t next_vmem;
@@ -311,26 +315,26 @@ struct cxlmi_cmd_memdev_get_partition_info {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.2.2: Set Partition Info (Opcode 4101h) */
-struct cxlmi_cmd_memdev_set_partition_info {
+struct cxlmi_cmd_memdev_set_partition_info_req {
 	uint64_t volatile_capacity;
 	uint8_t flags;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.2.3: Get LSA (Opcode 4102h) */
-struct cxlmi_cmd_memdev_get_lsa {
+struct cxlmi_cmd_memdev_get_lsa_req {
 	uint32_t offset;
 	uint32_t length;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.2.4: Set LSA (Opcode 4103h) */
-struct cxlmi_cmd_memdev_set_lsa {
+struct cxlmi_cmd_memdev_set_lsa_req {
 	uint32_t offset;
 	uint32_t rsvd;
 	uint8_t data[];
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.3.1: Get Health Info (Opcode 4200h) */
-struct cxlmi_cmd_memdev_get_health_info {
+struct cxlmi_cmd_memdev_get_health_info_rsp {
 	uint8_t health_status;
 	uint8_t media_status;
 	uint8_t additional_status;
@@ -342,7 +346,7 @@ struct cxlmi_cmd_memdev_get_health_info {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.3.2: Get Alert Config (Opcode 4201h) */
-struct cxlmi_cmd_memdev_get_alert_config {
+struct cxlmi_cmd_memdev_get_alert_config_rsp {
 	uint8_t valid_alerts;
 	uint8_t programmable_alerts;
 	uint8_t life_used_critical_alert_threshold;
@@ -356,7 +360,7 @@ struct cxlmi_cmd_memdev_get_alert_config {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.3.3: Set Alert Config (Opcode 4202h) */
-struct cxlmi_cmd_memdev_set_alert_config {
+struct cxlmi_cmd_memdev_set_alert_config_req {
 	uint8_t valid_alert_actions;
 	uint8_t enable_alert_actions;
 	uint8_t life_used_programmable_warning_threshold;
@@ -368,12 +372,12 @@ struct cxlmi_cmd_memdev_set_alert_config {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.3.4: Get Shutdown State (Opcode 4203h) */
-struct cxlmi_cmd_memdev_get_shutdown_state {
+struct cxlmi_cmd_memdev_get_shutdown_state_rsp {
 	uint8_t state;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.3.5: Set Shutdown State (Opcode 4204h) */
-struct cxlmi_cmd_memdev_set_shutdown_state {
+struct cxlmi_cmd_memdev_set_shutdown_state_req {
 	uint8_t state;
 } __attribute__((packed));
 
@@ -399,12 +403,12 @@ struct cxlmi_cmd_memdev_get_poison_list_rsp {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.4.2: Inject Poison (Opcode 4301h) */
-struct cxlmi_cmd_memdev_inject_poison {
+struct cxlmi_cmd_memdev_inject_poison_req {
 	uint64_t inject_poison_phy_addr;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.4.3: Clear Poison (Opcode 4302h) */
-struct cxlmi_cmd_memdev_clear_poison {
+struct cxlmi_cmd_memdev_clear_poison_req {
 	uint64_t clear_poison_phy_addr;
 	uint8_t clear_poison_write_data[64];
 } __attribute__((packed));
@@ -420,7 +424,7 @@ struct cxlmi_cmd_get_scan_media_capabilities_rsp {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.4.5 Scan Media (Opcode 4304h) */
-struct cxlmi_cmd_scan_media {
+struct cxlmi_cmd_scan_media_req {
 	uint64_t scan_media_physaddr;
 	uint64_t scan_media_physaddr_length;
 	uint8_t scan_media_flags;
@@ -434,7 +438,7 @@ struct cxlmi_media_error_record {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.4.6 Get Scan Media Results (Opcode 4305h) */
-struct cxlmi_cmd_get_scan_media_results {
+struct cxlmi_cmd_get_scan_media_results_rsp {
 	uint64_t scan_media_restart_physaddr;
 	uint64_t scan_media_restart_physaddr_length;
 	uint8_t scan_media_flags;
@@ -473,7 +477,7 @@ struct cxlmi_cmd_memdev_media_ops_dpa_range_list_entry {
     uint64_t length;
 } __attribute__((packed));
 
-struct cxlmi_cmd_memdev_media_operations_sanitize {
+struct cxlmi_cmd_memdev_media_operations_sanitize_req {
 	uint8_t media_operation_class;
 	uint8_t media_operation_subclass;
 	uint8_t rsvd[2];
@@ -482,12 +486,12 @@ struct cxlmi_cmd_memdev_media_operations_sanitize {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.6.1: Get Security State (Opcode 4500h) */
-struct cxlmi_cmd_memdev_get_security_state {
+struct cxlmi_cmd_memdev_get_security_state_rsp {
 	uint32_t security_state;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.6.2: Set Passphrase (Opcode 4501h) */
-struct cxlmi_cmd_memdev_set_passphrase {
+struct cxlmi_cmd_memdev_set_passphrase_req {
 	uint8_t passphrase_type;
 	uint8_t rsvd[0x1F];
 	uint8_t current_passphrase[0x20];
@@ -495,26 +499,26 @@ struct cxlmi_cmd_memdev_set_passphrase {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.6.3: Disable Passphrase (Opcode 4502h) */
-struct cxlmi_cmd_memdev_disable_passphrase {
+struct cxlmi_cmd_memdev_disable_passphrase_req {
 	uint8_t passphrase_type;
 	uint8_t rsvd[0x1F];
 	uint8_t passphrase[0x20];
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.6.4: Unlock (Opcode 4503h) */
-struct cxlmi_cmd_memdev_unlock {
+struct cxlmi_cmd_memdev_unlock_req {
 	uint8_t current_passphrase[0x20];
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.6.6: Passphrase Secure Erase (Opcode 4505h) */
-struct cxlmi_cmd_memdev_passphrase_secure_erase {
+struct cxlmi_cmd_memdev_passphrase_secure_erase_req {
 	uint8_t passphrase_type;
 	uint8_t rsvd[0x1F];
 	uint8_t passphrase[0x20];
 } __attribute__((packed));
 
 /* CXL r3.2 Section 8.2.10.9.7.1: Security Send Input Payload (Opcode 4600h) */
-struct cxlmi_cmd_memdev_security_send {
+struct cxlmi_cmd_memdev_security_send_req {
        uint8_t security_protocol;
        uint16_t sp_specific;
        uint8_t rsvd[0x5];
@@ -529,7 +533,7 @@ struct cxlmi_cmd_memdev_security_receive_req {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.8.1: Get SLD QoS Control (Opcode 4700h) */
-struct cxlmi_cmd_memdev_get_sld_qos_control {
+struct cxlmi_cmd_memdev_get_sld_qos_control_rsp {
 	uint8_t qos_telemetry_control;
 	uint8_t egress_moderate_percentage;
 	uint8_t egress_severe_percentage;
@@ -537,7 +541,7 @@ struct cxlmi_cmd_memdev_get_sld_qos_control {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.8.2: Set SLD QoS Control (Opcode 4701h) */
-struct cxlmi_cmd_memdev_set_sld_qos_control {
+struct cxlmi_cmd_memdev_set_sld_qos_control_req {
 	uint8_t qos_telemetry_control;
 	uint8_t egress_moderate_percentage;
 	uint8_t egress_severe_percentage;
@@ -545,7 +549,7 @@ struct cxlmi_cmd_memdev_set_sld_qos_control {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.8.3: Get SLD QoS Status (Opcode 4702h) */
-struct cxlmi_cmd_memdev_get_sld_qos_status {
+struct cxlmi_cmd_memdev_get_sld_qos_status_rsp {
 	uint8_t backpressure_avg_percentage;
 } __attribute__((packed));
 
@@ -596,7 +600,7 @@ struct cxlmi_cmd_memdev_get_dc_extent_list_rsp {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.9.3 Add Dynamic Capacity Response (Opcode 4802h) */
-struct cxlmi_cmd_memdev_add_dc_response {
+struct cxlmi_cmd_memdev_add_dc_response_req {
 	uint32_t updated_extent_list_size;
 	uint8_t flags;
 	uint8_t rsvd1[3];
@@ -608,7 +612,7 @@ struct cxlmi_cmd_memdev_add_dc_response {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.9.4 Release Dynamic Capacity (Opcode 4803h) */
-struct cxlmi_cmd_memdev_release_dc {
+struct cxlmi_cmd_memdev_release_dc_req {
 	uint32_t updated_extent_list_size;
 	uint8_t flags;
 	uint8_t rsvd1[3];
@@ -620,7 +624,7 @@ struct cxlmi_cmd_memdev_release_dc {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.1.1: Identify Switch Device (Opcode 5100h) */
-struct cxlmi_cmd_fmapi_identify_sw_device {
+struct cxlmi_cmd_fmapi_identify_sw_device_rsp {
 	uint8_t ingres_port_id;
 	uint8_t rsv1;
 	uint8_t num_physical_ports;
@@ -663,7 +667,7 @@ struct cxlmi_cmd_fmapi_get_phys_port_state_rsp {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.1.3: Physical Port Control (Opcode 5102h) */
-struct cxlmi_cmd_fmapi_phys_port_control {
+struct cxlmi_cmd_fmapi_phys_port_control_req {
 	uint8_t ppb_id;
 	uint8_t port_opcode;
 } __attribute__((packed));
@@ -680,12 +684,12 @@ struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_rsp {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.1.5: Get Domain Validation SV State (Opcode 5104h) */
-struct cxlmi_cmd_fmapi_get_domain_validation_sv_state {
+struct cxlmi_cmd_fmapi_get_domain_validation_sv_state_rsp {
 	uint8_t secret_value_state;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.1.6: Set Domain Validation SV (Opcode 5105h) */
-struct cxlmi_cmd_fmapi_set_domain_validation_sv {
+struct cxlmi_cmd_fmapi_set_domain_validation_sv_req {
 	uint8_t secret_value_uuid[0x10];
 } __attribute__((packed));
 
@@ -708,7 +712,7 @@ struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.2.2: BindvPPB (Opcode 5201h) */
-struct cxlmi_cmd_fmapi_bind_vppb {
+struct cxlmi_cmd_fmapi_bind_vppb_req {
 	uint8_t vcs_id;
 	uint8_t vppb_id;
 	uint8_t port_id;
@@ -717,7 +721,7 @@ struct cxlmi_cmd_fmapi_bind_vppb {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.2.3: UnbindvPPB (Opcode 5202h) */
-struct cxlmi_cmd_fmapi_unbind_vppb {
+struct cxlmi_cmd_fmapi_unbind_vppb_req {
 	uint8_t vcs_id;
 	uint8_t vppb_id;
 	uint8_t option;
@@ -753,7 +757,7 @@ struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_rsp {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.4.1: Get LD Info (Opcode 5400h) */
-struct cxlmi_cmd_fmapi_get_ld_info {
+struct cxlmi_cmd_fmapi_get_ld_info_rsp {
 	uint64_t memory_size;
 	uint16_t ld_count;
 	uint8_t qos_telemetry_capability;
@@ -794,7 +798,7 @@ struct cxlmi_cmd_fmapi_set_ld_allocations_rsp {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.4.4: Get QoS Control (Opcode 5403h) */
-struct cxlmi_cmd_fmapi_get_qos_control {
+struct cxlmi_cmd_fmapi_get_qos_control_rsp {
 	uint8_t qos_telemetry_control;
 	uint8_t egress_moderate_percentage;
 	uint8_t egress_severe_percentage;
@@ -804,7 +808,16 @@ struct cxlmi_cmd_fmapi_get_qos_control {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.4.5: Set QoS Control (Opcode 5404h) */
-struct cxlmi_cmd_fmapi_set_qos_control {
+struct cxlmi_cmd_fmapi_set_qos_control_req {
+	uint8_t qos_telemetry_control;
+	uint8_t egress_moderate_percentage;
+	uint8_t egress_severe_percentage;
+	uint8_t backpressure_sample_interval;
+	uint16_t recmpbasis;
+	uint8_t completion_collection_interval;
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_set_qos_control_rsp {
 	uint8_t qos_telemetry_control;
 	uint8_t egress_moderate_percentage;
 	uint8_t egress_severe_percentage;
@@ -814,7 +827,7 @@ struct cxlmi_cmd_fmapi_set_qos_control {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.4.6: Get QoS Status (Opcode 5405h) */
-struct cxlmi_cmd_fmapi_get_qos_status {
+struct cxlmi_cmd_fmapi_get_qos_status_rsp {
 	uint8_t backpressure_avg_percentage;
 } __attribute__((packed));
 
@@ -831,7 +844,13 @@ struct cxlmi_cmd_fmapi_get_qos_allocated_bw_rsp {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.4.8: Set QoS Allocated BW (Opcode 5407h) */
-struct cxlmi_cmd_fmapi_set_qos_allocated_bw {
+struct cxlmi_cmd_fmapi_set_qos_allocated_bw_req {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t qos_allocation_fraction[];
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_set_qos_allocated_bw_rsp {
 	uint8_t number_ld;
 	uint8_t start_ld_id;
 	uint8_t qos_allocation_fraction[];
@@ -850,7 +869,13 @@ struct cxlmi_cmd_fmapi_get_qos_bw_limit_rsp {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.4.10: Set QoS BW Limit (Opcode 5409h) */
-struct cxlmi_cmd_fmapi_set_qos_bw_limit {
+struct cxlmi_cmd_fmapi_set_qos_bw_limit_req {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t qos_limit_fraction[];
+} __attribute__((packed));
+
+struct cxlmi_cmd_fmapi_set_qos_bw_limit_rsp {
 	uint8_t number_ld;
 	uint8_t start_ld_id;
 	uint8_t qos_limit_fraction[];
@@ -897,7 +922,7 @@ struct cxlmi_cmd_fmapi_get_head_info_rsp {
 } __attribute__((packed));
 
 /* CXL r3.2 Section 7.6.7.6.1: Get DCD Info (Opcode 5600h) */
-struct cxlmi_cmd_fmapi_get_dcd_info {
+struct cxlmi_cmd_fmapi_get_dcd_info_rsp {
 	uint8_t num_hosts;
 	uint8_t num_supported_dc_regions;
 	uint8_t rsvd1[0x2];
@@ -948,7 +973,7 @@ struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp {
 }__attribute__((packed));
 
 /* CXL r3.2 Section 7.6.7.6.3 Set DC Region Configuration (Opcode 5602h) */
-struct cxlmi_cmd_fmapi_set_dc_region_config {
+struct cxlmi_cmd_fmapi_set_dc_region_config_req {
 	uint8_t region_id;
 	uint8_t rsvd[3];
 	uint64_t block_sz;
@@ -1016,12 +1041,12 @@ struct cxlmi_cmd_fmapi_initiate_dc_release_req {
 }__attribute__((packed));
 
 /* CXL r3.2 Section 7.6.7.6.7 Dynamic Capacity Add Reference (Opcode 5606h) */
-struct cxlmi_cmd_fmapi_dc_add_ref {
+struct cxlmi_cmd_fmapi_dc_add_ref_req {
 	uint8_t tag[0x10];
 }__attribute__((packed));
 
 /* CXL r3.2 Section 7.6.7.6.8 Dynamic Capacity Remove Reference (Opcode 5607h) */
-struct cxlmi_cmd_fmapi_dc_remove_ref {
+struct cxlmi_cmd_fmapi_dc_remove_ref_req {
 	uint8_t tag[0x10];
 }__attribute__((packed));
 

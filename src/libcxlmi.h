@@ -390,17 +390,17 @@ struct cxlmi_tunnel_info {
  */
 int cxlmi_cmd_identify(struct cxlmi_endpoint *ep,
 		       struct cxlmi_tunnel_info *ti,
-		       struct cxlmi_cmd_identify *ret);
+		       struct cxlmi_cmd_identify_rsp *ret);
 int cxlmi_cmd_bg_op_status(struct cxlmi_endpoint *ep,
 			   struct cxlmi_tunnel_info *ti,
-			   struct cxlmi_cmd_bg_op_status *ret);
+			   struct cxlmi_cmd_bg_op_status_rsp *ret);
 int cxlmi_cmd_get_response_msg_limit(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_get_response_msg_limit *ret);
+			     struct cxlmi_cmd_get_response_msg_limit_rsp *ret);
 int cxlmi_cmd_set_response_msg_limit(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_set_response_msg_limit *in,
-			     struct cxlmi_cmd_set_response_msg_limit *ret);
+			     struct cxlmi_cmd_set_response_msg_limit_req *in,
+			     struct cxlmi_cmd_set_response_msg_limit_rsp *ret);
 int cxlmi_cmd_request_bg_op_abort(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti);
 
@@ -411,44 +411,44 @@ int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 				struct cxlmi_cmd_get_event_records_rsp *ret);
 int cxlmi_cmd_clear_event_records(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti,
-				  struct cxlmi_cmd_clear_event_records *in);
+				  struct cxlmi_cmd_clear_event_records_req *in);
 int cxlmi_cmd_get_event_interrupt_policy(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_get_event_interrupt_policy *ret);
+				 struct cxlmi_cmd_get_event_interrupt_policy_rsp *ret);
 int cxlmi_cmd_set_event_interrupt_policy(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_set_event_interrupt_policy *in);
+				 struct cxlmi_cmd_set_event_interrupt_policy_req *in);
 int cxlmi_cmd_get_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_get_mctp_event_interrupt_policy *ret);
+			      struct cxlmi_cmd_get_mctp_event_interrupt_policy_rsp *ret);
 int cxlmi_cmd_set_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_set_mctp_event_interrupt_policy *in);
+			      struct cxlmi_cmd_set_mctp_event_interrupt_policy_req *in);
 int cxlmi_cmd_event_notification(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_event_notification *in);
+				 struct cxlmi_cmd_event_notification_req *in);
 
 int cxlmi_cmd_get_fw_info(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
-			  struct cxlmi_cmd_get_fw_info *out);
+			  struct cxlmi_cmd_get_fw_info_rsp *out);
 int cxlmi_cmd_transfer_fw(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
-			  struct cxlmi_cmd_transfer_fw *in);
+			  struct cxlmi_cmd_transfer_fw_req *in);
 int cxlmi_cmd_activate_fw(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
-			  struct cxlmi_cmd_activate_fw *in);
+			  struct cxlmi_cmd_activate_fw_req *in);
 
 int cxlmi_cmd_get_timestamp(struct cxlmi_endpoint *ep,
 			    struct cxlmi_tunnel_info *ti,
-			    struct cxlmi_cmd_get_timestamp *ret);
+			    struct cxlmi_cmd_get_timestamp_rsp *ret);
 int cxlmi_cmd_set_timestamp(struct cxlmi_endpoint *ep,
 			    struct cxlmi_tunnel_info *ti,
-			    struct cxlmi_cmd_set_timestamp *in);
+			    struct cxlmi_cmd_set_timestamp_req *in);
 
 #define CXLMI_MAX_SUPPORTED_LOGS 7
 int cxlmi_cmd_get_supported_logs(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_get_supported_logs *ret);
+				 struct cxlmi_cmd_get_supported_logs_rsp *ret);
 int cxlmi_cmd_get_log(struct cxlmi_endpoint *ep,
 		      struct cxlmi_tunnel_info *ti,
 		      struct cxlmi_cmd_get_log_req *in,
@@ -463,10 +463,10 @@ int cxlmi_cmd_get_log_capabilities(struct cxlmi_endpoint *ep,
 			   struct cxlmi_cmd_get_log_capabilities_rsp *ret);
 int cxlmi_cmd_clear_log(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_clear_log *in);
+			struct cxlmi_cmd_clear_log_req *in);
 int cxlmi_cmd_populate_log(struct cxlmi_endpoint *ep,
 			   struct cxlmi_tunnel_info *ti,
-			   struct cxlmi_cmd_populate_log *in);
+			   struct cxlmi_cmd_populate_log_req *in);
 int cxlmi_cmd_get_supported_logs_sublist(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
 			  struct cxlmi_cmd_get_supported_logs_sublist_req *in,
@@ -481,7 +481,7 @@ int cxlmi_cmd_get_feature(struct cxlmi_endpoint *ep,
 	struct cxlmi_cmd_get_feature_rsp *ret);
 int cxlmi_cmd_set_feature(struct cxlmi_endpoint *ep,
 	struct cxlmi_tunnel_info *ti,
-	struct cxlmi_cmd_set_feature *in,
+	struct cxlmi_cmd_set_feature_req *in,
 	size_t feature_data_sz);
 
 /*
@@ -489,36 +489,37 @@ int cxlmi_cmd_set_feature(struct cxlmi_endpoint *ep,
  */
 int cxlmi_cmd_memdev_identify(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_memdev_identify *ret);
+			      struct cxlmi_cmd_memdev_identify_rsp *ret);
 
 int cxlmi_cmd_memdev_get_partition_info(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_memdev_get_partition_info *ret);
+				struct cxlmi_cmd_memdev_get_partition_info_rsp *ret);
 int cxlmi_cmd_memdev_set_partition_info(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_memdev_set_partition_info *in);
+				struct cxlmi_cmd_memdev_set_partition_info_req *in);
 int cxlmi_cmd_memdev_get_lsa(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_memdev_get_lsa *ret);
+			     struct cxlmi_cmd_memdev_get_lsa_req *in,
+			     void *ret);
 int cxlmi_cmd_memdev_set_lsa(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_memdev_set_lsa *in);
+			     struct cxlmi_cmd_memdev_set_lsa_req *in);
 
 int cxlmi_cmd_memdev_get_health_info(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_memdev_get_health_info *ret);
+			     struct cxlmi_cmd_memdev_get_health_info_rsp *ret);
 int cxlmi_cmd_memdev_get_alert_config(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_memdev_get_alert_config *ret);
+			      struct cxlmi_cmd_memdev_get_alert_config_rsp *ret);
 int cxlmi_cmd_memdev_set_alert_config(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_memdev_set_alert_config *in);
+			      struct cxlmi_cmd_memdev_set_alert_config_req *in);
 int cxlmi_cmd_memdev_get_shutdown_state(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_memdev_get_shutdown_state *ret);
+			      struct cxlmi_cmd_memdev_get_shutdown_state_rsp *ret);
 int cxlmi_cmd_memdev_set_shutdown_state(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_memdev_set_shutdown_state *in);
+			      struct cxlmi_cmd_memdev_set_shutdown_state_req *in);
 
 int cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
 					struct cxlmi_tunnel_info *ti,
@@ -526,20 +527,20 @@ int cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
 					struct cxlmi_cmd_memdev_get_poison_list_rsp *ret);
 int cxlmi_cmd_memdev_inject_poison(struct cxlmi_endpoint *ep,
 				   struct cxlmi_tunnel_info *ti,
-				   struct cxlmi_cmd_memdev_inject_poison *in);
+				   struct cxlmi_cmd_memdev_inject_poison_req *in);
 int cxlmi_cmd_memdev_clear_poison(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti,
-				  struct cxlmi_cmd_memdev_clear_poison *in);
+				  struct cxlmi_cmd_memdev_clear_poison_req *in);
 int cxlmi_cmd_get_scan_media_capabilities(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti,
 				  struct cxlmi_cmd_get_scan_media_capabilities_req *in,
 				  struct cxlmi_cmd_get_scan_media_capabilities_rsp *ret);
 int cxlmi_cmd_scan_media(struct cxlmi_endpoint *ep,
 			 struct cxlmi_tunnel_info *ti,
-			 struct cxlmi_cmd_scan_media *in);
+			 struct cxlmi_cmd_scan_media_req *in);
 int cxlmi_cmd_get_scan_media_results(struct cxlmi_endpoint *ep,
 				     struct cxlmi_tunnel_info *ti,
-				     struct cxlmi_cmd_get_scan_media_results *ret);
+				     struct cxlmi_cmd_get_scan_media_results_rsp *ret);
 
 int cxlmi_cmd_memdev_sanitize(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti);
@@ -551,11 +552,11 @@ int cxlmi_cmd_memdev_media_operations_discovery(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_memdev_media_operations_discovery_rsp *ret);
 int cxlmi_cmd_memdev_media_operations_sanitize(struct cxlmi_endpoint *ep,
 			       struct cxlmi_tunnel_info *ti,
-			       struct cxlmi_cmd_memdev_media_operations_sanitize *in);
+			       struct cxlmi_cmd_memdev_media_operations_sanitize_req *in);
 
 int cxlmi_cmd_memdev_security_send(struct cxlmi_endpoint *ep,
 				   struct cxlmi_tunnel_info *ti,
-				   struct cxlmi_cmd_memdev_security_send *in);
+				   struct cxlmi_cmd_memdev_security_send_req *in);
 int cxlmi_cmd_memdev_security_receive(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
 			      struct cxlmi_cmd_memdev_security_receive_req *in,
@@ -563,32 +564,31 @@ int cxlmi_cmd_memdev_security_receive(struct cxlmi_endpoint *ep,
 
 int cxlmi_cmd_memdev_get_security_state(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_memdev_get_security_state *ret);
+				struct cxlmi_cmd_memdev_get_security_state_rsp *ret);
 int cxlmi_cmd_memdev_set_passphrase(struct cxlmi_endpoint *ep,
 				    struct cxlmi_tunnel_info *ti,
-				    struct cxlmi_cmd_memdev_set_passphrase *in);
+				    struct cxlmi_cmd_memdev_set_passphrase_req *in);
 int cxlmi_cmd_memdev_disable_passphrase(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_memdev_disable_passphrase *in);
+				struct cxlmi_cmd_memdev_disable_passphrase_req *in);
 int cxlmi_cmd_memdev_unlock(struct cxlmi_endpoint *ep,
 			    struct cxlmi_tunnel_info *ti,
-			    struct cxlmi_cmd_memdev_unlock *in);
+			    struct cxlmi_cmd_memdev_unlock_req *in);
 int cxlmi_cmd_memdev_freeze_security_state(struct cxlmi_endpoint *ep,
 					   struct cxlmi_tunnel_info *ti);
 int cxlmi_cmd_memdev_passphrase_secure_erase(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_memdev_passphrase_secure_erase *in);
+			     struct cxlmi_cmd_memdev_passphrase_secure_erase_req *in);
 
 int cxlmi_cmd_memdev_get_sld_qos_control(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_memdev_get_sld_qos_control *ret);
+				 struct cxlmi_cmd_memdev_get_sld_qos_control_rsp *ret);
 int cxlmi_cmd_memdev_set_sld_qos_control(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_memdev_set_sld_qos_control *in,
-				 struct cxlmi_cmd_memdev_set_sld_qos_control *ret);
+				 struct cxlmi_cmd_memdev_set_sld_qos_control_req *in);
 int cxlmi_cmd_memdev_get_sld_qos_status(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_memdev_get_sld_qos_status *ret);
+				struct cxlmi_cmd_memdev_get_sld_qos_status_rsp *ret);
 
 int cxlmi_cmd_memdev_get_dc_config(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
@@ -600,34 +600,34 @@ int cxlmi_cmd_memdev_get_dc_extent_list(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_memdev_get_dc_extent_list_rsp *ret);
 int cxlmi_cmd_memdev_add_dc_response(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
-			  struct cxlmi_cmd_memdev_add_dc_response *in);
+			  struct cxlmi_cmd_memdev_add_dc_response_req *in);
 int cxlmi_cmd_memdev_release_dc(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_memdev_release_dc *in);
+				struct cxlmi_cmd_memdev_release_dc_req *in);
 
 /*
  * Definitions for FMAPI Commands. per CXL r3.1 Table 8-215.
  */
 int cxlmi_cmd_fmapi_identify_sw_device(struct cxlmi_endpoint *ep,
 		       struct cxlmi_tunnel_info *ti,
-		       struct cxlmi_cmd_fmapi_identify_sw_device *ret);
+		       struct cxlmi_cmd_fmapi_identify_sw_device_rsp *ret);
 int cxlmi_cmd_fmapi_get_phys_port_state(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_phys_port_state_req *in,
 			struct cxlmi_cmd_fmapi_get_phys_port_state_rsp *ret);
 int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_phys_port_control *in);
+			struct cxlmi_cmd_fmapi_phys_port_control_req *in);
 int cxlmi_cmd_fmapi_send_ppb_cxlio_config_request(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
 			  struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_req *in,
 			  struct cxlmi_cmd_fmapi_send_ppb_cxlio_config_request_rsp *ret);
 int cxlmi_cmd_fmapi_get_domain_validation_sv_state(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_get_domain_validation_sv_state *ret);
+			struct cxlmi_cmd_fmapi_get_domain_validation_sv_state_rsp *ret);
 int cxlmi_cmd_fmapi_set_domain_validation_sv(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_set_domain_validation_sv *in);
+			struct cxlmi_cmd_fmapi_set_domain_validation_sv_req *in);
 int cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state_req *in,
@@ -638,10 +638,10 @@ int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp *ret);
 int cxlmi_cmd_fmapi_bind_vppb(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_bind_vppb *in);
+			struct cxlmi_cmd_fmapi_bind_vppb_req *in);
 int cxlmi_cmd_fmapi_unbind_vppb(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_unbind_vppb *in);
+			struct cxlmi_cmd_fmapi_unbind_vppb_req *in);
 
 int cxlmi_cmd_fmapi_send_ld_cxlio_config_request(struct cxlmi_endpoint *ep,
 			 struct cxlmi_tunnel_info *ti,
@@ -654,7 +654,7 @@ int cxlmi_cmd_fmapi_send_ld_cxlio_mem_request(struct cxlmi_endpoint *ep,
 
 int cxlmi_cmd_fmapi_get_ld_info(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_get_ld_info *ret);
+			struct cxlmi_cmd_fmapi_get_ld_info_rsp *ret);
 int cxlmi_cmd_fmapi_get_ld_allocations(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_ld_allocations_req *in,
@@ -665,30 +665,30 @@ int cxlmi_cmd_fmapi_set_ld_allocations(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_set_ld_allocations_rsp *ret);
 int cxlmi_cmd_fmapi_get_qos_control(struct cxlmi_endpoint *ep,
 				    struct cxlmi_tunnel_info *ti,
-				    struct cxlmi_cmd_fmapi_get_qos_control *ret);
+				    struct cxlmi_cmd_fmapi_get_qos_control_rsp *ret);
 int cxlmi_cmd_fmapi_set_qos_control(struct cxlmi_endpoint *ep,
 				    struct cxlmi_tunnel_info *ti,
-				    struct cxlmi_cmd_fmapi_set_qos_control *in,
-				    struct cxlmi_cmd_fmapi_set_qos_control *ret);
+				    struct cxlmi_cmd_fmapi_set_qos_control_req *in,
+				    struct cxlmi_cmd_fmapi_set_qos_control_rsp *ret);
 int cxlmi_cmd_fmapi_get_qos_status(struct cxlmi_endpoint *ep,
 				   struct cxlmi_tunnel_info *ti,
-				   struct cxlmi_cmd_fmapi_get_qos_status *ret);
+				   struct cxlmi_cmd_fmapi_get_qos_status_rsp *ret);
 int cxlmi_cmd_fmapi_get_qos_allocated_bw(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_qos_allocated_bw_req *in,
 			struct cxlmi_cmd_fmapi_get_qos_allocated_bw_rsp *ret);
 int cxlmi_cmd_fmapi_set_qos_allocated_bw(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_set_qos_allocated_bw *in,
-			struct cxlmi_cmd_fmapi_set_qos_allocated_bw *ret);
+			struct cxlmi_cmd_fmapi_set_qos_allocated_bw_req *in,
+			struct cxlmi_cmd_fmapi_set_qos_allocated_bw_rsp *ret);
 int cxlmi_cmd_fmapi_get_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_qos_bw_limit_req *in,
 			struct cxlmi_cmd_fmapi_get_qos_bw_limit_rsp *ret);
 int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
-			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
+			struct cxlmi_cmd_fmapi_set_qos_bw_limit_req *in,
+			struct cxlmi_cmd_fmapi_set_qos_bw_limit_rsp *ret);
 
 int cxlmi_cmd_fmapi_get_multiheaded_info(struct cxlmi_endpoint *ep,
 			 struct cxlmi_tunnel_info *ti,
@@ -697,14 +697,14 @@ int cxlmi_cmd_fmapi_get_multiheaded_info(struct cxlmi_endpoint *ep,
 
 int cxlmi_cmd_fmapi_get_dcd_info(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_get_dcd_info *ret);
+			struct cxlmi_cmd_fmapi_get_dcd_info_rsp *ret);
 int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_host_dc_region_config_req *in,
 			struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp *ret);
 int cxlmi_cmd_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_set_dc_region_config *in);
+			struct cxlmi_cmd_fmapi_set_dc_region_config_req *in);
 int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *in,
@@ -717,10 +717,10 @@ int cxlmi_cmd_fmapi_initiate_dc_release(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_initiate_dc_release_req *in);
 int cxlmi_cmd_fmapi_dc_add_reference(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_dc_add_ref *in);
+			struct cxlmi_cmd_fmapi_dc_add_ref_req *in);
 int cxlmi_cmd_fmapi_dc_remove_reference(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_dc_remove_ref *in);
+			struct cxlmi_cmd_fmapi_dc_remove_ref_req *in);
 int cxlmi_cmd_fmapi_dc_list_tags(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_dc_list_tags_req *in,

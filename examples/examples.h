@@ -56,7 +56,7 @@ typedef enum physical_port_control_opcode {
     MAX_PPC_OPCODE
 } physical_port_control_opcode;
 
-static int parse_supported_logs(struct cxlmi_cmd_get_supported_logs *pl,
+static int parse_supported_logs(struct cxlmi_cmd_get_supported_logs_rsp *pl,
 				size_t *cel_size)
 {
 	int i, j;
@@ -127,7 +127,7 @@ static inline bool ep_supports_op(struct cxlmi_endpoint *ep, uint16_t opcode)
 {
 	int rc;
 	size_t cel_size;
-	struct cxlmi_cmd_get_supported_logs *gsl;
+	struct cxlmi_cmd_get_supported_logs_rsp *gsl;
 	bool op_support = false;
 
 	gsl = calloc(1, sizeof(*gsl) + maxlogs * sizeof(*gsl->entries));

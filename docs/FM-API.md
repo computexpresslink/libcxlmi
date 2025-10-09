@@ -537,10 +537,23 @@ int cxlmi_cmd_fmapi_get_qos_control(struct cxlmi_endpoint *ep,
 
 ## Set QoS Control (5404h)
 
-Input/Return payload:
+Input payload:
 
    ```C
-struct cxlmi_cmd_fmapi_set_qos_control {
+struct cxlmi_cmd_fmapi_set_qos_control_req {
+	uint8_t qos_telemetry_control;
+	uint8_t egress_moderate_percentage;
+	uint8_t egress_severe_percentage;
+	uint8_t backpressure_sample_interval;
+	uint16_t recmpbasis;
+	uint8_t completion_collection_interval;
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_set_qos_control_rsp {
 	uint8_t qos_telemetry_control;
 	uint8_t egress_moderate_percentage;
 	uint8_t egress_severe_percentage;
@@ -555,8 +568,8 @@ Command name:
    ```C
 int cxlmi_cmd_fmapi_set_qos_control(struct cxlmi_endpoint *ep,
 					struct cxlmi_tunnel_info *ti,
-					struct cxlmi_cmd_fmapi_set_qos_control *in,
-					struct cxlmi_cmd_fmapi_set_qos_control *ret);
+					struct cxlmi_cmd_fmapi_set_qos_control_req *in,
+					struct cxlmi_cmd_fmapi_set_qos_control_rsp *ret);
    ```
 
 ## Get QoS Status (5405h)
@@ -609,10 +622,20 @@ int cxlmi_cmd_fmapi_get_qos_allocated_bw(struct cxlmi_endpoint *ep,
 
 ## Set QoS Allocated BW (5407h)
 
-Input/Return payload:
+Input payload:
 
    ```C
-struct cxlmi_cmd_fmapi_set_qos_allocated_bw {
+struct cxlmi_cmd_fmapi_set_qos_allocated_bw_req {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t qos_allocation_fraction[];
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_set_qos_allocated_bw_rsp {
 	uint8_t number_ld;
 	uint8_t start_ld_id;
 	uint8_t qos_allocation_fraction[];
@@ -624,8 +647,8 @@ Command name:
    ```C
 int cxlmi_cmd_fmapi_set_qos_allocated_bw(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_set_qos_allocated_bw *in,
-			struct cxlmi_cmd_fmapi_set_qos_allocated_bw *ret);
+			struct cxlmi_cmd_fmapi_set_qos_allocated_bw_req *in,
+			struct cxlmi_cmd_fmapi_set_qos_allocated_bw_rsp *ret);
    ```
 
 ## Get QoS BW Limit (5408h)
@@ -660,10 +683,20 @@ int cxlmi_cmd_fmapi_get_qos_bw_limit(struct cxlmi_endpoint *ep,
 
 ## Set QoS BW Limit (5409h)
 
-Input/Return payload:
+Input payload:
 
    ```C
-struct cxlmi_cmd_fmapi_set_qos_bw_limit {
+struct cxlmi_cmd_fmapi_set_qos_bw_limit_req {
+	uint8_t number_ld;
+	uint8_t start_ld_id;
+	uint8_t qos_limit_fraction[];
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_set_qos_bw_limit_rsp {
 	uint8_t number_ld;
 	uint8_t start_ld_id;
 	uint8_t qos_limit_fraction[];
@@ -675,8 +708,8 @@ Command name:
    ```C
 int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_set_qos_bw_limit *in,
-			struct cxlmi_cmd_fmapi_set_qos_bw_limit *ret);
+			struct cxlmi_cmd_fmapi_set_qos_bw_limit_req *in,
+			struct cxlmi_cmd_fmapi_set_qos_bw_limit_rsp *ret);
    ```
 
 # Multi-Headed Devices (55h)

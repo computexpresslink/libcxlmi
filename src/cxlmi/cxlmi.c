@@ -1102,7 +1102,7 @@ CXLMI_EXPORT void cxlmi_set_probe_enabled(struct cxlmi_ctx *ctx, bool enabled)
 /* probe cxl component for basic device info */
 static void endpoint_probe_mctp(struct cxlmi_endpoint *ep)
 {
-	struct cxlmi_cmd_identify id;
+	struct cxlmi_cmd_identify_rsp id;
 	struct cxlmi_transport_mctp *mctp = ep->transport_data;
 	struct sockaddr_mctp fmapi_addr = {
 		.smctp_family = AF_MCTP,

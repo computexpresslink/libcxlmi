@@ -46,7 +46,7 @@ command set, as per the latest specification.
 Return payload:
 
    ```C
-struct cxlmi_cmd_identify {
+struct cxlmi_cmd_identify_rsp {
 	uint16_t vendor_id;
 	uint16_t device_id;
 	uint16_t subsys_vendor_id;
@@ -60,7 +60,7 @@ struct cxlmi_cmd_identify {
 Command name:
 
    ```C
-int cxlmi_cmd_identify(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti, struct cxlmi_cmd_identify *ret)
+int cxlmi_cmd_identify(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti, struct cxlmi_cmd_identify_rsp *ret)
    ```
 
 ## Background Operation Status (0002h)
@@ -68,7 +68,7 @@ int cxlmi_cmd_identify(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti, 
 Return payload:
 
    ```C
-struct cxlmi_cmd_bg_op_status {
+struct cxlmi_cmd_bg_op_status_rsp {
 	uint8_t status;
 	uint8_t rsvd;
 	uint16_t opcode;
@@ -79,7 +79,7 @@ struct cxlmi_cmd_bg_op_status {
 Command name:
 
    ```C
-int cxlmi_cmd_bg_op_status(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti, struct cxlmi_cmd_bg_op_status *ret);
+int cxlmi_cmd_bg_op_status(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti, struct cxlmi_cmd_bg_op_status_rsp *ret);
    ```
 
 ## Get Response Message Limit (0003h)
@@ -87,7 +87,7 @@ int cxlmi_cmd_bg_op_status(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *
 Return payload:
 
    ```C
-struct cxlmi_cmd_get_response_msg_limit {
+struct cxlmi_cmd_get_response_msg_limit_rsp {
 	uint8_t limit;
 };
    ```
@@ -96,7 +96,7 @@ Command name:
    ```C
 int cxlmi_cmd_get_response_msg_limit(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_get_response_msg_limit *ret);
+				 struct cxlmi_cmd_get_response_msg_limit_rsp *ret);
    ```
 
 ## Set Response Message Limit (0004h)
@@ -104,14 +104,14 @@ int cxlmi_cmd_get_response_msg_limit(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_set_response_msg_limit {
+struct cxlmi_cmd_set_response_msg_limit_req {
 	uint8_t limit;
 };
    ```
 Return payload:
 
    ```C
-struct cxlmi_cmd_set_response_msg_limit {
+struct cxlmi_cmd_set_response_msg_limit_rsp {
 	uint8_t limit;
 };
    ```
@@ -121,8 +121,8 @@ Command name:
    ```C
 int cxlmi_cmd_set_response_msg_limit(struct cxlmi_endpoint *ep,
 					 struct cxlmi_tunnel_info *ti,
-					 struct cxlmi_cmd_set_response_msg_limit *in,
-					 struct cxlmi_cmd_set_response_msg_limit *ret);
+					 struct cxlmi_cmd_set_response_msg_limit_req *in,
+					 struct cxlmi_cmd_set_response_msg_limit_rsp *ret);
    ```
 
 ## Request Abort Background Operation (0005h)
@@ -207,7 +207,7 @@ Input payload:
 
 
    ```C
-struct cxlmi_cmd_clear_event_records {
+struct cxlmi_cmd_clear_event_records_req {
 	uint8_t event_log;
 	uint8_t clear_flags;
 	uint8_t nr_recs;
@@ -221,7 +221,7 @@ Command name:
    ```C
 int cxlmi_cmd_clear_event_records(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti,
-				  struct cxlmi_cmd_clear_event_records *in);
+				  struct cxlmi_cmd_clear_event_records_req *in);
    ```
 
 ## Get Event Interrupt Policy (0102h)
@@ -229,7 +229,7 @@ int cxlmi_cmd_clear_event_records(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_get_event_interrupt_policy {
+struct cxlmi_cmd_get_event_interrupt_policy_rsp {
 	uint8_t informational_settings;
 	uint8_t warning_settings;
 	uint8_t failure_settings;
@@ -243,7 +243,7 @@ Command name:
    ```C
 int cxlmi_cmd_get_event_interrupt_policy(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_get_event_interrupt_policy *ret);
+				 struct cxlmi_cmd_get_event_interrupt_policy_rsp *ret);
    ```
 
 ## Set Event Interrupt Policy (0103h)
@@ -251,7 +251,7 @@ int cxlmi_cmd_get_event_interrupt_policy(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_set_event_interrupt_policy {
+struct cxlmi_cmd_set_event_interrupt_policy_req {
 	uint8_t informational_settings;
 	uint8_t warning_settings;
 	uint8_t failure_settings;
@@ -265,7 +265,7 @@ Command name:
    ```C
 int cxlmi_cmd_set_event_interrupt_policy(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_set_event_interrupt_policy *in);
+				 struct cxlmi_cmd_set_event_interrupt_policy_req *in);
    ```
 
 ## Get MCTP Event Interrupt Policy (0104h)
@@ -273,7 +273,7 @@ int cxlmi_cmd_set_event_interrupt_policy(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_get_mctp_event_interrupt_policy {
+struct cxlmi_cmd_get_mctp_event_interrupt_policy_rsp {
 	uint16_t event_interrupt_settings;
 };
    ```
@@ -283,7 +283,7 @@ Command name:
    ```C
 int cxlmi_cmd_get_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti,
-				  struct cxlmi_cmd_get_mctp_event_interrupt_policy *ret);
+				  struct cxlmi_cmd_get_mctp_event_interrupt_policy_rsp *ret);
    ```
 
 ## Set MCTP Event Interrupt Policy (0105h)
@@ -291,7 +291,7 @@ int cxlmi_cmd_get_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_set_mctp_event_interrupt_policy {
+struct cxlmi_cmd_set_mctp_event_interrupt_policy_req {
 	uint16_t event_interrupt_settings;
 };
    ```
@@ -301,7 +301,7 @@ Command name:
    ```C
 int cxlmi_cmd_set_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti,
-				  struct cxlmi_cmd_set_mctp_event_interrupt_policy *in);
+				  struct cxlmi_cmd_set_mctp_event_interrupt_policy_req *in);
    ```
 
 ## Event Notification (0106h)
@@ -309,7 +309,7 @@ int cxlmi_cmd_set_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_event_notification {
+struct cxlmi_cmd_event_notification_req {
 	uint16_t event;
 };
    ```
@@ -319,7 +319,7 @@ Command name:
    ```C
 int cxlmi_cmd_event_notification(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_event_notification *in);
+				 struct cxlmi_cmd_event_notification_req *in);
    ```
 
 # Firmware Update (02h)
@@ -329,7 +329,7 @@ int cxlmi_cmd_event_notification(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_get_fw_info {
+struct cxlmi_cmd_get_fw_info_rsp {
 	uint8_t slots_supported;
 	uint8_t slot_info;
 	uint8_t caps;
@@ -352,7 +352,7 @@ int cxlmi_cmd_request_bg_op_abort(struct cxlmi_endpoint *ep, struct cxlmi_tunnel
 Input payload:
 
    ```C
-struct cxlmi_cmd_transfer_fw {
+struct cxlmi_cmd_transfer_fw_req {
 	uint8_t action;
 	uint8_t slot;
 	uint8_t rsvd1[2];
@@ -367,7 +367,7 @@ Command name:
    ```C
 int cxlmi_cmd_transfer_fw(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
-			  struct cxlmi_cmd_transfer_fw *in);
+			  struct cxlmi_cmd_transfer_fw_req *in);
    ```
 
 ## Activate FW (0202h)
@@ -375,7 +375,7 @@ int cxlmi_cmd_transfer_fw(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_activate_fw {
+struct cxlmi_cmd_activate_fw_req {
 	uint8_t action;
 	uint8_t slot;
 };
@@ -386,7 +386,7 @@ Command name:
    ```C
 int cxlmi_cmd_activate_fw(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
-			  struct cxlmi_cmd_activate_fw *in);
+			  struct cxlmi_cmd_activate_fw_req *in);
    ```
 
 # Timestamp (03h)
@@ -395,7 +395,7 @@ int cxlmi_cmd_activate_fw(struct cxlmi_endpoint *ep,
 
 Return payload:
    ```C
-struct cxlmi_cmd_set_timestamp {
+struct cxlmi_cmd_get_timestamp_rsp {
 	uint64_t timestamp;
 };
    ```
@@ -405,7 +405,7 @@ Command name:
    ```C
 int cxlmi_cmd_get_timestamp(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_get_timestamp *ret);
+				struct cxlmi_cmd_get_timestamp_rsp *ret);
    ```
 
 ## Set Timestamp (Opcode 0301h)
@@ -413,7 +413,7 @@ int cxlmi_cmd_get_timestamp(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_set_timestamp {
+struct cxlmi_cmd_set_timestamp_req {
 	uint64_t timestamp;
 };
    ```
@@ -423,7 +423,7 @@ Command name:
    ```C
 int cxlmi_cmd_set_timestamp(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_set_timestamp *in);
+				struct cxlmi_cmd_set_timestamp_req *in);
    ```
 
 # Logs (04h)
@@ -453,7 +453,7 @@ by `CXLMI_MAX_SUPPORTED_LOGS`:
 Return payload:
 
   ```C
-struct cxlmi_cmd_get_supported_logs {
+struct cxlmi_cmd_get_supported_logs_rsp {
 	uint16_t num_supported_log_entries;
 	uint8_t reserved[6];
 	struct cxlmi_supported_log_entry entries[];
@@ -465,7 +465,7 @@ Command name:
    ```C
 int cxlmi_cmd_get_supported_logs(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_get_supported_logs *ret);
+				 struct cxlmi_cmd_get_supported_logs_rsp *ret);
    ```
 
 ## Get Log (0401h)
@@ -521,7 +521,7 @@ int cxlmi_cmd_get_log_capabilities(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_clear_log {
+struct cxlmi_cmd_clear_log_req {
 	uint8_t uuid[0x10];
 };
    ```
@@ -531,7 +531,7 @@ Command name:
    ```C
 int cxlmi_cmd_clear_log(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_clear_log *in);
+			struct cxlmi_cmd_clear_log_req *in);
    ```
 
 ## Populate Log (0404h)
@@ -539,7 +539,7 @@ int cxlmi_cmd_clear_log(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_populate_log {
+struct cxlmi_cmd_populate_log_req {
 	uint8_t uuid[0x10];
 };
    ```
@@ -549,7 +549,7 @@ Command name:
    ```C
 int cxlmi_cmd_populate_log(struct cxlmi_endpoint *ep,
 			   struct cxlmi_tunnel_info *ti,
-			   struct cxlmi_cmd_populate_log *in);
+			   struct cxlmi_cmd_populate_log_req *in);
    ```
 
 ## Get Supported Logs Sub-List (0405h)
@@ -664,7 +664,7 @@ int cxlmi_cmd_get_feature(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_set_feature {
+struct cxlmi_cmd_set_feature_req {
 	uint8_t feature_id[0x10];
 	uint32_t set_feature_flags;
 	uint16_t offset;
@@ -679,6 +679,6 @@ Command name:
    ```C
 int cxlmi_cmd_set_feature(struct cxlmi_endpoint *ep,
 	struct cxlmi_tunnel_info *ti,
-	struct cxlmi_cmd_set_feature *in,
+	struct cxlmi_cmd_set_feature_req *in,
 	size_t feature_data_sz);
    ```

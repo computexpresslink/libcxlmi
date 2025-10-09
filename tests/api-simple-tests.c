@@ -52,7 +52,7 @@ static int query_mld_from_switch(struct cxlmi_endpoint *ep, int num_ports)
 
 	/* query ports */
 	for (i = 0; i < ret->num_ports; i++) {
-		struct cxlmi_cmd_identify id;
+		struct cxlmi_cmd_identify_rsp id;
 		struct cxlmi_cmd_fmapi_port_state_info_block *port;
 		DEFINE_CXLMI_TUNNEL_SWITCH_MLD(ti, i, 0);
 
@@ -83,7 +83,7 @@ static int verify_ep_fmapi(struct cxlmi_endpoint *ep)
 
 	if (cxlmi_endpoint_has_fmapi(ep) && cxlmi_endpoint_disable_fmapi(ep)) {
 		int rc;
-		struct cxlmi_cmd_identify id;
+		struct cxlmi_cmd_identify_rsp id;
 		DEFINE_CXLMI_TUNNEL_MLD(ti, 0);
 
 		rc = cxlmi_cmd_identify(ep, &ti, &id);
@@ -116,7 +116,7 @@ static int verify_ep_fmapi(struct cxlmi_endpoint *ep)
 			 * switch + mld port (LD 0) scenario.
 			 */
 			if (id.component_type == 0x0) {
-				struct cxlmi_cmd_fmapi_identify_sw_device idsw;
+				struct cxlmi_cmd_fmapi_identify_sw_device_rsp idsw;
 
 				rc = cxlmi_cmd_fmapi_identify_sw_device(ep,
 								NULL, &idsw);

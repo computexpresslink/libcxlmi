@@ -83,11 +83,11 @@ payload input and output. As such, the user is expected to know what to look
 for in each case, accessing particular structure members, for example.
 
 The names of both the functions to send commands and the CXL-defined payload
-data structures are the same, using a `cxlmi_cmd_[memdev|fmapi_]<cmdname>()`
-format. When there are input *and* output payloads, the `_req` and `_rsp`
-suffixes are needed, respectively, for the payload names. When command payloads
-are generic such as for Logs and Security Passthrough, the payload return is
-simply a generic pointer, for which the user is expected to handle the buffer
+data structures follow a `cxlmi_cmd_[memdev|fmapi_]<cmdname>()` format. All
+payload structures use consistent naming with `_req` suffix for input
+payloads and `_rsp` suffix for output payloads. Commands that return
+raw data (such as Get LSA or Log commands) use a `void *ret` parameter instead
+of a structured response, for which the user is expected to handle the buffer
 accordingly.
 
 Naturally, `memdev` and `fmapi` corresponds to the respective command set,
@@ -131,7 +131,7 @@ the specified LD.
 <img src="http://stgolabs.net/tunnel1.png" width="650" height="260">
 
    ```C
-   struct cxlmi_cmd_memdev_set_lsa *lsa = arm_lsa(offset, data);
+   struct cxlmi_cmd_memdev_set_lsa_req *lsa = arm_lsa(offset, data);
    DEFINE_CXLMI_TUNNEL_MLD(ti, 1);
 
    rc = cxlmi_cmd_memdev_set_lsa(ep, &ti, lsa);
@@ -148,7 +148,7 @@ that is accessible through an MLD port of a CXL Switch.
 <img src="http://stgolabs.net/tunnel2.png" width="850 " height="260">
 
    ```C
-   struct cxlmi_cmd_memdev_set_lsa *lsa = arm_lsa(offset, data);
+   struct cxlmi_cmd_memdev_set_lsa_req *lsa = arm_lsa(offset, data);
    DEFINE_CXLMI_TUNNEL_SWITCH_MLD(ti, 3, 1);
 
    rc = cxlmi_cmd_memdev_set_lsa(ep, &ti, lsa);
@@ -185,7 +185,7 @@ buffer. Next are a few examples for sending commands directly.
 1. Input-only payload
 
    ```C
-   struct cxlmi_cmd_set_timestamp ts = {
+   struct cxlmi_cmd_set_timestamp_req ts = {
 	  .timestamp = 946684800, /* Jan 1, 2000 */
    };
 
@@ -198,7 +198,7 @@ buffer. Next are a few examples for sending commands directly.
 2. Output-only payload
 
    ```C
-   struct cxlmi_cmd_get_timestamp ts;
+   struct cxlmi_cmd_get_timestamp_rsp ts;
 
    err = cxlmi_cmd_get_timestamp(ep, NULL, &ts);
    if (!err) {

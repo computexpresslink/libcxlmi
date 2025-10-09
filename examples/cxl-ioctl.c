@@ -23,7 +23,7 @@ enum CXLAlertActions {
 static int show_memdev_info(struct cxlmi_endpoint *ep)
 {
 	int rc;
-	struct cxlmi_cmd_memdev_identify id;
+	struct cxlmi_cmd_memdev_identify_rsp id;
 
 	rc = cxlmi_cmd_memdev_identify(ep, NULL, &id);
 	if (rc)
@@ -47,7 +47,7 @@ static int show_some_info_from_all_devices(struct cxlmi_ctx *ctx)
 	struct cxlmi_endpoint *ep;
 
 	cxlmi_for_each_endpoint(ctx, ep) {
-		struct cxlmi_cmd_identify id;
+		struct cxlmi_cmd_identify_rsp id;
 
 		rc = cxlmi_cmd_identify(ep, NULL, &id);
 		if (rc)
@@ -82,7 +82,7 @@ static int show_some_info_from_all_devices(struct cxlmi_ctx *ctx)
 static int toggle_abort(struct cxlmi_endpoint *ep)
 {
 	int rc;
-	struct cxlmi_cmd_bg_op_status sts;
+	struct cxlmi_cmd_bg_op_status_rsp sts;
 
 	rc = cxlmi_cmd_bg_op_status(ep, NULL, &sts);
 	if (rc)
@@ -117,8 +117,8 @@ static int play_with_device_timestamp(struct cxlmi_endpoint *ep)
 {
 	int rc;
 	uint64_t orig_ts;
-	struct cxlmi_cmd_get_timestamp get_ts;
-	struct cxlmi_cmd_set_timestamp set_ts = {
+	struct cxlmi_cmd_get_timestamp_rsp get_ts;
+	struct cxlmi_cmd_set_timestamp_req set_ts = {
 		.timestamp = 946684800, /* Jan 1, 2000 */
 	};
 
@@ -166,12 +166,12 @@ static int play_with_scan_media(struct cxlmi_endpoint *ep)
 		.get_scan_media_capabilities_physaddr_length = 64,
 	};
 	struct cxlmi_cmd_get_scan_media_capabilities_rsp rsp;
-	struct cxlmi_cmd_scan_media media = {
+	struct cxlmi_cmd_scan_media_req media = {
 		.scan_media_physaddr = 0x0,
 		.scan_media_physaddr_length = 64,
 		.scan_media_flags = 0x0,
 	};
-	struct cxlmi_cmd_get_scan_media_results results;
+	struct cxlmi_cmd_get_scan_media_results_rsp results;
 
 	memset(&req, 0, sizeof(struct cxlmi_cmd_get_scan_media_capabilities_req));
 
@@ -183,7 +183,7 @@ static int play_with_scan_media(struct cxlmi_endpoint *ep)
 	       "estimated scan media time : %d ms\n",
 	       rsp.estimated_scan_media_time);
 
-	memset(&media, 0, sizeof(struct cxlmi_cmd_scan_media));
+	memset(&media, 0, sizeof(struct cxlmi_cmd_scan_media_req));
 	rc = cxlmi_cmd_scan_media(ep, NULL, &media);
 
 	if(rc){
@@ -248,7 +248,7 @@ static int get_device_logs(struct cxlmi_endpoint *ep)
 {
 	int rc;
 	size_t cel_size;
-	struct cxlmi_cmd_get_supported_logs *gsl;
+	struct cxlmi_cmd_get_supported_logs_rsp *gsl;
 
 	gsl = calloc(1, sizeof(*gsl) +
 		     CXLMI_MAX_SUPPORTED_LOGS * sizeof(*gsl->entries));
@@ -299,7 +299,7 @@ done:
 static int clear_log(struct cxlmi_endpoint *ep)
 {
 	int rc;
-	struct cxlmi_cmd_clear_log *cl;
+	struct cxlmi_cmd_clear_log_req *cl;
 	cl = calloc(1, sizeof(*cl));
 	if (!cl)
 		return -1;
@@ -318,7 +318,7 @@ done:
 static int populate_log(struct cxlmi_endpoint *ep)
 {
 	int rc;
-	struct cxlmi_cmd_populate_log *pl;
+	struct cxlmi_cmd_populate_log_req *pl;
 	pl = calloc(1, sizeof(*pl));
 	if (!pl)
 		return -1;
@@ -336,7 +336,7 @@ done:
 
 static int get_alert_config(struct cxlmi_endpoint *ep)
 {
-        struct cxlmi_cmd_memdev_get_alert_config *rsp;
+        struct cxlmi_cmd_memdev_get_alert_config_rsp *rsp;
         int rc;
 
         rsp = calloc(1, sizeof(*rsp));
@@ -365,7 +365,7 @@ exit:
 
 static int set_alert_config(struct cxlmi_endpoint *ep)
 {
-        struct cxlmi_cmd_memdev_set_alert_config *req;
+        struct cxlmi_cmd_memdev_set_alert_config_req *req;
         int rc = -1;
         uint8_t alert_value = LUPWT;
         enum CXLAlertActions actions = LUPWT | DOTPWT | DUTPWT | CVMEPWT | CPMEPWT;
@@ -412,8 +412,8 @@ static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 	int i, rc[num_poisons];
 	struct cxlmi_cmd_memdev_get_poison_list_req get_poison_list_req[num_poisons];
 	struct cxlmi_cmd_memdev_get_poison_list_rsp get_poison_list_rsp[num_poisons];
-	struct cxlmi_cmd_memdev_inject_poison inject_poison[num_poisons];
-	struct cxlmi_cmd_memdev_clear_poison clear_poison[num_poisons];
+	struct cxlmi_cmd_memdev_inject_poison_req inject_poison[num_poisons];
+	struct cxlmi_cmd_memdev_clear_poison_req clear_poison[num_poisons];
 	uint64_t phy_addr[num_poisons];
 	uint64_t phy_start_addr = 0x00001000;
 
