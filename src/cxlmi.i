@@ -224,6 +224,15 @@ def endpoints(ctx):
     while ep:
         yield ep
         ep = cxlmi_next_endpoint(ctx, ep)
+
+def for_each_endpoint_safe(ctx):
+    e = cxlmi_first_endpoint(ctx)
+    if e is None:
+        return
+    _e = cxlmi_next_endpoint(ctx, e)
+    while e:
+        yield e
+        e, _e = _e, cxlmi_next_endpoint(ctx, _e)
 %}
 
 /* Include structure definitions from api-types.h */
