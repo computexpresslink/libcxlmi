@@ -65,7 +65,46 @@
 %include "cstring.i"
 %include "carrays.i"
 
-/* Exception handling for command return codes - only apply to functions returning int */
+/* Exception handling for C library error codes
+ *
+ * These %exception directives convert C-style error return codes into Python exceptions,
+ * providing idiomatic Python error handling instead of requiring manual return code checks.
+ *
+ * WITHOUT exception handlers:
+ *   ret = cxlmi.cxlmi_scan(ctx)
+ *   if ret < 0:
+ *       # Handle error - users might forget to check!
+ *
+ * WITH exception handlers:
+ *   try:
+ *       num = cxlmi.cxlmi_scan(ctx)  # Raises exception automatically on error
+ *   except IOError as e:
+ *       print(f"Error: {e}")
+ *
+ * Benefits:
+ * 1. Pythonic error handling - uses try/except instead of checking return codes
+ * 2. Better error messages - converts numeric codes to descriptive strings
+ * 3. Type safety - different exception types (IOError vs RuntimeError) for different errors
+ * 4. Prevents silent failures - errors can't be accidentally ignored
+ *
+ * The $action macro executes the wrapped C function, and 'result' contains its return value.
+ */
+
+/* Exception handler for all CXL Management Interface commands
+ *
+ * Applies to all functions starting with "cxlmi_cmd_" (wildcard match).
+ *
+ * C API return semantics:
+ *   return 0  = Success
+ *   return <0 = I/O or system error (e.g., device not responding, permission denied)
+ *   return >0 = CXL protocol error code (e.g., UNSUPPORTED, INVALID_INPUT, etc.)
+ *
+ * Python exception mapping:
+ *   result < 0  -> IOError("CXLMI command failed")
+ *   result > 0  -> RuntimeError("CXLMI error: <description> (code N)")
+ *
+ * The error code is converted to a human-readable string using cxlmi_cmd_retcode_tostr().
+ */
 %exception cxlmi_cmd_ %{
     $action
     if (result < 0) {
