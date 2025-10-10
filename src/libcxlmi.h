@@ -83,6 +83,21 @@ int cxlmi_scan_mctp(struct cxlmi_ctx *ctx);
 struct cxlmi_endpoint *cxlmi_open(struct cxlmi_ctx *ctx, const char *devname);
 
 /**
+ * cxlmi_scan() - look for ioctl-connected CXL endpoints.
+ * @ctx: library context object to create under
+ *
+ * Description: This function scans the /dev/cxl/ directory to find CXL
+ * devices that can be accessed via ioctl interface. Each found device
+ * will be opened using cxlmi_open().
+ *
+ * Return: The number of opened ioctl endpoints after the scan, or -1
+ * upon failure.
+ *
+ * See &cxlmi_open
+ */
+int cxlmi_scan(struct cxlmi_ctx *ctx);
+
+/**
  * cxlmi_close() - Close an endpoint connection and release resources
  *
  * @ep: Endpoint object to close

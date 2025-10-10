@@ -15,6 +15,8 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 #include <linux/types.h>
 #if HAVE_LINUX_MCTP_H
@@ -1553,6 +1555,62 @@ err_close_ep:
 	cxlmi_close(ep);
 	errno = errno_save;
 	return NULL;
+}
+
+CXLMI_EXPORT int cxlmi_scan(struct cxlmi_ctx *ctx)
+{
+	const char *cxl_dev_path = "/dev/cxl";
+	DIR *dir;
+	struct dirent *entry;
+	int nopen = 0;
+
+	dir = opendir(cxl_dev_path);
+	if (!dir) {
+		if (errno == ENOENT) {
+			cxlmi_msg(ctx, LOG_DEBUG, "%s directory not found\n", cxl_dev_path);
+			return 0; /* No CXL devices available */
+		}
+		cxlmi_msg(ctx, LOG_ERR, "Failed to open %s directory: %s\n",
+			  cxl_dev_path, strerror(errno));
+		return -1;
+	}
+
+	while ((entry = readdir(dir)) != NULL) {
+		struct cxlmi_endpoint *ep;
+		struct stat statbuf;
+		char fullpath[512];
+
+		/* Skip . and .. */
+		if (entry->d_name[0] == '.')
+			continue;
+
+		/* Build full path to check if it's a character device */
+		snprintf(fullpath, sizeof(fullpath), "%s/%s", cxl_dev_path, entry->d_name);
+
+		if (stat(fullpath, &statbuf) != 0) {
+			cxlmi_msg(ctx, LOG_DEBUG, "Failed to stat %s: %s\n",
+				  fullpath, strerror(errno));
+			continue;
+		}
+
+		/* Only process character devices */
+		if (!S_ISCHR(statbuf.st_mode)) {
+			cxlmi_msg(ctx, LOG_DEBUG, "Skipping %s: not a character device\n",
+				  fullpath);
+			continue;
+		}
+
+		ep = cxlmi_open(ctx, entry->d_name);
+		if (ep) {
+			nopen++;
+			cxlmi_msg(ctx, LOG_DEBUG, "Opened CXL device: %s\n", entry->d_name);
+		} else {
+			cxlmi_msg(ctx, LOG_DEBUG, "Failed to open %s\n", entry->d_name);
+		}
+	}
+
+	closedir(dir);
+	return nopen;
 }
 
 static const char *const cxlmi_cmd_retcode_tbl[] = {

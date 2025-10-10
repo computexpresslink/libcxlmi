@@ -246,6 +246,32 @@ free_ctx:
 	return nerr;
 }
 
+/* test cxlmi_scan() functionality */
+static int test_scan_ioctl(void)
+{
+	struct cxlmi_ctx *ctx;
+	int nerr = 0;
+	int scan_result;
+
+	ctx = cxlmi_new_ctx(stdout, DEFAULT_LOGLEVEL);
+	if (!ctx) {
+		fprintf(stderr, "cannot create new context object\n");
+		return -1;
+	}
+
+	/* Run the scan - should not crash and return >= 0 for success */
+	scan_result = cxlmi_scan(ctx);
+	if (scan_result < 0) {
+		fprintf(stderr, "[FAIL] cxlmi_scan() returned error: %d\n", scan_result);
+		nerr++;
+	} else {
+		printf("cxlmi_scan() found %d CXL devices\n", scan_result);
+	}
+
+	cxlmi_free_ctx(ctx);
+	return nerr;
+}
+
 /*
  * Ways to run these tests are determined by the passed arguments:
  *
@@ -269,6 +295,7 @@ int main(int argc, char **argv)
 	}
 
 	if (argc == 2) { /* ioctl */
+		errs += test_scan_ioctl();
 		errs += test_ep_duplicates_ioctl(argv[1]);
 	} else if (argc == 3) { /* mctp */
 		nid = atoi(argv[1]);
@@ -279,6 +306,7 @@ int main(int argc, char **argv)
 		nid = atoi(argv[1]);
 		eid = atoi(argv[2]);
 
+		errs += test_scan_ioctl();
 		errs += test_ep_duplicates_mctp(nid, eid);
 		errs += test_ep_duplicates_ioctl(argv[3]);
 
