@@ -69,6 +69,7 @@ import cxlmi
 #### Endpoint Opening and Scanning
 - `cxlmi.cxlmi_open(ctx, devname)` - Open CXL device (e.g., "mem0")
 - `cxlmi.cxlmi_open_mctp(ctx, net, eid)` - Open MCTP endpoint
+- `cxlmi.cxlmi_scan(ctx)` - Scan /dev/cxl/ for ioctl endpoints
 - `cxlmi.cxlmi_scan_mctp(ctx)` - Scan for MCTP endpoints (requires D-Bus)
 - `cxlmi.cxlmi_close(ep)` - Close endpoint
 
@@ -105,8 +106,13 @@ ctx = cxlmi.cxlmi_new_ctx(None, 0)  # NULL log file, log level 0
 # Enable/disable automatic probing
 cxlmi.cxlmi_set_probe_enabled(ctx, True)
 
+# Scan for ioctl endpoints in /dev/cxl/
+num_ioctl_eps = cxlmi.cxlmi_scan(ctx)
+print(f"Found {num_ioctl_eps} ioctl endpoints")
+
 # Scan for MCTP endpoints
-cxlmi.cxlmi_scan_mctp(ctx)
+num_mctp_eps = cxlmi.cxlmi_scan_mctp(ctx)
+print(f"Found {num_mctp_eps} MCTP endpoints")
 
 # Free context when done
 cxlmi.cxlmi_free_ctx(ctx)

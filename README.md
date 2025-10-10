@@ -69,6 +69,9 @@ Component discovery
 - Individual, Linux-specific `device` endpoint by using `cxlmi_open()`. This
   is for in-band communication through ioctl for Mailbox based raw CXL commands.
 
+- Enumerate all Linux CXL devices with `cxlmi_scan()`. This function scans the
+  `/dev/cxl/` directory for available CXL devices and opens each one found.
+  Each found endpoint will be subject to the same treatment as `cxlmi_open()`.
 
 Issuing CCI commands
 --------------------

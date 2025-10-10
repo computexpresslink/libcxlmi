@@ -92,6 +92,14 @@
     }
 %}
 
+%exception cxlmi_scan %{
+    $action
+    if (result < 0) {
+        PyErr_SetString(PyExc_IOError, "CXL device scan failed");
+        SWIG_fail;
+    }
+%}
+
 %exception cxlmi_endpoint_set_timeout %{
     $action
     if (result < 0) {
