@@ -23,7 +23,9 @@ static int show_memdev_info(struct cxlmi_endpoint *ep)
 	printf("lsa size: %d bytes\n", id.lsa_size);
 	printf("poison injection limit: %d\n", id.inject_poison_limit);
 	printf("poison caps 0x%x\n", id.poison_caps);
+#ifndef SUPPORT_CXL_2_0
 	printf("DC event log size %d\n", id.dc_event_log_size);
+#endif
 
        return 0;
 }

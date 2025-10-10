@@ -72,6 +72,7 @@ else
 endif
 
 conf.set('CONFIG_DBUS', libdbus_dep.found(), description: 'Enable dbus support?')
+conf.set('SUPPORT_CXL_2_0', get_option('cxl2_0_mode').enabled(), description: 'Enable CXL 2.0 compatibility mode')
 
 conf.set10(
     'HAVE_TYPEOF',
