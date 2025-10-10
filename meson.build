@@ -35,7 +35,7 @@ conf = configuration_data()
 if get_option('libdbus').disabled()
     libdbus_dep = dependency('', required: false)
 else
-    # Check for libdus availability. Optional, only required for MCTP dbus scan
+    # Check for libdbus availability. Optional, only required for MCTP dbus scan
     libdbus_dep = dependency(
 	'dbus-1',
 	required: true,

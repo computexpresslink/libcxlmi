@@ -7,7 +7,7 @@ CXL Management Interface library (libcxlmi).
 CXL Management Interface utility library provides type definitions
 for CXL specification structures, enumerations and helper functions to
 construct, send and decode CCI commands and payloads over both
-in-band (Linux) an out-of-band (OoB) link, typically MCTP-based
+in-band (Linux) and out-of-band (OoB) link, typically MCTP-based
 CCIs over I2C or VDM. As such, users will mostly be BMC, firmware
 and/or fabric managers, targeting: Type3 SLD, Type3 MLD
 (FM owned) or a CXL Switch.
@@ -58,7 +58,7 @@ Component discovery
 - Individual, MCTP-specific `nid:eid` endpoint by using `cxlmi_open_mctp()`.
   This will setup the path for CCI commands to be sent. By default, it will
   also probe the endpoint to get the CXL component this belongs to: either
-  a Switch or a Type3 device. This auto-probing can by disabled with
+  a Switch or a Type3 device. This auto-probing can be disabled with
   `cxlmi_set_probe_enabled()` or with the `$LIBCXLMI_PROBE_ENABLED` environment
   variable. Potential reasons to disable probing are wanting to avoid
   the necessary Identify command and/or disabling the FM-API.
@@ -181,7 +181,7 @@ that is accessible through an MLD port of a CXL Switch.
    }
    ```
 
-Commands with simple payload input/output can use  stack-allocated variables,
+Commands with simple payload input/output can use stack-allocated variables,
 while more complex ones require the user to already provide the respective payload
 buffer. Next are a few examples for sending commands directly.
 
@@ -238,14 +238,14 @@ buffer. Next are a few examples for sending commands directly.
 When sending a command to a device, a return of `0` indicates success.
 Otherwise `-1` is returned to indicate a problem sending the command, while
 `> 0` corresponds to the CXL defined returned code `cxlmi_cmd_retcode`,
-which can be translated to a string with `cxlmi_cmd_retcode_to_str()`.
+which can be translated to a string with `cxlmi_cmd_retcode_tostr()`.
 Upon error, the return payload is undefined and should be considered invalid.
 
    ```C
    err = cxlmi_cmd_fmapi_identify_switch_device(ep, NULL, &ret);
    if (err) {
 	   if (err > 0)
-		   fprintf(stderr, "%s", cxlmi_cmd_retcode_to_str(err));
+		   fprintf(stderr, "%s", cxlmi_cmd_retcode_tostr(err));
 	   return err;
    }
    ```
@@ -373,7 +373,7 @@ Also, to configure with dbus support to enable MCTP scanning:
 ```
 meson setup -Dlibdbus=enabled -Dmctpd=(openbmc | codeconstruct) build
 ```
-The `mctpd` option defaults to "codeconstruct", which refers to CodeConstruct's
+The `mctpd` option defaults to "openbmc", but "codeconstruct" can also be specified, which refers to CodeConstruct's
 [mctpd v2](https://codeconstruct.com.au/docs/mctp-utils-v2-0-release/).
 
 To configure a build for debugging purposes (i.e. optimization turned
@@ -391,7 +391,7 @@ meson setup build -Db_sanitize=address
 
 This option adds `-fsanitize=address` to the gcc options.
 
-Note that when using the sanitize feature, the library `libasan.so` must be available and must be the very first library loaded when running an executable. If experiencing linking issues, you can ensure that `libasan.so` gets loaded first with the `LD_PRELOAD` environment variable as follows:
+Note that when using the sanitize feature, the library `libasan.so` must be available and must be the very first library loaded when running an executable. If experiencing linking issues, ensure that `libasan.so` gets loaded first with the `LD_PRELOAD` environment variable as follows:
 
 It's also possible to enable the undefined behavior sanitizer with `-Db_sanitize=undefined`. To enable both, use `-Db_sanitize=address,undefined`.
 
@@ -404,7 +404,7 @@ meson compile -C build
 ```
 meson install -C build
 ```
-4. To purge everything::
+4. To purge everything:
 ```
 rm -rf build
 ```
