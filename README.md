@@ -376,6 +376,12 @@ meson setup -Dlibdbus=enabled -Dmctpd=(openbmc | codeconstruct) build
 The `mctpd` option defaults to "openbmc", but "codeconstruct" can also be specified, which refers to CodeConstruct's
 [mctpd v2](https://codeconstruct.com.au/docs/mctp-utils-v2-0-release/).
 
+To enable CXL 2.0 compatibility mode:
+```
+meson setup build -Dcxl2_0_mode=enabled
+```
+This mode adjusts payload structures and behavior to be compatible with CXL 2.0 specification requirements. By default, the library targets CXL 3.x specifications. The affected commands include Get/Set Event Interrupt Policy and related event management commands where payload structures changed between CXL versions.
+
 To configure a build for debugging purposes (i.e. optimization turned
 off and debug symbols enabled):
 
