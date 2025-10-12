@@ -126,6 +126,16 @@ CXLMI_EXPORT struct cxlmi_ctx *cxlmi_new_ctx(FILE *fp, int log_level)
 
 CXLMI_EXPORT void cxlmi_free_ctx(struct cxlmi_ctx *ctx)
 {
+	struct cxlmi_endpoint *ep, *next;
+
+	if (!ctx)
+		return;
+
+	/* Close all remaining endpoints to prevent memory leaks */
+	list_for_each_safe(&ctx->endpoints, ep, next, entry) {
+		cxlmi_close(ep);
+	}
+
 	free(ctx);
 }
 
