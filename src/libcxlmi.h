@@ -33,6 +33,10 @@ struct cxlmi_ctx *cxlmi_new_ctx(FILE *fp, int log_level);
  * cxlmi_free_ctx() - Free context object.
  * @ctx: context to free
  *
+ * This function automatically closes and frees all endpoints that were
+ * created under this context. It is safe to call this function even if
+ * endpoints have not been explicitly closed with cxlmi_close().
+ *
  * See &cxlmi_new_ctx.
  */
 void cxlmi_free_ctx(struct cxlmi_ctx *ctx);
