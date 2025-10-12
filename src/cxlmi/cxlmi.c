@@ -203,13 +203,13 @@ static struct cxlmi_endpoint *init_endpoint(struct cxlmi_ctx *ctx)
 }
 
 static int mctp_check_timeout(struct cxlmi_endpoint *ep,
-			      int timeout_ms)
+			      unsigned int timeout_ms)
 {
 	return timeout_ms > MCTP_MAX_TIMEOUT;
 }
 
 CXLMI_EXPORT int cxlmi_endpoint_set_timeout(struct cxlmi_endpoint *ep,
-					    int timeout_ms)
+					    unsigned int timeout_ms)
 {
 	if (ep->transport_data) {
 		int rc;
