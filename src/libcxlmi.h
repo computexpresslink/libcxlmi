@@ -136,7 +136,7 @@ unsigned int cxlmi_endpoint_get_timeout(struct cxlmi_endpoint *ep);
  * @timeout_ms: Timeout for responses, given in milliseconds
  */
 int cxlmi_endpoint_set_timeout(struct cxlmi_endpoint *ep,
-			       int timeout_ms);
+			       unsigned int timeout_ms);
 
 /**
  * cxlmi_endpoint_has_fmapi - determine whether or not the underlying
