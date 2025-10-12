@@ -229,7 +229,7 @@ CXLMI_EXPORT int cxlmi_cmd_clear_event_records(struct cxlmi_endpoint *ep,
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	struct cxlmi_cci_msg rsp;
 	ssize_t req_sz, handles_sz = (in->nr_recs) * sizeof(*(in->handles));
-	int rc = -1;
+	int i, rc = -1;
 
 	req_sz = sizeof(*req_pl) + handles_sz + sizeof(*req);
 	req = calloc(1, req_sz);
@@ -242,7 +242,8 @@ CXLMI_EXPORT int cxlmi_cmd_clear_event_records(struct cxlmi_endpoint *ep,
 	req_pl->event_log = in->event_log;
 	req_pl->clear_flags = in->clear_flags;
 	req_pl->nr_recs = in->nr_recs;
-	memcpy(req_pl->handles, in->handles, handles_sz);
+	for (i = 0; i < in->nr_recs; i++)
+		req_pl->handles[i] = cpu_to_le16(in->handles[i]);
 
 	rc = send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
 	return rc;
@@ -491,7 +492,7 @@ CXLMI_EXPORT int cxlmi_cmd_activate_fw(struct cxlmi_endpoint *ep,
 	arm_cci_request(ep, req, sizeof(*in), FIRMWARE_UPDATE, ACTIVATE);
 
 	req_pl = (struct cxlmi_cmd_activate_fw_req *)req->payload;
-	req_pl->action = in->slot;
+	req_pl->action = in->action;
 	req_pl->slot = in->slot;
 
 	rc = send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
@@ -2706,7 +2707,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_qos_control(struct cxlmi_endpoint *ep,
 	ret->egress_moderate_percentage = rsp_pl->egress_moderate_percentage;
 	ret->egress_severe_percentage = rsp_pl->egress_severe_percentage;
 	ret->backpressure_sample_interval = rsp_pl->backpressure_sample_interval;
-	ret->recmpbasis = le16_to_cpu(rsp_pl->backpressure_sample_interval);
+	ret->recmpbasis = le16_to_cpu(rsp_pl->recmpbasis);
 	ret->completion_collection_interval = rsp_pl->completion_collection_interval;
 
 	return rc;
@@ -2740,7 +2741,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_qos_control(struct cxlmi_endpoint *ep,
 	req_pl->egress_moderate_percentage = in->egress_moderate_percentage;
 	req_pl->egress_severe_percentage = in->egress_severe_percentage;
 	req_pl->backpressure_sample_interval = in->backpressure_sample_interval;
-	req_pl->recmpbasis = cpu_to_le16(in->backpressure_sample_interval);
+	req_pl->recmpbasis = cpu_to_le16(in->recmpbasis);
 	req_pl->completion_collection_interval = in->completion_collection_interval;
 
 	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp);
@@ -2759,7 +2760,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_qos_control(struct cxlmi_endpoint *ep,
 	ret->egress_moderate_percentage = rsp_pl->egress_moderate_percentage;
 	ret->egress_severe_percentage = rsp_pl->egress_severe_percentage;
 	ret->backpressure_sample_interval = rsp_pl->backpressure_sample_interval;
-	ret->recmpbasis = le16_to_cpu(rsp_pl->backpressure_sample_interval);
+	ret->recmpbasis = le16_to_cpu(rsp_pl->recmpbasis);
 	ret->completion_collection_interval = rsp_pl->completion_collection_interval;
 
 	return rc;
