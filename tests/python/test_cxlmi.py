@@ -166,10 +166,20 @@ class TestStructures(unittest.TestCase):
         event.length = 0x80
         event.handle = 0x1234
         event.related_handle = 0x5678
+        event.timestamp = 0x123456789ABCDEF0
+        event.maint_op_class = 0x01
+        event.maint_op_subclass = 0x02
+        event.ld_id = 0x0005  # CXL 3.2: Logical Device ID
+        event.head_id = 0x03   # CXL 3.2: Head ID for MHD
 
         self.assertEqual(event.length, 0x80)
         self.assertEqual(event.handle, 0x1234)
         self.assertEqual(event.related_handle, 0x5678)
+        self.assertEqual(event.timestamp, 0x123456789ABCDEF0)
+        self.assertEqual(event.maint_op_class, 0x01)
+        self.assertEqual(event.maint_op_subclass, 0x02)
+        self.assertEqual(event.ld_id, 0x0005)
+        self.assertEqual(event.head_id, 0x03)
 
     def test_fw_info_structure(self):
         """Test firmware info structure"""

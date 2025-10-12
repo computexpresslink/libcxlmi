@@ -207,13 +207,19 @@ CXLMI_EXPORT int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 	for (i = 0; i < ret->record_count; i++) {
 		memcpy(ret->records[i].uuid, rsp_pl->records[i].uuid, 0x10);
 		ret->records[i].length = rsp_pl->records[i].length;
+		memcpy(ret->records[i].flags, rsp_pl->records[i].flags,
+		       sizeof(rsp_pl->records[i].flags));
 		ret->records[i].handle = le16_to_cpu(rsp_pl->records[i].handle);
+		ret->records[i].related_handle =
+			le16_to_cpu(rsp_pl->records[i].related_handle);
 		ret->records[i].timestamp =
 			le64_to_cpu(rsp_pl->records[i].timestamp);
 		ret->records[i].maint_op_class =
 			rsp_pl->records[i].maint_op_class;
 		ret->records[i].maint_op_subclass =
 			rsp_pl->records[i].maint_op_subclass;
+		ret->records[i].ld_id = le16_to_cpu(rsp_pl->records[i].ld_id);
+		ret->records[i].head_id = rsp_pl->records[i].head_id;
 		memcpy(ret->records[i].data, rsp_pl->records[i].data,
 		       sizeof(rsp_pl->records[i].data));
 	}

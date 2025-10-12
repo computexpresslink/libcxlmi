@@ -59,7 +59,7 @@ struct cxlmi_cmd_set_response_msg_limit_rsp {
 
 /*
  * Common Event Record Format
- * CXL r3.1 section 8.2.9.2.1: Event Records; Table 8-43
+ * CXL r3.2 Section 8.2.10.2.1: Event Records; Table 8-55
  */
 struct cxlmi_event_record {
 	uint8_t uuid[0x10];
@@ -70,7 +70,9 @@ struct cxlmi_event_record {
 	uint64_t timestamp;
 	uint8_t maint_op_class;
 	uint8_t maint_op_subclass;
-	uint8_t reserved[0xe];
+	uint16_t ld_id;
+	uint8_t head_id;
+	uint8_t reserved[0xb];
 	uint8_t data[0x50];
 } __attribute__((packed));
 
