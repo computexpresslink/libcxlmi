@@ -562,19 +562,22 @@ struct cxlmi_cmd_memdev_get_dc_config_req {
 	uint8_t start_region_id;
 } __attribute__((packed));
 
+/* DC region configuration entry */
+struct cxlmi_dc_region_config {
+	uint64_t base;
+	uint64_t decode_len;
+	uint64_t region_len;
+	uint64_t block_size;
+	uint32_t dsmadhandle;
+	uint8_t flags;
+	uint8_t rsvd2[3];
+} __attribute__((packed));
+
 struct cxlmi_cmd_memdev_get_dc_config_rsp {
 	uint8_t num_regions;
 	uint8_t regions_returned;
 	uint8_t rsvd1[6];
-	struct {
-		uint64_t base;
-		uint64_t decode_len;
-		uint64_t region_len;
-		uint64_t block_size;
-		uint32_t dsmadhandle;
-		uint8_t flags;
-		uint8_t rsvd2[3];
-	} __attribute__((packed)) region_configs[8];
+	struct cxlmi_dc_region_config region_configs[8];
 	uint32_t num_extents_supported;
 	uint32_t num_extents_available;
 	uint32_t num_tags_supported;
@@ -587,18 +590,26 @@ struct cxlmi_cmd_memdev_get_dc_extent_list_req {
        uint32_t start_extent_idx;
 } __attribute__((packed));
 
+struct cxlmi_memdev_get_list_extent {
+    uint64_t start_dpa;
+    uint64_t len;
+    uint8_t tag[0x10];
+    uint16_t shared_seq;
+    uint8_t rsvd[6];
+};
 struct cxlmi_cmd_memdev_get_dc_extent_list_rsp {
        uint32_t num_extents_returned;
        uint32_t total_num_extents;
        uint32_t generation_num;
        uint8_t rsvd[4];
-       struct {
-	       uint64_t start_dpa;
-	       uint64_t len;
-	       uint8_t tag[0x10];
-	       uint16_t shared_seq;
-	       uint8_t rsvd[0x6];
-       } __attribute__((packed)) extents[];
+       struct cxlmi_memdev_get_list_extent extents[];
+} __attribute__((packed));
+
+/* Memdev DC Extent Entry */
+struct cxlmi_memdev_dc_extent {
+    uint64_t start_dpa;
+    uint64_t len;
+    uint8_t rsvd[8];
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.9.3 Add Dynamic Capacity Response (Opcode 4802h) */
@@ -606,11 +617,7 @@ struct cxlmi_cmd_memdev_add_dc_response_req {
 	uint32_t updated_extent_list_size;
 	uint8_t flags;
 	uint8_t rsvd1[3];
-	struct {
-		uint64_t start_dpa;
-		uint64_t len;
-		uint8_t rsvd[8];
-	} __attribute__((packed)) extents[];
+	struct cxlmi_memdev_dc_extent extents[];
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.9.4 Release Dynamic Capacity (Opcode 4803h) */
@@ -618,11 +625,7 @@ struct cxlmi_cmd_memdev_release_dc_req {
 	uint32_t updated_extent_list_size;
 	uint8_t flags;
 	uint8_t rsvd1[3];
-	struct {
-		uint64_t start_dpa;
-		uint64_t len;
-		uint8_t rsvd[8];
-	} __attribute__((packed)) extents[];
+	struct cxlmi_memdev_dc_extent extents[];
 } __attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.1.1: Identify Switch Device (Opcode 5100h) */
@@ -954,20 +957,23 @@ struct cxlmi_cmd_fmapi_get_host_dc_region_config_req {
 	uint8_t start_region_id;
 }__attribute__((packed));
 
+/* FM-API DC region configuration entry */
+struct cxlmi_fmapi_dc_region_config {
+	uint64_t base;
+	uint64_t decode_len;
+	uint64_t region_len;
+	uint64_t block_size;
+	uint8_t flags;
+	uint8_t rsvd[3];
+	uint8_t sanitize_on_release;
+	uint8_t rsvd2[3];
+} __attribute__((packed));
+
 struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp {
 	uint16_t host_id;
 	uint8_t num_regions;
 	uint8_t regions_returned;
-	struct {
-		uint64_t base;
-		uint64_t decode_len;
-		uint64_t region_len;
-		uint64_t block_size;
-		uint8_t flags;
-		uint8_t rsvd[3];
-		uint8_t sanitize_on_release;
-		uint8_t rsvd2[3];
-	} __attribute__((packed)) region_configs[8];
+	struct cxlmi_fmapi_dc_region_config region_configs[8];
 	uint32_t num_extents_supported;
 	uint32_t num_extents_available;
 	uint32_t num_tags_supported;
@@ -991,6 +997,15 @@ struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req {
 	uint32_t start_ext_index;
 }__attribute__((packed));
 
+/* FMAPI DC Extent Entry */
+struct cxlmi_fmapi_dc_extent {
+    uint64_t start_dpa;
+    uint64_t len;
+    uint8_t tag[0x10];
+    uint16_t shared_seq;
+    uint8_t rsvd[6];
+};
+
 struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp {
 	uint16_t host_id;
 	uint8_t rsvd1[2];
@@ -999,13 +1014,7 @@ struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp {
 	uint32_t total_extents;
 	uint32_t list_generation_num;
 	uint8_t rsvd2[4];
-	struct {
-	       uint64_t start_dpa;
-	       uint64_t len;
-	       uint8_t tag[0x10];
-	       uint16_t shared_seq;
-	       uint8_t rsvd[6];
-       } __attribute__((packed)) extents[];
+	struct cxlmi_fmapi_dc_extent extents[];
 }__attribute__((packed));
 
 /* CXL r3.1 Section 7.6.7.6.5 Initiate Dynamic Capacity Add (Opcode 5604h) */
@@ -1016,13 +1025,7 @@ struct cxlmi_cmd_fmapi_initiate_dc_add_req {
 	uint64_t length;
 	uint8_t tag[0x10];
 	uint32_t ext_count;
-	struct {
-	       uint64_t start_dpa;
-	       uint64_t len;
-	       uint8_t tag[0x10];
-	       uint16_t shared_seq;
-	       uint8_t rsvd[6];
-       } __attribute__((packed)) extents[];
+	struct cxlmi_fmapi_dc_extent extents[];
 }__attribute__((packed));
 
 /* CXL r3.2 Section 7.6.7.6.6 Initiate Dynamic Capacity Release (Opcode 5605h) */
@@ -1033,13 +1036,7 @@ struct cxlmi_cmd_fmapi_initiate_dc_release_req {
 	uint64_t length;
 	uint8_t tag[0x10];
 	uint32_t ext_count;
-	struct {
-	       uint64_t start_dpa;
-	       uint64_t len;
-	       uint8_t tag[0x10];
-	       uint16_t shared_seq;
-	       uint8_t rsvd[6];
-       } __attribute__((packed)) extents[];
+	struct cxlmi_fmapi_dc_extent extents[];
 }__attribute__((packed));
 
 /* CXL r3.2 Section 7.6.7.6.7 Dynamic Capacity Add Reference (Opcode 5606h) */
