@@ -562,19 +562,22 @@ struct cxlmi_cmd_memdev_get_dc_config_req {
 	uint8_t start_region_id;
 } __attribute__((packed));
 
+/* DC region configuration entry */
+struct cxlmi_dc_region_config {
+	uint64_t base;
+	uint64_t decode_len;
+	uint64_t region_len;
+	uint64_t block_size;
+	uint32_t dsmadhandle;
+	uint8_t flags;
+	uint8_t rsvd2[3];
+} __attribute__((packed));
+
 struct cxlmi_cmd_memdev_get_dc_config_rsp {
 	uint8_t num_regions;
 	uint8_t regions_returned;
 	uint8_t rsvd1[6];
-	struct {
-		uint64_t base;
-		uint64_t decode_len;
-		uint64_t region_len;
-		uint64_t block_size;
-		uint32_t dsmadhandle;
-		uint8_t flags;
-		uint8_t rsvd2[3];
-	} __attribute__((packed)) region_configs[8];
+	struct cxlmi_dc_region_config region_configs[8];
 	uint32_t num_extents_supported;
 	uint32_t num_extents_available;
 	uint32_t num_tags_supported;
@@ -954,20 +957,23 @@ struct cxlmi_cmd_fmapi_get_host_dc_region_config_req {
 	uint8_t start_region_id;
 }__attribute__((packed));
 
+/* FM-API DC region configuration entry */
+struct cxlmi_fmapi_dc_region_config {
+	uint64_t base;
+	uint64_t decode_len;
+	uint64_t region_len;
+	uint64_t block_size;
+	uint8_t flags;
+	uint8_t rsvd[3];
+	uint8_t sanitize_on_release;
+	uint8_t rsvd2[3];
+} __attribute__((packed));
+
 struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp {
 	uint16_t host_id;
 	uint8_t num_regions;
 	uint8_t regions_returned;
-	struct {
-		uint64_t base;
-		uint64_t decode_len;
-		uint64_t region_len;
-		uint64_t block_size;
-		uint8_t flags;
-		uint8_t rsvd[3];
-		uint8_t sanitize_on_release;
-		uint8_t rsvd2[3];
-	} __attribute__((packed)) region_configs[8];
+	struct cxlmi_fmapi_dc_region_config region_configs[8];
 	uint32_t num_extents_supported;
 	uint32_t num_extents_available;
 	uint32_t num_tags_supported;

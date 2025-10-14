@@ -227,6 +227,125 @@ event_rsp.record_count = 3
 print(f"Events: {event_rsp.record_count}")
 ```
 
+### Working with Arrays
+
+The Python bindings provide helpers for accessing fixed-size arrays in structures.
+
+#### Byte Arrays (Passphrases, UUIDs, etc.)
+
+Fixed-size byte arrays like `uint8_t passphrase[32]` or `uint8_t uuid[16]` are exposed as opaque pointers. Use the generic array helpers to read/write them:
+
+```python
+# Example: Set passphrase command
+req = cxlmi.cxlmi_cmd_memdev_set_passphrase_req()
+req.passphrase_type = 0  # Regular scalar field
+
+# Set byte arrays using cxlmi_array_set()
+# Automatically zero-pads if data is shorter than array size
+cxlmi.cxlmi_array_set(req.current_passphrase, b'my_old_password', 32)
+cxlmi.cxlmi_array_set(req.new_passphrase, b'my_new_password', 32)
+
+# Get byte arrays using cxlmi_array_get()
+old_pass = cxlmi.cxlmi_array_get(req.current_passphrase, 32)
+print(old_pass)  # b'my_old_password\x00\x00\x00...' (32 bytes total)
+
+# Send the command
+cxlmi.cxlmi_cmd_memdev_set_passphrase(ep, None, req)
+```
+
+**Array Helper Functions:**
+- `cxlmi_array_set(array_ptr, data, size)` - Write Python bytes to C array with auto zero-padding
+- `cxlmi_array_get(array_ptr, size)` - Read C array as Python bytes object
+
+**Error Handling:**
+```python
+# Data too large
+try:
+    cxlmi.cxlmi_array_set(req.passphrase, b'x' * 100, 32)
+except ValueError as e:
+    print(f"Error: {e}")  # "Data too large: 100 bytes for array of size 32"
+
+# Wrong type
+try:
+    cxlmi.cxlmi_array_set(req.passphrase, "not bytes", 32)
+except TypeError as e:
+    print(f"Error: {e}")  # "Expected bytes object"
+```
+
+#### Struct Arrays (Region Configs, etc.)
+
+Fixed-size struct arrays are accessed using SWIG-generated array functions:
+
+```python
+# Example: Get Dynamic Capacity Configuration
+rsp = cxlmi.cxlmi_cmd_memdev_get_dc_config_rsp()
+cxlmi.cxlmi_cmd_memdev_get_dc_config(ep, None, req, rsp)
+
+# Access individual region configs from the region_configs[8] array
+for i in range(rsp.regions_returned):
+    region = cxlmi.DCRegionConfigArray_getitem(rsp.region_configs, i)
+    print(f"Region {i}:")
+    print(f"  Base: 0x{region.base:x}")
+    print(f"  Decode Length: 0x{region.decode_len:x}")
+    print(f"  Region Length: 0x{region.region_len:x}")
+    print(f"  Block Size: 0x{region.block_size:x}")
+    print(f"  DSMAD Handle: {region.dsmadhandle}")
+    print(f"  Flags: 0x{region.flags:02x}")
+
+# Modify and set a region config
+region = cxlmi.cxlmi_dc_region_config()
+region.base = 0x1000
+region.decode_len = 0x100000
+region.region_len = 0x80000
+region.block_size = 0x1000
+region.dsmadhandle = 0
+region.flags = 0x01
+
+# Write it back to the array
+cxlmi.DCRegionConfigArray_setitem(rsp.region_configs, 0, region)
+```
+
+**Available Array Types:**
+- `EventRecordArray` - for `struct cxlmi_event_record` arrays
+- `SupportedLogEntryArray` - for `struct cxlmi_supported_log_entry` arrays
+- `MediaErrRecordArray` - for `struct cxlmi_memdev_media_err_record` arrays
+- `PortStateInfoArray` - for `struct cxlmi_cmd_fmapi_port_state_info_block` arrays
+- `DCRegionConfigArray` - for `struct cxlmi_dc_region_config` arrays (memory device DC)
+- `FMAPIDCRegionConfigArray` - for `struct cxlmi_fmapi_dc_region_config` arrays (FM-API DC)
+
+**Array Functions Pattern:**
+Each array type provides these functions:
+- `<Type>Array_getitem(array_ptr, index)` - Get element at index
+- `<Type>Array_setitem(array_ptr, index, value)` - Set element at index
+- `<Type>Array_cast(ptr)` - Cast pointer to array type
+- `<Type>Array_frompointer(ptr)` - Create array from pointer
+
+**Complete Example - FM-API Get Host DC Region Config:**
+```python
+# Query FM-API DC region configuration
+req = cxlmi.cxlmi_cmd_fmapi_get_host_dc_region_config_req()
+req.host_id = 1
+req.region_cnt = 8
+req.start_region_id = 0
+
+rsp = cxlmi.cxlmi_cmd_fmapi_get_host_dc_region_config_rsp()
+cxlmi.cxlmi_cmd_fmapi_get_host_dc_region_config(ep, None, req, rsp)
+
+# Iterate through returned regions
+print(f"Host ID: {rsp.host_id}")
+print(f"Regions returned: {rsp.regions_returned}")
+
+for i in range(rsp.regions_returned):
+    region = cxlmi.FMAPIDCRegionConfigArray_getitem(rsp.region_configs, i)
+    print(f"\nRegion {i}:")
+    print(f"  Base: 0x{region.base:x}")
+    print(f"  Decode Len: 0x{region.decode_len:x}")
+    print(f"  Region Len: 0x{region.region_len:x}")
+    print(f"  Block Size: 0x{region.block_size:x}")
+    print(f"  Flags: 0x{region.flags:02x}")
+    print(f"  Sanitize on Release: {region.sanitize_on_release}")
+```
+
 ### Error Handling
 
 Commands raise Python exceptions on errors:
@@ -413,6 +532,46 @@ Example structures with hidden flexible arrays:
 - `cxlmi_cmd_get_event_records_rsp.records[]`
 - `cxlmi_cmd_get_fw_info.fw_slot_info[]`
 - `cxlmi_cmd_memdev_get_poison_list_rsp.media_error_records[]`
+
+### Fixed-Size Array Handling
+
+The bindings provide two mechanisms for accessing fixed-size arrays in structures:
+
+#### 1. Generic Byte Array Helpers
+
+For byte/char arrays (e.g., `uint8_t passphrase[32]`, `char fw_rev[16]`), use the generic helpers:
+
+- **`cxlmi_array_get(array_ptr, size)`** - Read array as Python bytes object
+- **`cxlmi_array_set(array_ptr, data, size)`** - Write Python bytes to array with auto zero-padding
+
+These functions work with any fixed-size byte array field without needing structure-specific code.
+
+**Implementation:**
+- `cxlmi_array_set()` accepts Python bytes objects and validates size
+- Automatically zero-pads if provided data is shorter than array size
+- Raises `ValueError` if data is too large
+- Raises `TypeError` if data is not a bytes object
+
+#### 2. SWIG Array Functions for Struct Arrays
+
+For fixed-size struct arrays (e.g., `struct region_config configs[8]`), the library exposes named struct types with SWIG-generated array accessor functions:
+
+**Available Struct Array Types:**
+- `struct cxlmi_dc_region_config` - Dynamic Capacity region configuration (memory device)
+- `struct cxlmi_fmapi_dc_region_config` - Dynamic Capacity region configuration (FM-API)
+- `struct cxlmi_event_record` - Event record entry
+- `struct cxlmi_supported_log_entry` - Supported log entry
+- `struct cxlmi_memdev_media_err_record` - Media error record
+- `struct cxlmi_cmd_fmapi_port_state_info_block` - Port state information
+
+**Generated Array Functions (per type):**
+- `<Type>Array_getitem(array, index)` - Retrieve element at index
+- `<Type>Array_setitem(array, index, value)` - Set element at index
+- `<Type>Array_cast(ptr)` - Cast pointer to typed array
+- `<Type>Array_frompointer(ptr)` - Create array accessor from pointer
+
+**Why This Approach:**
+Struct arrays use named types to enable SWIG's automatic generation of type-safe accessor functions. This provides Pythonic access to complex nested structures while maintaining proper memory layout and alignment required by the CXL specification.
 
 ### Memory Management
 

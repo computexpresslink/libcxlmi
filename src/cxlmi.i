@@ -211,6 +211,73 @@
 %array_functions(struct cxlmi_supported_log_entry, SupportedLogEntryArray);
 %array_functions(struct cxlmi_memdev_media_err_record, MediaErrRecordArray);
 %array_functions(struct cxlmi_cmd_fmapi_port_state_info_block, PortStateInfoArray);
+%array_functions(struct cxlmi_dc_region_config, DCRegionConfigArray);
+%array_functions(struct cxlmi_fmapi_dc_region_config, FMAPIDCRegionConfigArray);
+
+/* Generic helpers for accessing fixed-size byte/char arrays in structures
+ *
+ * Since SWIG wraps fixed-size arrays (uint8_t foo[32]) as opaque pointers,
+ * these helpers provide a way to read/write them from Python.
+ *
+ * Example Python usage:
+ *   req = cxlmi.cxlmi_cmd_memdev_set_passphrase_req()
+ *
+ *   # Set passphrase fields (32 bytes each)
+ *   cxlmi.array_set(req.current_passphrase, b'oldpass' + b'\x00' * 25, 32)
+ *   cxlmi.array_set(req.new_passphrase, b'newpass' + b'\x00' * 25, 32)
+ *
+ *   # Get passphrase as bytes
+ *   old_pass = cxlmi.array_get(req.current_passphrase, 32)
+ *
+ *   # Access struct arrays using generated array functions
+ *   rsp = cxlmi.cxlmi_cmd_memdev_get_dc_config_rsp()
+ *   region = cxlmi.DCRegionConfigArray_getitem(rsp.region_configs, 0)
+ *   print(region.base, region.decode_len)
+ */
+
+/* Exception handler for array_set - properly propagate Python exceptions */
+%exception cxlmi_array_set %{
+    $action
+    if (PyErr_Occurred()) {
+        SWIG_fail;
+    }
+%}
+
+%inline %{
+#include <string.h>
+
+/* Get array data as Python bytes object */
+PyObject* cxlmi_array_get(void *array_ptr, size_t size) {
+    if (!array_ptr) {
+        PyErr_SetString(PyExc_ValueError, "NULL pointer");
+        return NULL;
+    }
+    return PyBytes_FromStringAndSize((char*)array_ptr, size);
+}
+
+/* Set array data from Python bytes, with automatic zero-padding if needed
+ * Raises Python exception on error (checked by %exception handler above) */
+void cxlmi_array_set(void *array_ptr, PyObject *data, size_t array_size) {
+    if (!array_ptr) {
+        PyErr_SetString(PyExc_ValueError, "NULL array pointer");
+        return;
+    }
+    if (!PyBytes_Check(data)) {
+        PyErr_SetString(PyExc_TypeError, "Expected bytes object");
+        return;
+    }
+    Py_ssize_t data_len = PyBytes_Size(data);
+    if (data_len > (Py_ssize_t)array_size) {
+        PyErr_Format(PyExc_ValueError, "Data too large: %zd bytes for array of size %zu", data_len, array_size);
+        return;
+    }
+    memcpy(array_ptr, PyBytes_AsString(data), data_len);
+    /* Zero-pad remaining space if data is shorter than array */
+    if (data_len < (Py_ssize_t)array_size) {
+        memset((uint8_t*)array_ptr + data_len, 0, array_size - data_len);
+    }
+}
+%}
 
 /* Rename helper functions for tunnel definitions */
 %inline %{
