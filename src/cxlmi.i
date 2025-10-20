@@ -213,6 +213,9 @@
 %array_functions(struct cxlmi_cmd_fmapi_port_state_info_block, PortStateInfoArray);
 %array_functions(struct cxlmi_dc_region_config, DCRegionConfigArray);
 %array_functions(struct cxlmi_fmapi_dc_region_config, FMAPIDCRegionConfigArray);
+%array_functions(struct cxlmi_memdev_get_list_extent, MemdevGetListExtentArray);
+%array_functions(struct cxlmi_memdev_dc_extent, MemdevDCExtentArray);
+%array_functions(struct cxlmi_fmapi_dc_extent, FMAPIDCExtentArray);
 
 /* Generic helpers for accessing fixed-size byte/char arrays in structures
  *
