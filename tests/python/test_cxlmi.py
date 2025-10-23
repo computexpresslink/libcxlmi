@@ -303,6 +303,42 @@ class TestConstants(unittest.TestCase):
         """Test mailbox max payload size constant"""
         self.assertEqual(cxlmi.CXL_MAILBOX_MAX_PAYLOAD_SIZE, 2048)
 
+class TestArrayAccess(unittest.TestCase):
+    """Tests for fixed-size array assignments and anonymous struct array behavior"""
+
+    def test_primitive_type_array_assignment(self):
+        """Test primitive array assignment using cxlmi_array_set()"""
+        rsp = cxlmi.cxlmi_cmd_memdev_identify_rsp()
+        expected = b'\1\2\3'
+        cxlmi.cxlmi_array_set(rsp.poison_list_max_mer, b'\1\2\3', 3)
+        self.assertEqual(cxlmi.cxlmi_array_get(rsp.poison_list_max_mer, 3), expected)
+
+        # Test auto \x00 padding
+        expected = b'1\x00\x00'
+        cxlmi.cxlmi_array_set(rsp.poison_list_max_mer, b'1', 3)
+        self.assertEqual(cxlmi.cxlmi_array_get(rsp.poison_list_max_mer, 3), expected)
+
+    def test_nested_struct_array(self):
+        """Test special array get/set functions for nested structs.
+        """
+        rsp = cxlmi.cxlmi_cmd_memdev_get_dc_config_rsp()
+
+        # Test DCRegionConfigArray_getitem
+        r0 = cxlmi.DCRegionConfigArray_getitem(rsp.region_configs, 0)
+        print(type(r0))
+        r0.base = 0x12345678
+        self.assertEqual(r0.base, 0x12345678)
+
+        # Test DCRegionConfigArray_setitem
+        r1 = cxlmi.cxlmi_dc_region_config()
+        r1.base = 0x5555
+        r1.region_len = 0x100
+
+        cxlmi.DCRegionConfigArray_setitem(rsp.region_configs, 1, r1)
+        get_r1 = cxlmi.DCRegionConfigArray_getitem(rsp.region_configs, 1)
+
+        self.assertEqual(get_r1.base, 0x5555)
+        self.assertEqual(get_r1.region_len, 0x100)
 
 class TestCommandRequestStructures(unittest.TestCase):
     """Test command request structures for all command types"""
@@ -540,6 +576,7 @@ def run_tests():
     suite.addTests(loader.loadTestsFromTestCase(TestCommandRequestStructures))
     suite.addTests(loader.loadTestsFromTestCase(TestFlexibleArrayStructures))
     suite.addTests(loader.loadTestsFromTestCase(TestComplexStructures))
+    suite.addTests(loader.loadTestsFromTestCase(TestArrayAccess))
 
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
