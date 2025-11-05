@@ -1,0 +1,4 @@
+# ctypeslib2 only compatible with clang 17-19 as of Feb. 2025
+# pip will install the highest available version in this range
+clang>=17,<20
+ctypeslib2
