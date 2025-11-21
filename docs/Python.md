@@ -2,9 +2,13 @@
 
 This document describes the Python bindings for libcxlmi, providing Python developers with access to CXL Management Interface functionality.
 
+The Python interface is a work-in-progress, provided as a preview of what can be done when integrating with Python.
+It is not guaranteed to be stable, as there are dependencies for the binding generator,
+which may break across versions. See, the [Limitations](#limitations) section for a list of known shortcomings/areas of improvement.
+
 ## Overview
 
-The Python bindings are generated using SWIG (Simplified Wrapper and Interface Generator) and provide a Pythonic interface to the libcxlmi C library. The bindings support all major CXL command sets:
+The Python bindings are generated using clang2py and provide a ctypes-based interface to the libcxlmi C library. The bindings support all CXL command structures and functions through direct ctypes wrapping.
 
 - **Generic Component Commands**: Device identification, events, firmware, logs
 - **Memory Device Commands**: Capacity, health, security, dynamic capacity
@@ -14,11 +18,44 @@ The Python bindings are generated using SWIG (Simplified Wrapper and Interface G
 ## Building with Python Support
 
 ### Prerequisites
-
+We use the ctypeslib2 tool to generate python bindings, this requires the following:
 - Python 3.6 or later
-- SWIG 3.0 or later (for building bindings)
-- Python setuptools module
-- For MCTP examples: libcxlmi built with D-Bus support (`-Dlibdbus=enabled`)
+- clang compiler (clang llvm llvm-dev), 17 <= version < 20
+- clang python bindings with the *same version* as the clang compiler that was installed
+- ctypeslib2
+    - only compatible with clang 17-19 as of Feb. 2025
+
+Assuming you already have the clang compiler installed, for quick python package
+installation (this is agnostic to your clang compiler version, so YMMV):
+```
+pip install src/python/requirements.txt
+```
+
+Otherwise, to install everything manually, follow the example below for Debian:
+```
+# Install clang compiler
+sudo apt-get install clang-19 llvm-19 llvm-19-dev
+
+# Check clang version
+clang --version
+
+Debian clang version 19.1.7 (7)
+Target: x86_64-pc-linux-gnu
+Thread model: posix
+InstalledDir: /usr/lib/llvm-19/bin
+
+# Start a Python venv to install Python dependencies
+python3 -m venv venv
+
+# Install clang Python bindings with the *same* version as your system clang
+pip install clang==19.1.7
+
+# Install ctypes
+pip install ctypes
+
+# Install ctypeslib2 -- this fork includes a bug fix that has not yet been merged
+pip install "ctypeslib2 @ git+https://github.com/anisa-su993/anisa-ctypes2.git"
+```
 
 ### Build Configuration
 
@@ -51,13 +88,250 @@ export LD_LIBRARY_PATH=/path/to/build/src
 python3 your_script.py
 ```
 
-## Python API
+## Troubleshooting
+ctypeslib2 is built on lib/ctypes, which part of the python standard library.
+If you are using Python 3.12+: the ctypes.CDLL._filepath attribute was deprecated,
+breaking upstream ctypeslib2 as of Novemeber 2025. This causes the following error:
+
+```
+ File "/root/libcxlmi/venv/lib/python3.13/site-packages/ctypeslib/codegen/codegenerator.py", line 804, in get_sharedlib
+    print("_libraries[%r] =%s ctypes.CDLL(%r%s)" % (library._name, stub_comment, library._filepath, global_flag),
+                                                                                 ^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.13/ctypes/__init__.py", line 403, in __getattr__
+    func = self.__getitem__(name)
+  File "/usr/lib/python3.13/ctypes/__init__.py", line 408, in __getitem__
+    func = self._FuncPtr((name_or_ordinal, self))
+AttributeError: /usr/local/lib/x86_64-linux-gnu/libcxlmi.so: undefined symbol: _filepath
+```
+
+To solve, please install this fork of ctypeslib2, which includes a fix:
+
+```
+pip install "ctypeslib2 @ git+https://github.com/anisa-su993/anisa-ctypes2.git"
+```
+
+## Limitations
+
+1. "This param type is not defined" warning
+Ex:
+```
+INFO:cursorhandler:This param type is not declared: uint8_t
+```
+ctypeslib2 uses the clang AST, which does not expose #define macros. Some uint types
+in stdint may be defined as macros with #define instead of with typedef, which will
+trigger this warning.
+
+It should be safe to ignore, as ctypeslib2 will default to its built-in map of common
+type conversion.
+
+2. "Bad source code, bitsize == -16 on __" warning
+Ex:
+```
+WARNING:cursorhandler:Bad source code, bitsize == -16 <0 on records
+```
+ctypeslib2 can trigger this warning for flex-arrays, as the clang AST internally represents
+the size of flex arrays as -2. `cursorhandler` calculate sthe number of bits for each field of
+a struct, which results in the -16.
+
+The warning checks for cases such as having something like `int a[-4];` in the source code but
+is not accurate for flex arrays. Thus, it can be safely ignored.
+
+3. **No #define macros**: Constants (pre-processor macros from #define statements) are *not* exposed.
+This is a limitation of ctypeslib2, which parses the clang AST to generate the bindings.
+Pre-processor macros are not included in the AST, thus are not translated to Python.
+
+    This includes all of the tunnel initialization helper macros:
+        - `cxlmi_tunnel_mld(ld)` - Create MLD tunnel info
+        - `cxlmi_tunnel_switch(port)` - Create switch tunnel info
+        - `cxlmi_tunnel_switch_mld(port, ld)` - Create switch→MLD tunnel info
+        - `cxlmi_tunnel_mhd()` - Create MHD tunnel info
+        - `cxlmi_tunnel_free(ti)` - Free tunnel info
+
+    tunnel_info structs can still be manually initialized. See `examples/python/tunnel_example.py` for examples each of the tunneling situations above.
+
+    Unsupported constants include (non-comprehensive):
+
+    ```
+    CXLMI_MAX_SUPPORTED_EVENT_RECORDS  # 20
+    CXLMI_MAX_SUPPORTED_LOGS           # 7
+    CXL_MAILBOX_MAX_PAYLOAD_SIZE       # 2048 bytes
+    ```
+
+## Usage
 
 ### Module Import
 
 ```python
 import cxlmi
 ```
+
+### Struct Initialization
+Python’s ctypes automatically creates a generated __init__ that accepts keyword arguments for all field names. Thus, you can initialize a struct/class with any
+number of its defined fields, or none.
+
+Unspecified fields default to zero / false / null.
+
+For example:
+```python
+# Default initialize tunnel_info
+ti = struct_cxlmi_tunnel_info()
+
+# Initialize all fields
+ti = struct_cxlmi_tunnel_info(
+    port=3,
+    ld=2,
+    level=0,
+    mhd=True
+)
+
+# Initialize some fields
+ti = struct_cxlmi_tunnel_info(
+    port=3,
+    ld=2,
+)
+```
+
+This applies to all structs.
+
+### Opening IOCTL EPs
+To open a specific device, use the built-in `.endcode()` function to convert a
+string to `ctypes.c_char_p` because Python `str` cannot be automatically cast to
+`char *`
+
+Ex:
+```python
+
+def main():
+    if len(sys.argv) < 2:
+        print(f"Usage: {sys.argv[0]} <cxl_device>")
+        print(f"Example: {sys.argv[0]} mem0")
+        return 1
+
+    device_name = sys.argv[1]
+
+    ctx = cxlmi.cxlmi_new_ctx(None, 6)
+    try:
+        ep = cxlmi.cxlmi_open(ctx, device_name.encode())
+        if not ep:
+            print(f"Failed to open device: {device_name}")
+            return 1
+```
+
+### Byte Strings
+Fixed-size byte-strings are not automatically 0-padded. For example, take the
+set_passphrase request struct:
+```
+/* CXL r3.1 Section 8.2.9.9.6.2: Set Passphrase (Opcode 4501h) */
+struct cxlmi_cmd_memdev_set_passphrase_req {
+	uint8_t passphrase_type;
+	uint8_t rsvd[0x1F];
+	uint8_t current_passphrase[0x20];
+	uint8_t new_passphrase[0x20];
+} __attribute__((packed));
+```
+The following Python assignment will fail because ctypes expects an array object of exactly the same type (c_ubyte * 32), not raw bytes.
+
+Even if it did accept the bytes, ctypes never automatically pads them with zeros; it would truncate or reject them depending on context:
+```
+set_pass = cxlmi.struct_cxlmi_cmd_memdev_set_passphrase_req()
+set_pass.current_passphrase = b'current_pass'
+```
+
+Use the built-in `ljust` or left-justify method to pad with 0s:
+```
+set_pass = cxlmi.struct_cxlmi_cmd_memdev_set_passphrase_req()
+set_pass.current_passphrase = b'current_pass'.ljust(32, b'\0')
+```
+
+### Flexible Arrays
+
+Some CXL structures contain C99 flexible array members (for example `uint8_t data[]`) at the end.
+ctypeslib2 cannot create a Python attribute with a dynamic-length array, so the generated bindings declare
+the flexible field as an array of length 0 (for example `records = struct_cxlmi_event_record * 0`).
+
+--------------------------------------------------------------
+
+The general pattern is:
+
+1. Decide how many elements (N) you need in the flexible array.
+2. Allocate one contiguous buffer using `create_string_buffer`:
+
+```python
+total_size = ctypes.sizeof(cxlmi.struct_cxlmi_cmd_get_event_records_rsp) + \
+             N * ctypes.sizeof(cxlmi.struct_cxlmi_event_record)
+buf = ctypes.create_string_buffer(total_size)
+```
+
+3. Create a typed view of the header using `.from_buffer()`:
+
+```python
+event_rsp = cxlmi.struct_cxlmi_cmd_get_event_records_rsp.from_buffer(buf)
+```
+
+4. Create an array type for the flexible element and make a typed view starting at the header size offset:
+
+```python
+records_type = cxlmi.struct_cxlmi_event_record * N
+records = records_type.from_buffer(buf, ctypes.sizeof(cxlmi.struct_cxlmi_cmd_get_event_records_rsp))
+```
+
+5. Use `records[i]` to access or modify individual elements. Each element is a ctypes Structure so you can set fields
+   directly (for example `records[0].handle = 0x100`).
+
+Important notes and gotchas
+--------------------------
+
+- Keep a reference to the original `buf`. If it is garbage-collected the views (`event_rsp`, `records`) may become
+  invalid and accessing them will crash. The easiest approach is to keep `buf` in scope for as long as you need the views.
+- Use `ctypes.sizeof()` to compute header and element sizes — avoid hard-coding sizes.
+- The structure packing (`_pack_`) and field order in the generated bindings already reflect the C layout; the views
+  created with `from_buffer` will therefore map correctly onto the memory buffer.
+- Endianness and ABI are governed by the platform and the compiled C library; the ctypes views assume the native
+  platform layout.
+
+--------------------------------------------------------
+
+`examples/python/fmapi_get_dc_region_extent_list.py` demonstrates this pattern. It allocates a
+buffer for five `struct_cxlmi_fmapi_dc_extent` entries, sends the command to the device
+and reads the extent information out of the returned list.
+
+```python
+# Allocate one contiguous buffer: header + N extents
+total_size = ctypes.sizeof(struct_cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp) + \
+            req.extent_count * ctypes.sizeof(struct_cxlmi_fmapi_dc_extent)
+buf = ctypes.create_string_buffer(total_size)
+
+# Create typed views into the buffer
+rsp = struct_cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp.from_buffer(buf)
+extents = struct_cxlmi_fmapi_dc_extent * req.extent_count
+rsp_extents = extents.from_buffer(buf, ctypes.sizeof(struct_cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp))
+
+# Create array for extents in response
+ret = cxlmi_cmd_fmapi_get_dc_region_ext_list(ep, None, req, rsp)
+
+if ret != 0:
+    print(f"Bad rc {ret}")
+    return ret
+
+print(f"Total Extents: {rsp.total_extents}")
+print(f"Extents Returned: {rsp.extents_returned}")
+print(f"Extent Starting Index: {rsp.start_ext_index}")
+
+# Access extents directly from the response structure
+for i in range(rsp.extents_returned):
+    ext = rsp_extents[i]
+    print(f"Extent {i}:")
+    print(f"  Start DPA: {ext.start_dpa}")
+    print(f"  Length: {ext.len}")
+
+print("Done")
+```
+
+Summary
+-------
+
+The `from_buffer` pattern is a safe, zero-copy way to work with C flexible array members using ctypes. The test-suite
+includes examples (see `tests/python/test_cxlmi.py::test_event_records_response`) which you can reuse as a template.
 
 ### Core Library Functions
 
@@ -84,16 +358,6 @@ import cxlmi
 - `cxlmi.cxlmi_first_endpoint(ctx)` - Get first endpoint
 - `cxlmi.cxlmi_next_endpoint(ctx, ep)` - Get next endpoint
 - `cxlmi.endpoints(ctx)` - Python generator for iteration
-
-#### Tunneling Functions
-- `cxlmi.cxlmi_tunnel_mld(ld)` - Create MLD tunnel info
-- `cxlmi.cxlmi_tunnel_switch(port)` - Create switch tunnel info
-- `cxlmi.cxlmi_tunnel_switch_mld(port, ld)` - Create switch→MLD tunnel info
-- `cxlmi.cxlmi_tunnel_mhd()` - Create MHD tunnel info
-- `cxlmi.cxlmi_tunnel_free(ti)` - Free tunnel info
-
-#### Utility Functions
-- `cxlmi.cxlmi_cmd_retcode_tostr(code)` - Convert return code to string
 
 ### Usage Examples
 
@@ -154,30 +418,6 @@ while ep:
     ep = cxlmi.cxlmi_next_endpoint(ctx, ep)
 ```
 
-#### Tunneling Support
-
-For complex CXL topologies, commands can be tunneled through switches and to Multi-Logical Devices (MLDs):
-
-```python
-# Tunnel to MLD (Logical Device)
-ti_mld = cxlmi.cxlmi_tunnel_mld(ld=0)
-
-# Tunnel through switch
-ti_switch = cxlmi.cxlmi_tunnel_switch(port=1)
-
-# Tunnel through switch to MLD
-ti_switch_mld = cxlmi.cxlmi_tunnel_switch_mld(port=1, ld=0)
-
-# Tunnel to Multi-Headed Device
-ti_mhd = cxlmi.cxlmi_tunnel_mhd()
-
-# Use None for direct (non-tunneled) commands
-ti = None
-
-# Free tunnel info when done
-cxlmi.cxlmi_tunnel_free(ti_mld)
-```
-
 ### Executing Commands
 
 Commands follow the C API pattern with Python-friendly argument passing:
@@ -229,24 +469,10 @@ print(f"Events: {event_rsp.record_count}")
 
 ### Error Handling
 
-Commands raise Python exceptions on errors:
-
-```python
-try:
-    ident = cxlmi.cxlmi_cmd_identify()
-    cxlmi.cxlmi_cmd_identify(ep, None, ident)
-except IOError as e:
-    print(f"I/O error: {e}")
-except RuntimeError as e:
-    print(f"CXL command error: {e}")
-```
-
-Error codes can be converted to strings:
-
-```python
-msg = cxlmi.cxlmi_cmd_retcode_tostr(cxlmi.CXLMI_RET_UNSUPPORTED)
-print(msg)  # "Unsupported"
-```
+The bindings use ctypes error handling. Functions may raise:
+- `ctypes.ArgumentError` - Invalid argument types
+- `OSError` - Library loading or system call errors
+- `ValueError` - Invalid parameter values
 
 ### Return Codes
 
@@ -261,23 +487,14 @@ cxlmi.CXLMI_RET_INTERNAL       # Internal error
 # ... and 29 more return codes
 ```
 
-### Constants
-
-Key constants are exposed:
-
-```python
-cxlmi.CXLMI_MAX_SUPPORTED_EVENT_RECORDS  # 20
-cxlmi.CXLMI_MAX_SUPPORTED_LOGS           # 7
-cxlmi.CXL_MAILBOX_MAX_PAYLOAD_SIZE       # 2048 bytes
-```
-
 ## Examples
 
 Complete example programs are provided in the `examples/python/` directory demonstrating various aspects of the library.
 
 ### Running Examples
 
-Make sure the Python module is in your PYTHONPATH:
+Make sure the Python module is in your PYTHONPATH or has been installed via the
+`meson install` command:
 
 ```bash
 export PYTHONPATH=/path/to/libcxlmi/build/src/python:$PYTHONPATH
@@ -287,83 +504,21 @@ export LD_LIBRARY_PATH=/path/to/libcxlmi/build/src:$LD_LIBRARY_PATH
 Then run any example:
 
 ```bash
-python3 identify_device.py mem0
-python3 get_health_info.py mem0
+python3 identify_device.py
 python3 get_partition_info.py mem0
 ```
 
-### Available Examples
+### Type Definitions
 
-#### identify_device.py
-Basic example showing how to:
-- Create a context
-- Open a CXL device (mailbox) or scan for MCTP endpoints
-- Send an Identify command
-- Display device information and decode component type
-
-#### get_health_info.py
-Demonstrates querying memory device health information:
-- Health status and media status
-- Temperature monitoring
-- Life used percentage
-- Error counts
-
-#### get_partition_info.py
-Shows how to query and display partition information:
-- Active partition sizes (volatile/persistent)
-- Pending partition changes
-- Human-readable capacity formatting
-
-#### list_endpoints_mctp.py
-MCTP endpoint discovery example (requires D-Bus support):
-- Scanning for MCTP-connected CXL endpoints
-- Iterating over discovered endpoints
-- Querying basic information from each
-
-#### tunnel_example.py
-Comprehensive tunneling demonstration:
-- Tunneling to Logical Devices in MLDs
-- Tunneling through CXL Switches
-- Multi-level tunneling (Switch → MLD)
-- Multi-Headed Device (MHD) tunneling
-
-#### fmapi_switch_info.py
-FM-API example for CXL Switches:
-- Checking FM-API support
-- Querying switch identification
-- Getting physical port states
-
-### Writing Your Own Scripts
-
-Here's a minimal example:
-
-```python
-#!/usr/bin/env python3
-import cxlmi
-
-# Create context
-ctx = cxlmi.cxlmi_new_ctx(None, 6)  # LOG_INFO level
-
-# Open device
-ep = cxlmi.cxlmi_open(ctx, "mem0")
-
-# Send command
-ident = cxlmi.cxlmi_cmd_identify()
-cxlmi.cxlmi_cmd_identify(ep, None, ident)
-
-# Access results
-print(f"Vendor ID: 0x{ident.vendor_id:04x}")
-
-# Cleanup
-cxlmi.cxlmi_close(ep)
-cxlmi.cxlmi_free_ctx(ctx)
-```
+The bindings include common C types mapped to Python:
+- `uint8_t`, `uint16_t`, `uint32_t`, `uint64_t`
+- `int8_t`, `int16_t`, `int32_t`, `int64_t`
+- Custom types like `c_int128` and `c_uint128`
 
 ## Testing
 
-The Python bindings include comprehensive unit tests in `tests/python/test_cxlmi.py`:
+The Python bindings include unit tests in `tests/python/test_cxlmi.py`:
 
-- 42 test cases covering all aspects of the bindings
 - Tests for context management, endpoint handling, structures, tunneling
 - Tests for flexible array member handling
 - Tests for error handling and constants
@@ -383,50 +538,67 @@ PYTHONPATH=../../build/src/python LD_LIBRARY_PATH=../../build/src python3 -m uni
 
 ## Technical Details
 
-### SWIG Interface
-
-The bindings are generated from `src/cxlmi.i`, which:
-- Exposes all CXL command structures from `cxlmi/api-types.h`
-- Provides context and endpoint management functions
-- Includes helper functions for tunneling
-- Handles opaque structure types (`cxlmi_ctx`, `cxlmi_endpoint`)
-- Provides Python generator for endpoint iteration
-
-### Flexible Array Members
-
-Some CXL structures contain C99 flexible array members (e.g., `uint8_t data[]`) at the end. SWIG cannot expose these fields to Python because:
-
-1. They have no fixed size - the actual size depends on the command/response
-2. They're part of variable-length wire protocol structures
-3. Python has no direct equivalent to C flexible array members
-
-**This is not a problem** because:
-- The structures themselves are fully usable from Python
-- Users create and populate these structures normally
-- All fixed-size fields remain accessible
-- The C library functions handle the flexible arrays internally
-- For reading data from flexible arrays, the C API provides dedicated getter functions
-- This is the standard approach for SWIG bindings (same pattern as libnvme)
-
-Example structures with hidden flexible arrays:
-- `cxlmi_cmd_identify.component_specific_ident_data[]`
-- `cxlmi_cmd_get_event_records_rsp.records[]`
-- `cxlmi_cmd_get_fw_info.fw_slot_info[]`
-- `cxlmi_cmd_memdev_get_poison_list_rsp.media_error_records[]`
-
 ### Memory Management
 
-- Context and endpoint objects are opaque pointers managed by the C library
-- Tunnel info structures are allocated by helper functions and must be freed with `cxlmi_tunnel_free()`
-- Command structures are Python objects with automatic memory management
-- The SWIG-generated code handles all marshalling between Python and C
+The bindings are ctypes-based, so memory ownership follows C semantics but is represented with ctypes types in Python. Key points:
 
-### Thread Safety
+- Context and endpoint objects are opaque C pointers exposed as ctypes POINTER types (for example the result of
+  `cxlmi.cxlmi_new_ctx()` is a `ctypes.POINTER(struct_cxlmi_ctx)`). These objects are owned by the C library and
+  must be released with the corresponding C free functions exposed in the bindings:
 
-The bindings inherit the thread safety characteristics of the C library:
-- No internal locking is provided
-- Users must serialize access to contexts and endpoints
-- Multiple contexts can be used concurrently from different threads
+```python
+ctx = cxlmi.cxlmi_new_ctx(None, 6)
+...
+cxlmi.cxlmi_free_ctx(ctx)
+
+ep = cxlmi.cxlmi_open(ctx, b"mem0")
+...
+cxlmi.cxlmi_close(ep)
+```
+
+- Tunnel info is represented as a ctypes Structure (`struct_cxlmi_tunnel_info`). You normally create it in Python and
+  pass it by reference to command functions. If the C library provides helper functions that allocate tunnel info for
+  you, follow those helpers' ownership rules (and free with the corresponding C free function if provided). Example of
+  the common case where Python owns the struct:
+
+```python
+ti = cxlmi.struct_cxlmi_tunnel_info()
+ti.port = -1
+ti.ld = 0
+ti.level = 1
+ti.mhd = False
+# pass ctypes.byref(ti) or ti directly depending on the function signature
+```
+
+- Command request/response structures are plain `ctypes.Structure` instances allocated in Python. They are garbage
+  collected by Python when no longer referenced. Pass them to C calls using `ctypes.byref()` or by passing the object
+  when the binding's argtypes expect a pointer.
+
+- Flexible-array members (C99 flexible arrays declared as `type name[]`) are represented in the generated bindings as
+  a zero-length array type at the end of the structure. To use them you must allocate a contiguous buffer large enough
+  for the header plus N elements and create typed views with `.from_buffer()` (see the Flexible Array Members section
+  for an example). Importantly, keep the original buffer object alive for as long as you need the views to avoid
+  use-after-free crashes.
+
+- Functions that return `char *` or `const char *` (for example string helpers) will usually be declared with a
+  `ctypes.POINTER(ctypes.c_char)` or `ctypes.c_char_p` restype. Convert these to Python strings using `ctypes.cast(...).value`
+  or the generated helper functions such as `string_cast()` if provided:
+
+```python
+# function declared as returning POINTER(c_char)
+ptr = cxlmi.cxlmi_cmd_retcode_tostr(cxlmi.CXLMI_RET_UNSUPPORTED)
+msg = ctypes.cast(ptr, ctypes.c_char_p).value.decode('utf-8')
+# or if the generated bindings provide a helper:
+msg = cxlmi.string_cast(ptr)
+```
+
+- If a C function allocates memory that the caller must free (rare and always documented in the C API), the bindings
+  will generally expose a matching free function. Only call the free function if the C API specifies the caller owns
+  the memory.
+
+Summary: Python code allocates and passes ctypes structures and buffers; release C-owned opaque pointers with the
+library-provided free functions; keep manually-created buffers alive while using `.from_buffer()` views; and use the
+provided string/utility helpers for safe conversions between C pointers and Python types.
 
 ## Command Reference
 
@@ -533,12 +705,6 @@ The Python bindings expose all CXL commands across four command sets:
 - `cxlmi_cmd_fmapi_dc_remove_reference()` - DC remove reference
 - `cxlmi_cmd_fmapi_dc_list_tags()` - DC list tags
 
-## Limitations
-
-1. **No async support**: Commands are synchronous only
-2. **No background operation polling**: Background operations must be polled using additional commands
-3. **Limited array support**: C arrays are not directly accessible; use provided array helper functions where available
-
 ## Compatibility
 
 - **Python versions**: 3.6, 3.7, 3.8, 3.9, 3.10, 3.11, 3.12+
@@ -554,6 +720,5 @@ The Python bindings are licensed under LGPL-2.1-or-later, matching the libcxlmi 
 When adding new commands to libcxlmi, the Python bindings automatically expose them if:
 - The command structures are in `cxlmi/api-types.h`
 - The command function is declared in `libcxlmi.h`
-- Any flexible array members are added to the `%ignore` list in `src/cxlmi.i`
 
 For questions or issues with the Python bindings, please open an issue at the libcxlmi repository.

@@ -22,5 +22,4 @@ libcxlmi_dep = declare_dependency(
     link_with: cxlmi,
 )
 
-# Python bindings
 subdir('python')

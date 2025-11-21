@@ -1,7 +1,3 @@
-# SPDX-License-Identifier: LGPL-2.1-or-later
-#
-# Python bindings for libcxlmi
-#
 
 # Check if we should build Python bindings
 python_option = get_option('python')
@@ -21,25 +17,12 @@ if not python.found()
     subdir_done()
 endif
 
-# Find SWIG - don't require it yet if auto
-swig = find_program('swig', required: false)
-if not swig.found()
-    if python_option.enabled()
-        error('SWIG not found but python=enabled')
-    endif
-    # Auto mode: silently skip without messages
-    subdir_done()
-endif
-
 # Now check for Python installation and setuptools
-# Only do this after we know python3 and swig exist
+# Only do this after we know python3 and clang2py exist
 python_installation = import('python').find_installation(
     'python3',
     required: false,
-    modules: ['setuptools']
 )
-
-message('Python install dir: ' + python_installation.get_path('purelib'))
 
 if not python_installation.found()
     if python_option.enabled()
@@ -49,68 +32,98 @@ if not python_installation.found()
     subdir_done()
 endif
 
+# Find install dir to find dependencies and tell meson where to install bindings in
+# add_install_script, which installs bindings when meson install is run.
+
+python_install_dir = run_command(
+  python, '-c',
+  'import site; print(site.getsitepackages()[0])',
+  check: true,
+).stdout().strip()
+
+message('Python site-packages path: ' + python_install_dir)
+
+# clang2py requires clang, python-clang, and clang.version == python-clang.version
+clang = find_program('clang', required: true)
+clang_version_output = run_command(clang, '--version', check: true).stdout().strip()
+
+clang_version = ''
+clang_major = ''
+
+foreach line : clang_version_output.split('\n')
+  if line.contains('clang version')
+    parts = line.split()
+    found = false
+    foreach p : parts
+      if found
+        clang_version = p
+        clang_major = clang_version.split('.')[0]
+        break
+      endif
+      if p == 'version'
+        found = true
+      endif
+    endforeach
+  endif
+endforeach
+
+message('Found clang: ' + clang.full_path())
+message('Full clang version: ' + clang_version)
+message('Clang major: ' + clang_major)
+
+python_clang_cmd = run_command(
+  python,
+  '-c',
+  'import importlib.metadata; print(importlib.metadata.version("clang"))',
+  check: false
+)
+
+if python_clang_cmd.returncode() != 0
+  error('Python clang not found. Install with "pip install clang"')
+else
+  python_clang_version = python_clang_cmd.stdout().strip()
+  message('Python clang version: ' + python_clang_version)
+endif
+
+if clang_major != python_clang_version.split('.')[0]
+    error('clang (' + clang_version + ') and python-clang (' + python_clang_version + ') versions differ!')
+else
+    message('clang and python-clang versions match: ' + clang_major)
+endif
+
+# Try to locate clang2py (the tool that generates bindings). If not found
+# we do not attempt to install anything automatically here; instead print a
+# helpful message asking the user to install the package that provides
+# `clang2py` (for example via `pip install clang2py` inside a venv).
+clang2py = find_program('clang2py', required: true)
+
 # All dependencies found - proceed with build
 build_python = true
 message('Building Python bindings')
 
-# Generate SWIG wrapper
-swig_c_file = custom_target(
-    'cxlmi_wrap.c',
-    input: files('../cxlmi.i'),
-    output: ['cxlmi_wrap.c', 'cxlmi.py'],
-    command: [
-        swig,
-        '-python',
-        # Suppress Warning 462: "Unable to set variable of type array"
-        # This warning occurs for C99 flexible array members (uint8_t data[] at end of struct).
-        # These are intentionally not exposed to Python because:
-        # 1. They're variable-length and can't be safely mapped to Python attributes
-        # 2. They're accessed through dedicated getter functions in the C API
-        # 3. The structures are still fully usable - only the flex array field is hidden
-        # 4. This is the standard approach for SWIG bindings (same as libnvme)
-        # The warning is harmless - it just means SWIG skips these fields, which is correct.
-        '-w462',
-        '-I@SOURCE_ROOT@/src',
-        '-I@SOURCE_ROOT@/src/cxlmi',
-        '-I@BUILD_ROOT@',
-        '-o', '@OUTPUT0@',
-        '-outdir', '@OUTDIR@',
-        '@INPUT@'
-    ],
-    depend_files: [
-        files('../libcxlmi.h'),
-        files('../cxlmi/api-types.h'),
-    ],
+# Generate the Python bindings
+src_h = meson.project_source_root() + '/src/libcxlmi.h'
+out_py = 'cxlmi.py'
+
+python_bindings = custom_target(
+  'generate_python_bindings',
+  input: src_h,
+  output: out_py,
+  command: [
+    clang2py,
+    '-l', 'cxlmi',
+    '@INPUT@',
+    '-o', meson.current_build_dir() + '/' + out_py,
+  ],
+  build_by_default: true,
 )
 
-# Build Python extension module using setup.py
-python_build = custom_target(
-    'python-build',
-    input: [swig_c_file],
-    output: '_cxlmi.so',
-    build_by_default: true,
-    command: [
-        python,
-        files('setup.py'),
-        'build_ext',
-        '--build-lib', '@OUTDIR@',
-        '--build-temp', '@PRIVATE_DIR@',
-    ],
-    env: {
-        'MESON_BUILD_ROOT': meson.project_build_root(),
-        'MESON_SOURCE_ROOT': meson.project_source_root(),
-    },
-    depends: [cxlmi],
-    install: false,
-)
-
-# Install Python module - always install when python bindings are enabled
-# Install using meson.add_install_script for generated files
 meson.add_install_script(
     'sh', '-c',
-    'cp @0@/cxlmi.py @0@/_cxlmi*.so @1@/'.format(
+    'cp @0@/@1@ @2@/'.format(
         meson.current_build_dir(),
-        python_installation.get_path('purelib')
+        out_py,
+        python_install_dir
     )
 )
 

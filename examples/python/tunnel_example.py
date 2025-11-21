@@ -19,10 +19,10 @@ def example_tunnel_to_mld(ep, ld_id):
     print(f"\nTunneling to LD {ld_id} in MLD:")
 
     # Create MLD tunnel info
-    ti = cxlmi.cxlmi_tunnel_mld(ld_id)
+    ti = cxlmi.struct_cxlmi_tunnel_info(port=-1, ld=ld_id, level=1, mhd=False)
 
     try:
-        ident = cxlmi.cxlmi_cmd_identify_rsp()
+        ident = cxlmi.struct_cxlmi_cmd_identify_rsp()
         ret = cxlmi.cxlmi_cmd_identify(ep, ti, ident)
 
         print(f"  Vendor ID:    0x{ident.vendor_id:04x}")
@@ -32,7 +32,7 @@ def example_tunnel_to_mld(ep, ld_id):
     except RuntimeError as e:
         print(f"  Error: {e}")
     finally:
-        cxlmi.cxlmi_tunnel_free(ti)
+        return ret
 
 
 def example_tunnel_to_switch_port(ep, port):
@@ -40,10 +40,10 @@ def example_tunnel_to_switch_port(ep, port):
     print(f"\nTunneling through Switch port {port}:")
 
     # Create Switch tunnel info
-    ti = cxlmi.cxlmi_tunnel_switch(port)
+    ti = cxlmi.struct_cxlmi_tunnel_info(port=port, ld=-1, level=1, mhd=False)
 
     try:
-        ident = cxlmi.cxlmi_cmd_identify_rsp()
+        ident = cxlmi.struct_cxlmi_cmd_identify_rsp()
         ret = cxlmi.cxlmi_cmd_identify(ep, ti, ident)
 
         print(f"  Vendor ID:    0x{ident.vendor_id:04x}")
@@ -52,7 +52,7 @@ def example_tunnel_to_switch_port(ep, port):
     except RuntimeError as e:
         print(f"  Error: {e}")
     finally:
-        cxlmi.cxlmi_tunnel_free(ti)
+        return ret
 
 
 def example_tunnel_switch_to_mld(ep, port, ld_id):
@@ -60,10 +60,10 @@ def example_tunnel_switch_to_mld(ep, port, ld_id):
     print(f"\nTunneling through Switch port {port} to LD {ld_id}:")
 
     # Create Switch+MLD tunnel info (2-level tunneling)
-    ti = cxlmi.cxlmi_tunnel_switch_mld(port, ld_id)
+    ti = cxlmi.struct_cxlmi_tunnel_info(port=port, ld=ld_id, level=2, mhd=False)
 
     try:
-        ident = cxlmi.cxlmi_cmd_identify_rsp()
+        ident = cxlmi.struct_cxlmi_cmd_identify_rsp()
         ret = cxlmi.cxlmi_cmd_identify(ep, ti, ident)
 
         print(f"  Vendor ID:    0x{ident.vendor_id:04x}")
@@ -72,7 +72,7 @@ def example_tunnel_switch_to_mld(ep, port, ld_id):
     except RuntimeError as e:
         print(f"  Error: {e}")
     finally:
-        cxlmi.cxlmi_tunnel_free(ti)
+        return ret
 
 
 def example_tunnel_to_mhd(ep):
@@ -80,10 +80,10 @@ def example_tunnel_to_mhd(ep):
     print(f"\nTunneling to MHD LD Pool:")
 
     # Create MHD tunnel info
-    ti = cxlmi.cxlmi_tunnel_mhd()
+    ti = cxlmi.struct_cxlmi_tunnel_info(port=-1, ld=-1, level=1, mhd=True)
 
     try:
-        ident = cxlmi.cxlmi_cmd_identify_rsp()
+        ident = cxlmi.struct_cxlmi_cmd_identify_rsp()
         ret = cxlmi.cxlmi_cmd_identify(ep, ti, ident)
 
         print(f"  Vendor ID:    0x{ident.vendor_id:04x}")
@@ -92,21 +92,22 @@ def example_tunnel_to_mhd(ep):
     except RuntimeError as e:
         print(f"  Error: {e}")
     finally:
-        cxlmi.cxlmi_tunnel_free(ti)
+        return ret
 
 
 def main():
     if len(sys.argv) < 2:
-        print(f"Usage: {sys.argv[0]} <cxl_device>")
+        print(f"Usage: {sys.argv[0]} <nid> <eid>")
         print()
         print("This example demonstrates different tunneling scenarios.")
         print("Note: Most commands will fail unless you have the appropriate")
         print("      CXL topology (MLD, Switch, etc.)")
         print()
-        print(f"Example: {sys.argv[0]} mem0")
+        print(f"Example: {sys.argv[0]} 11 8")
         return 1
 
-    device_name = sys.argv[1]
+    nid = int(sys.argv[1])
+    eid = int(sys.argv[2])
 
     ctx = cxlmi.cxlmi_new_ctx(None, 6)
     if not ctx:
@@ -114,9 +115,9 @@ def main():
         return 1
 
     try:
-        ep = cxlmi.cxlmi_open(ctx, device_name)
+        ep = cxlmi.cxlmi_open_mctp(ctx, nid, eid)
         if not ep:
-            print(f"Failed to open device: {device_name}")
+            print(f"Failed to open MCTP EP: {nid}:{eid}")
             return 1
 
         try:

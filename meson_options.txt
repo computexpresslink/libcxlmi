@@ -2,5 +2,5 @@
 option('libdbus', type : 'feature', value: 'disabled', description : 'libdbus support')
 option('mctpd', type: 'string', value: '', description: 'MCTP daemon type (openbmc or codeconstruct, case-insensitive). Option only valid if libdbus enabled.')
 option('tests', type : 'boolean', value : true, description : 'build tests')
-option('python', type : 'feature', value : 'disabled', description : 'Python bindings')
 option('cxl2_0_mode', type : 'feature', value : 'disabled', description : 'enable CXL 2.0 compatibility mode')
+option('python', type : 'feature', value : 'disabled', description : 'Python bindings')

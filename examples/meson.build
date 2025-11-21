@@ -22,6 +22,3 @@ executable(
     dependencies: libcxlmi_dep,
     include_directories: [inc]
 )
-
-# Python examples
-subdir('python')

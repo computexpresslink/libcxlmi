@@ -1,25 +1,26 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """
-Example: Identify a CXL device using Python bindings
+Example: Identify a CXL device using ctypes bindings
 
 This example demonstrates how to:
 1. Create a context
-2. Open a CXL endpoint (mailbox interface)
+2. Open an MCTP endpoint
 3. Send an Identify command
 4. Display the results
 """
 
 import sys
-import cxlmi
+from cxlmi import *
 
 def send_identify(ep):
+    ret = 0
     try:
         # Create the identify response structure
-        ident = cxlmi.cxlmi_cmd_identify_rsp()
+        ident = struct_cxlmi_cmd_identify_rsp()
 
         # Send the identify command (no tunneling)
-        ret = cxlmi.cxlmi_cmd_identify(ep, None, ident)
+        ret = cxlmi_cmd_identify(ep, None, ident)
 
         # Display the results
         print("CXL Device Identification:")
@@ -46,11 +47,20 @@ def send_identify(ep):
     finally:
         if ret != 0:
             print(f"Error: rc = {ret}")
-        return ret
+
+def for_each_endpoint_safe(ctx):
+    """Generator to safely iterate over endpoints"""
+    e = cxlmi_first_endpoint(ctx)
+    if not e:
+        return
+    _e = cxlmi_next_endpoint(ctx, e)
+    while e:
+        yield e
+        e, _e = _e, cxlmi_next_endpoint(ctx, _e)
 
 def main():
     # Create a new context with INFO log level
-    ctx = cxlmi.cxlmi_new_ctx(None, 6)
+    ctx = cxlmi_new_ctx(None, 6)
     if not ctx:
         print("Failed to create context")
         return 1
@@ -59,7 +69,7 @@ def main():
     if len(sys.argv) == 1:
         print("Scanning dbus....")
 
-        num_ep = cxlmi.cxlmi_scan_mctp(ctx)
+        num_ep = cxlmi_scan_mctp(ctx)
 
         if (num_ep < 0):
             print("dbus scan error")
@@ -69,32 +79,31 @@ def main():
             print(f"found {num_ep} endpoint(s)")
             try:
                 # Open MCTP EP
-                for ep in cxlmi.for_each_endpoint_safe(ctx):
+                for ep in for_each_endpoint_safe(ctx):
                     send_identify(ep)
-                    cxlmi.cxlmi_close(ep)
+                    cxlmi_close(ep)
             finally:
-                cxlmi.cxlmi_free_ctx(ctx)
+                cxlmi_free_ctx(ctx)
     elif len(sys.argv) == 3:
-        nid= int(sys.argv[1])
+        nid = int(sys.argv[1])
         eid = int(sys.argv[2])
 
         try:
             # Open MCTP EP
-            ep = cxlmi.cxlmi_open_mctp(ctx, nid, eid)
+            ep = cxlmi_open_mctp(ctx, nid, eid)
             if not ep:
                 print(f"Failed to open MCTP ep: {nid}:{eid}")
                 return 1
             send_identify(ep)
-            cxlmi.cxlmi_close(ep)
+            cxlmi_close(ep)
         finally:
-            cxlmi.cxlmi_free_ctx(ctx)
+            cxlmi_free_ctx(ctx)
     else:
-        print(f"Usage: {sys.argv[0]} <nid> <eid>")
+        print(f"Usage: {sys.argv[0]} | {sys.argv[0]} <nid> <eid>")
         print(f"Example: {sys.argv[0]} 12 8")
         return 1
 
     return 0
-
 
 if __name__ == '__main__':
     sys.exit(main())
