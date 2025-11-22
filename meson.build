@@ -192,6 +192,17 @@ if get_option('tests')
 endif
 
 ################################################################################
+# Generate and install pkg-config file
+pkg = import('pkgconfig')
+pkg.generate(
+    name: 'libcxlmi',
+    description: 'CXL Management Interface library',
+    version: meson.project_version(),
+    libraries: cxlmi,
+    subdirs: '.',
+)
+
+################################################################################
 if meson.version().version_compare('>=0.53.0')
     path_dict = {
 	'prefixdir':         prefixdir,
