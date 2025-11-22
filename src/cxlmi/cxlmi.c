@@ -315,7 +315,7 @@ static int sanity_check_mctp_rsp(struct cxlmi_endpoint *ep,
 	uint32_t pl_length;
 	struct cxlmi_ctx *ctx = ep->ctx;
 
-	if (len < sizeof(rsp)) {
+	if (len < sizeof(*rsp)) {
 		cxlmi_msg(ctx, LOG_ERR, "Too short to read error code\n");
 		return -1;
 	}
@@ -1138,7 +1138,7 @@ static void endpoint_probe_mctp(struct cxlmi_endpoint *ep)
 		break;
 	case 0x03:
 		cxlmi_msg(ep->ctx, LOG_INFO,
-			  "detected a CXL Type3 device (SLD or MLD FM-owned LD\n");
+			  "detected a CXL Type3 device (SLD or MLD FM-owned LD)\n");
 		break;
 	default:
 		cxlmi_msg(ep->ctx, LOG_WARNING,
@@ -1148,6 +1148,11 @@ static void endpoint_probe_mctp(struct cxlmi_endpoint *ep)
 
 	/* FM-API errors are ignored and the CCI will only be available */
 	mctp->fmapi_sd = socket(AF_MCTP, SOCK_DGRAM, 0);
+	if (mctp->fmapi_sd < 0) {
+		cxlmi_msg(ep->ctx, LOG_DEBUG,
+			  "FM-API unsupported, CCI-only mode\n");
+		return;
+	}
 	mctp->fmapi_addr = fmapi_addr;
 	ep->has_fmapi = true;
 }

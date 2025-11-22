@@ -3373,7 +3373,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_dc_add_reference(struct cxlmi_endpoint *ep,
 
 	req_sz = sizeof(*req) + sizeof(*req_pl);
 	req = calloc(1, req_sz);
-	if(!req)
+	if (!req)
 		return -1;
 
 	arm_cci_request(ep, req, sizeof(*req_pl), DCD_MANAGEMENT, DC_ADD_REFERENCE);
@@ -3401,7 +3401,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_dc_remove_reference(struct cxlmi_endpoint *ep,
 
 	req_sz = sizeof(*req) + sizeof(*req_pl);
 	req = calloc(1, req_sz);
-	if(!req)
+	if (!req)
 		return -1;
 
 	arm_cci_request(ep, req, sizeof(*req_pl), DCD_MANAGEMENT, DC_REMOVE_REFERENCE);
@@ -3432,7 +3432,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_dc_list_tags(struct cxlmi_endpoint *ep,
 
 	req_sz = sizeof(*req) + sizeof(*req_pl);
 	req = calloc(1, req_sz);
-	if(!req)
+	if (!req)
 		return -1;
 
 	arm_cci_request(ep, req, sizeof(*req_pl), DCD_MANAGEMENT, DC_LIST_TAGS);
