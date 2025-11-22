@@ -56,7 +56,7 @@ Return payload:
 
    ```C
 struct cxlmi_cmd_fmapi_identify_sw_device {
-	uint8_t ingres_port_id;
+	uint8_t ingress_port_id;
 	uint8_t rsv1;
 	uint8_t num_physical_ports;
 	uint8_t num_vcs;

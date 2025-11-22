@@ -627,7 +627,7 @@ struct cxlmi_cmd_memdev_release_dc_req {
 
 /* CXL r3.1 Section 7.6.7.1.1: Identify Switch Device (Opcode 5100h) */
 struct cxlmi_cmd_fmapi_identify_sw_device_rsp {
-	uint8_t ingres_port_id;
+	uint8_t ingress_port_id;
 	uint8_t rsv1;
 	uint8_t num_physical_ports;
 	uint8_t num_vcs;

@@ -2103,7 +2103,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_identify_sw_device(struct cxlmi_endpoint *ep,
 
 	rsp_pl = (struct cxlmi_cmd_fmapi_identify_sw_device_rsp *)rsp->payload;
 
-	ret->ingres_port_id = rsp_pl->ingres_port_id;
+	ret->ingress_port_id = rsp_pl->ingress_port_id;
 	ret->num_physical_ports = rsp_pl->num_physical_ports;
 	ret->num_vcs = rsp_pl->num_vcs;
 	memcpy(ret->active_port_bitmask, rsp_pl->active_port_bitmask,

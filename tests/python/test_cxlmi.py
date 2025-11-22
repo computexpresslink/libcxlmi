@@ -406,13 +406,13 @@ class TestFMAPICommands(unittest.TestCase):
         """Test FM-API identify switch device structure"""
         sw_ident = cxlmi.struct_cxlmi_cmd_fmapi_identify_sw_device_rsp()
 
-        sw_ident.ingres_port_id = 0
+        sw_ident.ingress_port_id = 0
         sw_ident.num_physical_ports = 8
         sw_ident.num_vcs = 2
         sw_ident.num_total_vppb = 16
         sw_ident.num_active_vppb = 8
 
-        self.assertEqual(sw_ident.ingres_port_id, 0)
+        self.assertEqual(sw_ident.ingress_port_id, 0)
         self.assertEqual(sw_ident.num_physical_ports, 8)
         self.assertEqual(sw_ident.num_vcs, 2)
         self.assertEqual(sw_ident.num_total_vppb, 16)
