@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <poll.h>
+#include <limits.h>
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -1532,7 +1533,7 @@ CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_open(struct cxlmi_ctx *ctx,
 {
 	struct cxlmi_endpoint *ep, *tmp;
 	int errno_save;
-	char filename[40];
+	char filename[PATH_MAX];
 
 	/* ensure no duplicates */
 	cxlmi_for_each_endpoint(ctx, tmp) {
@@ -1593,7 +1594,7 @@ CXLMI_EXPORT int cxlmi_scan(struct cxlmi_ctx *ctx)
 	while ((entry = readdir(dir)) != NULL) {
 		struct cxlmi_endpoint *ep;
 		struct stat statbuf;
-		char fullpath[512];
+		char fullpath[PATH_MAX];
 
 		/* Skip . and .. */
 		if (entry->d_name[0] == '.')
