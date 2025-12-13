@@ -233,7 +233,7 @@ enum {
 	#define SCAN_MEDIA             0x4
 	#define GET_SCAN_MEDIA_RESULTS 0x5
     SANITIZE    = 0x44,
-	#define SANITIZE      0x0
+	#define SANITIZE_OP   0x0
 	#define SECURE_ERASE  0x1
 	#define MEDIA_OPERATIONS 0x2
     PERSISTENT_MEM = 0x45,

@@ -632,7 +632,7 @@ CXLMI_EXPORT int cxlmi_cmd_get_log(struct cxlmi_endpoint *ep,
 		return rc;
 
 	rsp_pl = (void *)rsp->payload;
-	memcpy(ret, rsp_pl, in->length * sizeof(*rsp_pl));
+	memcpy(ret, rsp_pl, in->length);
 
 	return rc;
 }
@@ -1520,7 +1520,7 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_sanitize(struct cxlmi_endpoint *ep,
 {
 	struct cxlmi_cci_msg req, rsp;
 
-	arm_cci_request(ep, &req, 0, SANITIZE, SANITIZE);
+	arm_cci_request(ep, &req, 0, SANITIZE, SANITIZE_OP);
 
 	return send_cmd_cci(ep, ti, &req, sizeof(req),
 			    &rsp, sizeof(rsp), sizeof(rsp));
