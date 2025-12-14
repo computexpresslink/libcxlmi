@@ -38,6 +38,7 @@
 #include <libcxlmi.h>
 
 #include "private.h"
+#include "mock.h"
 
 #if !defined(AF_MCTP)
 #define AF_MCTP 45
@@ -295,7 +296,9 @@ static void mctp_close(struct cxlmi_endpoint *ep)
 
 CXLMI_EXPORT void cxlmi_close(struct cxlmi_endpoint *ep)
 {
-	if (ep->transport_data) {
+	if (cxlmi_is_mock_endpoint(ep)) {
+		mock_close(ep);
+	} else if (ep->transport_data) {
 		mctp_close(ep);
 		free(ep->transport_data);
 	} else {
@@ -385,8 +388,13 @@ static int send_mctp_direct(struct cxlmi_endpoint *ep, bool fmapi,
 
 	memset(rsp_msg, 0, rsp_msg_sz);
 
-	len = sendto(sd, req_msg, req_msg_sz, 0,
-		     (struct sockaddr *)&addr, sizeof(addr));
+	if (sendto(sd, req_msg, req_msg_sz, 0,
+		   (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+		errno_save = errno;
+		cxlmi_msg(ep->ctx, LOG_ERR, "Failed to send on MCTP socket");
+		errno = errno_save;
+		return -1;
+	}
 
 	pollfds[0].fd = sd;
 	pollfds[0].events = POLLIN;
@@ -1079,7 +1087,10 @@ int send_cmd_cci(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	if (cxlmi_ep_has_quirk(ep, CXLMI_QUIRK_MIN_INTER_COMMAND_TIME))
 		cxlmi_insert_delay(ep);
 
-	if (ep->transport_data) {
+	if (cxlmi_is_mock_endpoint(ep)) {
+		rc = send_mock_cmd(ep, req_msg, req_msg_sz,
+				   rsp_msg, rsp_msg_sz, rsp_msg_sz_min);
+	} else if (ep->transport_data) {
 		if (!ti || ti->level == 0)
 			rc = send_mctp_direct(ep, fmapi_cmd, req_msg, req_msg_sz,
 				      rsp_msg, rsp_msg_sz, rsp_msg_sz_min);
@@ -1489,8 +1500,6 @@ int cxlmi_scan_mctp(struct cxlmi_ctx *ctx)
 	/* objects container */
 	dbus_message_iter_recurse(&args, &objs);
 
-	rc = 0;
-
 	do {
 		DBusMessageIter ent;
 		int opened;
@@ -1687,7 +1696,7 @@ CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_next_endpoint(struct cxlmi_ctx *ctx,
 void arm_cci_request(struct cxlmi_endpoint *ep, struct cxlmi_cci_msg *req,
 		     size_t req_pl_sz, uint8_t cmdset, uint8_t cmd)
 {
-	if (ep->transport_data) {
+	if (ep->transport_data && !cxlmi_is_mock_endpoint(ep)) {
 		struct cxlmi_transport_mctp *mctp = ep->transport_data;
 
 		*req = (struct cxlmi_cci_msg) {
@@ -1704,11 +1713,17 @@ void arm_cci_request(struct cxlmi_endpoint *ep, struct cxlmi_cci_msg *req,
 			req->pl_length[2] = (req_pl_sz >> 16) & 0xff;
 		}
 	} else {
-		/* while CCIs arent sent directly over ioctl, add general info */
+		/* ioctl and mock: add general info */
 		*req = (struct cxlmi_cci_msg) {
 			.command = cmd,
 			.command_set = cmdset,
 			.vendor_ext_status = 0xabcd,
 		};
+
+		if (req_pl_sz) {
+			req->pl_length[0] = req_pl_sz & 0xff;
+			req->pl_length[1] = (req_pl_sz >> 8) & 0xff;
+			req->pl_length[2] = (req_pl_sz >> 16) & 0xff;
+		}
 	}
 }

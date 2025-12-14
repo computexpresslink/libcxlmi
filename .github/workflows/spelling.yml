@@ -1,0 +1,26 @@
+name: Spelling
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  codespell:
+    name: Codespell
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install codespell
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y codespell
+
+      - name: Run codespell
+        run: codespell src/ tests/ examples/

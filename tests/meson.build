@@ -8,3 +8,12 @@ executable(
     dependencies: libcxlmi_dep,
     include_directories: [inc]
 )
+
+mock_tests = executable(
+    'mock-tests',
+    ['mock-tests.c'],
+    dependencies: libcxlmi_dep,
+    include_directories: [inc]
+)
+
+test('mock-tests', mock_tests)

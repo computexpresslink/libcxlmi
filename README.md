@@ -2,7 +2,12 @@
 
 CXL Management Interface library (libcxlmi).
 
-[<img src="https://scan.coverity.com/projects/31615/badge.svg">](https://scan.coverity.com/projects/computexpresslink-libcxlmi)
+[![Build](https://github.com/computexpresslink/libcxlmi/actions/workflows/build.yml/badge.svg)](https://github.com/computexpresslink/libcxlmi/actions/workflows/build.yml)
+[![Test](https://github.com/computexpresslink/libcxlmi/actions/workflows/test.yml/badge.svg)](https://github.com/computexpresslink/libcxlmi/actions/workflows/test.yml)
+[![Analysis](https://github.com/computexpresslink/libcxlmi/actions/workflows/analysis.yml/badge.svg)](https://github.com/computexpresslink/libcxlmi/actions/workflows/analysis.yml)
+[![ABI](https://github.com/computexpresslink/libcxlmi/actions/workflows/abi.yml/badge.svg)](https://github.com/computexpresslink/libcxlmi/actions/workflows/abi.yml)
+[![Spelling](https://github.com/computexpresslink/libcxlmi/actions/workflows/spelling.yml/badge.svg)](https://github.com/computexpresslink/libcxlmi/actions/workflows/spelling.yml)
+[![Coverity](https://scan.coverity.com/projects/31615/badge.svg)](https://scan.coverity.com/projects/computexpresslink-libcxlmi)
 
 CXL Management Interface utility library provides type definitions
 for CXL specification structures, enumerations and helper functions to
@@ -401,7 +406,6 @@ Note that when using the sanitize feature, the library `libasan.so` must be avai
 
 It's also possible to enable the undefined behavior sanitizer with `-Db_sanitize=undefined`. To enable both, use `-Db_sanitize=address,undefined`.
 
-
 2. Then compile it:
 ```
 meson compile -C build
@@ -414,6 +418,58 @@ meson install -C build
 ```
 rm -rf build
 ```
+
+Testing
+=======
+
+The library includes a mock transport layer for unit testing without hardware.
+To run the tests:
+
+```
+meson setup build
+meson test -C build
+```
+
+The mock transport intercepts commands at the transport layer, exercising the
+complete command encoding/decoding path including endianness conversion. This
+enables testing of all CCI commands without CXL hardware.
+
+Include `<cxlmi/test.h>` for the mock API:
+
+```C
+#include <libcxlmi.h>
+#include <cxlmi/test.h>
+
+struct cxlmi_ctx *ctx = cxlmi_new_ctx(stderr, LOG_ERR);
+struct cxlmi_endpoint *ep = cxlmi_open_mock(ctx);
+
+/* Configure a mock response */
+struct cxlmi_cmd_identify_rsp rsp = { .vendor_id = 0x1234 };
+cxlmi_mock_set_response(ep, 0x00, 0x01, CXLMI_RET_SUCCESS, &rsp, sizeof(rsp));
+
+/* Send the command - it will receive the configured response */
+struct cxlmi_cmd_identify_rsp ret;
+int rc = cxlmi_cmd_identify(ep, NULL, &ret);
+
+cxlmi_close(ep);
+cxlmi_free_ctx(ctx);
+```
+
+Code Coverage
+-------------
+To generate code coverage reports (requires `lcov` or `gcovr`):
+
+```bash
+meson setup build-coverage -Db_coverage=true
+meson compile -C build-coverage
+meson test -C build-coverage
+ninja -C build-coverage coverage-html
+```
+
+The HTML report will be at `build-coverage/meson-logs/coveragereport/index.html`.
+
+For detailed documentation on the mock testing infrastructure, coverage
+reporting, and fuzz testing, see [docs/Testing.md](docs/Testing.md).
 
 Linking
 =======
