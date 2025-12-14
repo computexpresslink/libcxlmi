@@ -55,7 +55,7 @@ command set, as per the latest specification.
 Return payload:
 
    ```C
-struct cxlmi_cmd_fmapi_identify_sw_device {
+struct cxlmi_cmd_fmapi_identify_sw_device_rsp {
 	uint8_t ingress_port_id;
 	uint8_t rsv1;
 	uint8_t num_physical_ports;
@@ -72,8 +72,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_fmapi_identify_sw_device(struct cxlmi_endpoint *ep,
-			   struct cxlmi_tunnel_info *ti,
-			   struct cxlmi_cmd_fmapi_identify_sw_device *ret);
+		       struct cxlmi_tunnel_info *ti,
+		       struct cxlmi_cmd_fmapi_identify_sw_device_rsp *ret);
    ```
 
 ## Get Physical Port State (5101h)
@@ -129,7 +129,7 @@ int cxlmi_cmd_fmapi_get_phys_port_state(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_fmapi_phys_port_control {
+struct cxlmi_cmd_fmapi_phys_port_control_req {
 	uint8_t ppb_id;
 	uint8_t port_opcode;
 };
@@ -139,8 +139,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
-				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_fmapi_phys_port_control *in);
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_phys_port_control_req *in);
    ```
 
 ## Send PPB CXL.io Configuration Request (5103)
@@ -177,7 +177,7 @@ int cxlmi_cmd_fmapi_send_ppb_cxlio_config_request(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_fmapi_get_domain_validation_sv_state {
+struct cxlmi_cmd_fmapi_get_domain_validation_sv_state_rsp {
 	uint8_t secret_value_state;
 };
    ```
@@ -186,8 +186,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_fmapi_get_domain_validation_sv_state(struct cxlmi_endpoint *ep,
-				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_fmapi_get_domain_validation_sv_state *ret);
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_get_domain_validation_sv_state_rsp *ret);
    ```
 
 ## Set Domain Validation SV (5105h)
@@ -195,7 +195,7 @@ int cxlmi_cmd_fmapi_get_domain_validation_sv_state(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_fmapi_set_domain_validation_sv {
+struct cxlmi_cmd_fmapi_set_domain_validation_sv_req {
 	uint8_t secret_value_uuid[0x10];
 };
    ```
@@ -204,8 +204,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_fmapi_set_domain_validation_sv(struct cxlmi_endpoint *ep,
-				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_fmapi_set_domain_validation_sv *in);
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_set_domain_validation_sv_req *in);
    ```
 
 ## Get VCS Domain Validation SV State (5106h)
@@ -269,7 +269,7 @@ int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_fmapi_bind_vppb {
+struct cxlmi_cmd_fmapi_bind_vppb_req {
 	uint8_t vcs_id;
 	uint8_t vppb_id;
 	uint8_t port_id;
@@ -282,8 +282,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_fmapi_bind_vppb(struct cxlmi_endpoint *ep,
-			    struct cxlmi_tunnel_info *ti,
-			    struct cxlmi_cmd_fmapi_bind_vppb *in);
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_bind_vppb_req *in);
    ```
 
 ## Unbind vPPB (5202)
@@ -291,7 +291,7 @@ int cxlmi_cmd_fmapi_bind_vppb(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_fmapi_unbind_vppb {
+struct cxlmi_cmd_fmapi_unbind_vppb_req {
 	uint8_t vcs_id;
 	uint8_t vppb_id;
 	uint8_t option;
@@ -302,8 +302,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_fmapi_unbind_vppb(struct cxlmi_endpoint *ep,
-			    struct cxlmi_tunnel_info *ti,
-			    struct cxlmi_cmd_fmapi_unbind_vppb *in);
+			struct cxlmi_tunnel_info *ti,
+			struct cxlmi_cmd_fmapi_unbind_vppb_req *in);
    ```
 
 # MLD Port (53h)
@@ -427,7 +427,7 @@ int cxlmi_cmd_fmapi_send_ld_cxlio_mem_request(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_fmapi_get_ld_info {
+struct cxlmi_cmd_fmapi_get_ld_info_rsp {
 	uint64_t memory_size;
 	uint16_t ld_count;
 	uint8_t qos_telemetry_capability;
@@ -439,7 +439,7 @@ Command name:
    ```C
 int cxlmi_cmd_fmapi_get_ld_info(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_get_ld_info *ret);
+			struct cxlmi_cmd_fmapi_get_ld_info_rsp *ret);
    ```
 
 ## Get LD Allocations (5401h)
@@ -517,7 +517,7 @@ int cxlmi_cmd_fmapi_set_ld_allocations(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_fmapi_get_qos_control {
+struct cxlmi_cmd_fmapi_get_qos_control_rsp {
 	uint8_t qos_telemetry_control;
 	uint8_t egress_moderate_percentage;
 	uint8_t egress_severe_percentage;
@@ -531,8 +531,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_fmapi_get_qos_control(struct cxlmi_endpoint *ep,
-					struct cxlmi_tunnel_info *ti,
-					struct cxlmi_cmd_fmapi_get_qos_control *ret);
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_fmapi_get_qos_control_rsp *ret);
    ```
 
 ## Set QoS Control (5404h)
@@ -577,7 +577,7 @@ int cxlmi_cmd_fmapi_set_qos_control(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_fmapi_get_qos_status {
+struct cxlmi_cmd_fmapi_get_qos_status_rsp {
 	uint8_t backpressure_avg_percentage;
 };
    ```
@@ -586,8 +586,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_fmapi_get_qos_status(struct cxlmi_endpoint *ep,
-				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_fmapi_get_qos_status *ret);
+				   struct cxlmi_tunnel_info *ti,
+				   struct cxlmi_cmd_fmapi_get_qos_status_rsp *ret);
    ```
 
 ## Get QoS Allocated BW (5406h)
@@ -797,7 +797,7 @@ int cxlmi_cmd_fmapi_get_head_info(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_fmapi_get_dcd_info {
+struct cxlmi_cmd_fmapi_get_dcd_info_rsp {
 	uint8_t num_hosts;
 	uint8_t num_supported_dc_regions;
 	uint8_t rsvd1[0x2];
@@ -807,7 +807,14 @@ struct cxlmi_cmd_fmapi_get_dcd_info {
 	uint8_t sanitize_on_release_config_mask;
 	uint8_t rsvd3;
 	uint64_t total_dynamic_capacity;
-	uint64_t supported_block_sizes[8];
+	uint64_t region_0_supported_blk_sz_mask;
+	uint64_t region_1_supported_blk_sz_mask;
+	uint64_t region_2_supported_blk_sz_mask;
+	uint64_t region_3_supported_blk_sz_mask;
+	uint64_t region_4_supported_blk_sz_mask;
+	uint64_t region_5_supported_blk_sz_mask;
+	uint64_t region_6_supported_blk_sz_mask;
+	uint64_t region_7_supported_blk_sz_mask;
 };
    ```
 
@@ -816,7 +823,7 @@ Command name:
    ```C
 int cxlmi_cmd_fmapi_get_dcd_info(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_get_dcd_info *ret);
+			struct cxlmi_cmd_fmapi_get_dcd_info_rsp *ret);
    ```
 
 ## Get Host DC Region Config (5601h)
@@ -868,7 +875,7 @@ int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
 ## Set Host DC Region Config (5602h)
 Input Payload:
 ```C
-struct cxlmi_cmd_fmapi_set_dc_region_config {
+struct cxlmi_cmd_fmapi_set_dc_region_config_req {
 	uint8_t region_id;
 	uint8_t rsvd[3];
 	uint64_t block_sz;
@@ -881,7 +888,7 @@ Command name:
    ```C
 int cxlmi_cmd_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
-			struct cxlmi_cmd_fmapi_set_dc_region_config *in);
+			struct cxlmi_cmd_fmapi_set_dc_region_config_req *in);
    ```
 
 ## Get DC Region Extent Lists (5603h)
@@ -1018,8 +1025,8 @@ Input Payload:
 
    ```C
 struct cxlmi_cmd_fmapi_dc_list_tags_req {
-	uint32_t start_ind;
-	uint32_t max_tags;
+	uint32_t start_idx;
+	uint32_t tags_count;
 };
    ```
 
@@ -1035,8 +1042,8 @@ struct cxlmi_cmd_fmapi_dc_list_tags_rsp {
 		uint8_t tag[0x10];
 		uint8_t flags;
 		uint8_t rsvd[3];
-		uint8_t ref_bitmap[32];
-		uint8_t pending_ref_bitmap[32];
+		uint8_t ref_bitmap[0x20];
+		uint8_t pending_ref_bitmap[0x20];
 	} tags_list[];
 };
    ```

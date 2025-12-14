@@ -58,7 +58,7 @@ command set, as per the latest specification.
 Return payload:
 
    ```C
-struct cxlmi_cmd_memdev_identify {
+struct cxlmi_cmd_memdev_identify_rsp {
 	char fw_revision[0x10];
 	uint64_t total_capacity;
 	uint64_t volatile_capacity;
@@ -81,8 +81,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_identify(struct cxlmi_endpoint *ep,
-				  struct cxlmi_tunnel_info *ti,
-				  struct cxlmi_cmd_memdev_identify *ret);
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_identify_rsp *ret);
    ```
 
 # Capacity Configuration and Label Storage (41h)
@@ -92,7 +92,7 @@ int cxlmi_cmd_memdev_identify(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_memdev_get_partition_info {
+struct cxlmi_cmd_memdev_get_partition_info_rsp {
 	uint64_t active_vmem;
 	uint64_t active_pmem;
 	uint64_t next_vmem;
@@ -105,7 +105,7 @@ Command name:
    ```C
 int cxlmi_cmd_memdev_get_partition_info(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_memdev_get_partition_info *ret);
+				struct cxlmi_cmd_memdev_get_partition_info_rsp *ret);
    ```
 
 ## Set Partition Info (4101h)
@@ -113,7 +113,7 @@ int cxlmi_cmd_memdev_get_partition_info(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_set_partition_info {
+struct cxlmi_cmd_memdev_set_partition_info_req {
 	uint64_t volatile_capacity;
 	uint8_t flags;
 };
@@ -124,16 +124,16 @@ Command name:
    ```C
 int cxlmi_cmd_memdev_set_partition_info(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_memdev_set_partition_info *in);
+				struct cxlmi_cmd_memdev_set_partition_info_req *in);
    ```
 
 
 ## Get LSA (4102h)
 
-Return payload:
+Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_get_lsa {
+struct cxlmi_cmd_memdev_get_lsa_req {
 	uint32_t offset;
 	uint32_t length;
 };
@@ -143,8 +143,9 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_get_lsa(struct cxlmi_endpoint *ep,
-				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_memdev_get_lsa *ret);
+			     struct cxlmi_tunnel_info *ti,
+			     struct cxlmi_cmd_memdev_get_lsa_req *in,
+			     void *ret);
    ```
 
 ## Set LSA (4103h)
@@ -152,7 +153,7 @@ int cxlmi_cmd_memdev_get_lsa(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_set_lsa {
+struct cxlmi_cmd_memdev_set_lsa_req {
 	uint32_t offset;
 	uint32_t rsvd;
 	uint8_t data[];
@@ -163,8 +164,9 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_set_lsa(struct cxlmi_endpoint *ep,
-				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_memdev_set_lsa *in);
+			     struct cxlmi_tunnel_info *ti,
+			     struct cxlmi_cmd_memdev_set_lsa_req *in,
+			     size_t data_sz);
    ```
 
 # Health Info and Alerts (42h)
@@ -174,7 +176,7 @@ int cxlmi_cmd_memdev_set_lsa(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_memdev_get_health_info {
+struct cxlmi_cmd_memdev_get_health_info_rsp {
 	uint8_t health_status;
 	uint8_t media_status;
 	uint8_t additional_status;
@@ -190,8 +192,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_get_health_info(struct cxlmi_endpoint *ep,
-				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_memdev_get_health_info *ret);
+			     struct cxlmi_tunnel_info *ti,
+			     struct cxlmi_cmd_memdev_get_health_info_rsp *ret);
    ```
 
 ## Get Alert Configuration (4201h)
@@ -199,7 +201,7 @@ int cxlmi_cmd_memdev_get_health_info(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_memdev_get_alert_config {
+struct cxlmi_cmd_memdev_get_alert_config_rsp {
 	uint8_t valid_alerts;
 	uint8_t programmable_alerts;
 	uint8_t life_used_critical_alert_threshold;
@@ -217,8 +219,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_get_alert_config(struct cxlmi_endpoint *ep,
-				  struct cxlmi_tunnel_info *ti,
-				  struct cxlmi_cmd_memdev_get_alert_config *ret);
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_get_alert_config_rsp *ret);
    ```
 
 ## Set Alert Configuration (4202h)
@@ -226,7 +228,7 @@ int cxlmi_cmd_memdev_get_alert_config(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_set_alert_config {
+struct cxlmi_cmd_memdev_set_alert_config_req {
 	uint8_t valid_alert_actions;
 	uint8_t enable_alert_actions;
 	uint8_t life_used_programmable_warning_threshold;
@@ -242,8 +244,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_set_alert_config(struct cxlmi_endpoint *ep,
-				  struct cxlmi_tunnel_info *ti,
-				  struct cxlmi_cmd_memdev_set_alert_config *in);
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_set_alert_config_req *in);
    ```
 
 ## Get Shutdown State (4203h)
@@ -251,7 +253,7 @@ int cxlmi_cmd_memdev_set_alert_config(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_memdev_get_shutdown_state {
+struct cxlmi_cmd_memdev_get_shutdown_state_rsp {
 	uint8_t state;
 };
    ```
@@ -260,8 +262,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_get_shutdown_state(struct cxlmi_endpoint *ep,
-				  struct cxlmi_tunnel_info *ti,
-				  struct cxlmi_cmd_memdev_get_shutdown_state *ret);
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_get_shutdown_state_rsp *ret);
    ```
 
 ## Set Shutdown State (4204h)
@@ -269,7 +271,7 @@ int cxlmi_cmd_memdev_get_shutdown_state(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_set_shutdown_state {
+struct cxlmi_cmd_memdev_set_shutdown_state_req {
 	uint8_t state;
 };
    ```
@@ -278,8 +280,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_set_shutdown_state(struct cxlmi_endpoint *ep,
-				  struct cxlmi_tunnel_info *ti,
-				  struct cxlmi_cmd_memdev_set_shutdown_state *in);
+			      struct cxlmi_tunnel_info *ti,
+			      struct cxlmi_cmd_memdev_set_shutdown_state_req *in);
    ```
 
 # Media and Poison Management (43h)
@@ -328,7 +330,7 @@ int cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_inject_poison {
+struct cxlmi_cmd_memdev_inject_poison_req {
 	uint64_t inject_poison_phy_addr;
 };
    ```
@@ -338,7 +340,7 @@ Command name:
    ```C
 int cxlmi_cmd_memdev_inject_poison(struct cxlmi_endpoint *ep,
 				   struct cxlmi_tunnel_info *ti,
-				   struct cxlmi_cmd_memdev_inject_poison *in);
+				   struct cxlmi_cmd_memdev_inject_poison_req *in);
    ```
 
 ## Clear Poison (4302h)
@@ -346,7 +348,7 @@ int cxlmi_cmd_memdev_inject_poison(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_clear_poison {
+struct cxlmi_cmd_memdev_clear_poison_req {
 	uint64_t clear_poison_phy_addr;
 	uint8_t clear_poison_write_data[64];
 };
@@ -356,8 +358,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_clear_poison(struct cxlmi_endpoint *ep,
-				   struct cxlmi_tunnel_info *ti,
-				   struct cxlmi_cmd_memdev_clear_poison *in);
+				  struct cxlmi_tunnel_info *ti,
+				  struct cxlmi_cmd_memdev_clear_poison_req *in);
    ```
 
 ## Get Scan Media Capabilities (4303h)
@@ -393,11 +395,11 @@ int cxlmi_cmd_get_scan_media_capabilities(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_scan_media {
+struct cxlmi_cmd_scan_media_req {
 	uint64_t scan_media_physaddr;
 	uint64_t scan_media_physaddr_length;
 	uint8_t scan_media_flags;
-} __attribute__((packed));
+};
    ```
 
 Command name:
@@ -405,7 +407,7 @@ Command name:
    ```C
 int cxlmi_cmd_scan_media(struct cxlmi_endpoint *ep,
 			 struct cxlmi_tunnel_info *ti,
-			 struct cxlmi_cmd_scan_media *in);
+			 struct cxlmi_cmd_scan_media_req *in);
    ```
 
 ## Get Scan Media Results (4305h)
@@ -419,7 +421,7 @@ struct cxlmi_media_error_record {
 	uint8_t rsvd[4];
 };
 
-struct cxlmi_cmd_get_scan_media_results {
+struct cxlmi_cmd_get_scan_media_results_rsp {
 	uint64_t scan_media_restart_physaddr;
 	uint64_t scan_media_restart_physaddr_length;
 	uint8_t scan_media_flags;
@@ -434,8 +436,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_get_scan_media_results(struct cxlmi_endpoint *ep,
-					 struct cxlmi_tunnel_info *ti,
-					 struct cxlmi_cmd_get_scan_media_results *ret);
+				     struct cxlmi_tunnel_info *ti,
+				     struct cxlmi_cmd_get_scan_media_results_rsp *ret);
    ```
 
 
@@ -515,7 +517,7 @@ struct cxlmi_cmd_memdev_media_ops_dpa_range_list_entry {
     uint64_t length;
 };
 
-struct cxlmi_cmd_memdev_media_operations_sanitize {
+struct cxlmi_cmd_memdev_media_operations_sanitize_req {
 	uint8_t media_operation_class;
 	uint8_t media_operation_subclass;
 	uint8_t rsvd[2];
@@ -529,7 +531,7 @@ Sanitize Command name:
    ```C
 int cxlmi_cmd_memdev_media_operations_sanitize(struct cxlmi_endpoint *ep,
 			       struct cxlmi_tunnel_info *ti,
-			       struct cxlmi_cmd_memdev_media_operations_sanitize *in);
+			       struct cxlmi_cmd_memdev_media_operations_sanitize_req *in);
    ```
 
 # Persistent Memory Data-at-rest Security (45h)
@@ -539,7 +541,7 @@ int cxlmi_cmd_memdev_media_operations_sanitize(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_memdev_get_security_state {
+struct cxlmi_cmd_memdev_get_security_state_rsp {
 	uint32_t security_state;
 };
    ```
@@ -549,7 +551,7 @@ Command name:
    ```C
 int cxlmi_cmd_memdev_get_security_state(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_memdev_get_security_state *ret);
+				struct cxlmi_cmd_memdev_get_security_state_rsp *ret);
    ```
 
 ## Set Passphrase (4501h)
@@ -557,7 +559,7 @@ int cxlmi_cmd_memdev_get_security_state(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_set_passphrase {
+struct cxlmi_cmd_memdev_set_passphrase_req {
 	uint8_t passphrase_type;
 	uint8_t rsvd[0x1F];
 	uint8_t current_passphrase[0x20];
@@ -569,8 +571,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_set_passphrase(struct cxlmi_endpoint *ep,
-			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_memdev_set_passphrase *in);
+				    struct cxlmi_tunnel_info *ti,
+				    struct cxlmi_cmd_memdev_set_passphrase_req *in);
    ```
 
 ## Disable Passphrase (4502h)
@@ -578,7 +580,7 @@ int cxlmi_cmd_memdev_set_passphrase(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_disable_passphrase {
+struct cxlmi_cmd_memdev_disable_passphrase_req {
 	uint8_t passphrase_type;
 	uint8_t rsvd[0x1F];
 	uint8_t passphrase[0x20];
@@ -589,8 +591,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_disable_passphrase(struct cxlmi_endpoint *ep,
-			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_memdev_disable_passphrase *in);
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_memdev_disable_passphrase_req *in);
    ```
 
 ## Unlock (4503h)
@@ -598,7 +600,7 @@ int cxlmi_cmd_memdev_disable_passphrase(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_unlock {
+struct cxlmi_cmd_memdev_unlock_req {
 	uint8_t current_passphrase[0x20];
 };
    ```
@@ -608,7 +610,7 @@ Command name:
    ```C
 int cxlmi_cmd_memdev_unlock(struct cxlmi_endpoint *ep,
 			    struct cxlmi_tunnel_info *ti,
-			    struct cxlmi_cmd_memdev_unlock *in);
+			    struct cxlmi_cmd_memdev_unlock_req *in);
    ```
 
 ## Freeze Security State (4504h)
@@ -627,7 +629,7 @@ int cxlmi_cmd_memdev_freeze_security_state(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_passphrase_secure_erase {
+struct cxlmi_cmd_memdev_passphrase_secure_erase_req {
 	uint8_t passphrase_type;
 	uint8_t rsvd[0x1F];
 	uint8_t passphrase[0x20];
@@ -639,7 +641,7 @@ Command name:
    ```C
 int cxlmi_cmd_memdev_passphrase_secure_erase(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_memdev_passphrase_secure_erase *in);
+			     struct cxlmi_cmd_memdev_passphrase_secure_erase_req *in);
    ```
 
 # Security Passthrough (46h)
@@ -652,7 +654,7 @@ a maximum of 256 maximum protocols to be retrieved for each receive.
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_security_send {
+struct cxlmi_cmd_memdev_security_send_req {
        uint8_t security_protocol;
        uint16_t sp_specific;
        uint8_t rsvd[0x5];
@@ -664,8 +666,9 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_security_send(struct cxlmi_endpoint *ep,
-			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_memdev_security_send *in);
+				   struct cxlmi_tunnel_info *ti,
+				   struct cxlmi_cmd_memdev_security_send_req *in,
+				   size_t data_sz);
    ```
 
 ## Security Receive (4601h)
@@ -673,7 +676,7 @@ int cxlmi_cmd_memdev_security_send(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_security_receive {
+struct cxlmi_cmd_memdev_security_receive_req {
        uint8_t security_protocol;
        uint16_t sp_specific;
        uint8_t rsvd[0x5];
@@ -698,7 +701,7 @@ int cxlmi_cmd_memdev_security_receive(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_memdev_get_sld_qos_control {
+struct cxlmi_cmd_memdev_get_sld_qos_control_rsp {
 	uint8_t qos_telemetry_control;
 	uint8_t egress_moderate_percentage;
 	uint8_t egress_severe_percentage;
@@ -711,15 +714,15 @@ Command name:
    ```C
 int cxlmi_cmd_memdev_get_sld_qos_control(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_memdev_get_sld_qos_control *ret);
+				 struct cxlmi_cmd_memdev_get_sld_qos_control_rsp *ret);
    ```
 
 ## Set SLD QoS Control (4701h)
 
-Input/Return payloads:
+Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_get_sld_qos_control {
+struct cxlmi_cmd_memdev_set_sld_qos_control_req {
 	uint8_t qos_telemetry_control;
 	uint8_t egress_moderate_percentage;
 	uint8_t egress_severe_percentage;
@@ -732,8 +735,7 @@ Command name:
    ```C
 int cxlmi_cmd_memdev_set_sld_qos_control(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
-				 struct cxlmi_cmd_memdev_set_sld_qos_control *in,
-				 struct cxlmi_cmd_memdev_set_sld_qos_control *ret);
+				 struct cxlmi_cmd_memdev_set_sld_qos_control_req *in);
    ```
 
 ## Get SLD QoS Status (4702h)
@@ -741,7 +743,7 @@ int cxlmi_cmd_memdev_set_sld_qos_control(struct cxlmi_endpoint *ep,
 Return payload:
 
    ```C
-struct cxlmi_cmd_memdev_get_sld_qos_status {
+struct cxlmi_cmd_memdev_get_sld_qos_status_rsp {
 	uint8_t backpressure_avg_percentage;
 };
    ```
@@ -751,7 +753,7 @@ Command name:
    ```C
 int cxlmi_cmd_memdev_get_sld_qos_status(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_memdev_get_sld_qos_status *ret);
+				struct cxlmi_cmd_memdev_get_sld_qos_status_rsp *ret);
    ```
 
 # Dynamic Capacity (48h)
@@ -846,7 +848,7 @@ int cxlmi_cmd_memdev_get_dc_extent_list(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_add_dc_response {
+struct cxlmi_cmd_memdev_add_dc_response_req {
 		uint32_t updated_extent_list_size;
 		uint8_t flags;
 		uint8_t rsvd1[3];
@@ -862,8 +864,8 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_add_dc_response(struct cxlmi_endpoint *ep,
-					   struct cxlmi_tunnel_info *ti,
-					   struct cxlmi_cmd_memdev_add_dc_response *in);
+			  struct cxlmi_tunnel_info *ti,
+			  struct cxlmi_cmd_memdev_add_dc_response_req *in);
    ```
 
 ## Release Dynamic Capacity (4803h)
@@ -871,7 +873,7 @@ int cxlmi_cmd_memdev_add_dc_response(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_memdev_release_dc {
+struct cxlmi_cmd_memdev_release_dc_req {
 		uint32_t updated_extent_list_size;
 		uint8_t flags;
 		uint8_t rsvd1[3];
@@ -887,6 +889,6 @@ Command name:
 
    ```C
 int cxlmi_cmd_memdev_release_dc(struct cxlmi_endpoint *ep,
-					   struct cxlmi_tunnel_info *ti,
-					   struct cxlmi_cmd_memdev_release_dyn_cap *in);
+				struct cxlmi_tunnel_info *ti,
+				struct cxlmi_cmd_memdev_release_dc_req *in);
    ```

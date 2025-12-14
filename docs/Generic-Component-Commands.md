@@ -150,7 +150,9 @@ struct cxlmi_event_record {
 	uint64_t timestamp;
 	uint8_t maint_op_class;
 	uint8_t maint_op_subclass;
-	uint8_t reserved[0xe];
+	uint16_t ld_id;
+	uint8_t head_id;
+	uint8_t reserved[0xb];
 	uint8_t data[0x50];
 };
    ```
@@ -197,7 +199,7 @@ Command name:
    ```C
 int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 				struct cxlmi_tunnel_info *ti,
-				struct cxlmi_cmd_get_event_records_req *in,;
+				struct cxlmi_cmd_get_event_records_req *in,
 				struct cxlmi_cmd_get_event_records_rsp *ret);
    ```
 
@@ -344,7 +346,9 @@ struct cxlmi_cmd_get_fw_info_rsp {
 Command Name:
 
    ```C
-int cxlmi_cmd_request_bg_op_abort(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti);
+int cxlmi_cmd_get_fw_info(struct cxlmi_endpoint *ep,
+			  struct cxlmi_tunnel_info *ti,
+			  struct cxlmi_cmd_get_fw_info_rsp *ret);
    ```
 
 ## Transfer FW (0201h)
@@ -367,7 +371,8 @@ Command name:
    ```C
 int cxlmi_cmd_transfer_fw(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
-			  struct cxlmi_cmd_transfer_fw_req *in);
+			  struct cxlmi_cmd_transfer_fw_req *in,
+			  size_t data_sz);
    ```
 
 ## Activate FW (0202h)
@@ -603,7 +608,7 @@ Return payload:
 
    ```C
 struct cxlmi_cmd_get_supported_features_rsp {
-	uint32_t num_supported_feature_entries;
+	uint16_t num_supported_feature_entries;
 	uint16_t device_supported_features;
 	uint8_t rsvd[4];
 	struct {
@@ -646,7 +651,7 @@ Return payload:
 
    ```C
 struct cxlmi_cmd_get_feature_rsp {
-	uint8_t *feature_data;
+	uint8_t feature_data[CXL_MAILBOX_MAX_PAYLOAD_SIZE];
 };
    ```
 
@@ -670,7 +675,7 @@ struct cxlmi_cmd_set_feature_req {
 	uint16_t offset;
 	uint8_t version;
 	uint8_t rsvd[9];
-	uint8_t feature_data[MAX_FEATURE_SIZE];
+	uint8_t feature_data[];
 };
    ```
 
