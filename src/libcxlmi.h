@@ -389,7 +389,7 @@ struct cxlmi_tunnel_info {
  * Tunneling Commands to an LD in an MLD through a CXL Switch.
  *
  * @name: tunnel variable name
- * @port: switch downstream port number (outter tunnel)
+ * @port: switch downstream port number (outer tunnel)
  * @ld: Logical Device (LD) id within an MLD (inner tunnel)
  */
 #define DEFINE_CXLMI_TUNNEL_SWITCH_MLD(name, port, ld)			\

@@ -721,7 +721,7 @@ static int send_mctp_tunnel2(struct cxlmi_endpoint *ep,
 
 	if (inner_t_rsp->length != len) {
 		cxlmi_msg(ep->ctx, LOG_ERR,
-		  "Tunnel lenght not consistent with received length\n");
+		  "Tunnel length not consistent with received length\n");
 		rc = -1;
 		goto free_outer_rsp;
 	}
@@ -870,7 +870,7 @@ send_ioctl_tunnel1(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	rc = sanity_check_mctp_rsp(ep, t_req->message, t_rsp->message, len,
 			      len_max == len_min, len_min);
 	if (rc) {
-		cxlmi_msg(ep->ctx, LOG_ERR, "Inner tunnel repsonse failed\n");
+		cxlmi_msg(ep->ctx, LOG_ERR, "Inner tunnel response failed\n");
 		goto free_tunnel_rsp;
 	}
 
@@ -891,7 +891,7 @@ send_ioctl_tunnel1(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 
 /*
  * 2 level tunnel - so there are two tunnel_command_req, tunnel_comamnd_rsp
- * burried in an ioctl message
+ * buried in an ioctl message
  */
 static int
 send_ioctl_tunnel2(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
@@ -980,7 +980,7 @@ send_ioctl_tunnel2(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	}
 	len = cmd.out.size;
 
-	/* Check overal message size */
+	/* Check overall message size */
 	if (len < len_min) {
 		cxlmi_msg(ep->ctx, LOG_ERR,
 		       "IOCTL output too small %d < %ld\n", len, len_min);
@@ -1031,7 +1031,7 @@ send_ioctl_tunnel2(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	rc = sanity_check_mctp_rsp(ep, inner_t_req->message, inner_t_rsp->message, len,
 			      len_max == len_min, len_min);
 	if (rc) {
-		cxlmi_msg(ep->ctx, LOG_ERR, "Inner tunnel repsonse failed\n");
+		cxlmi_msg(ep->ctx, LOG_ERR, "Inner tunnel response failed\n");
 		goto free_tunnel_rsp;
 	}
 	extract_rsp_msg_from_tunnel(inner_rsp, rsp_msg, rsp_msg_sz);
@@ -1663,7 +1663,7 @@ static const char *const cxlmi_cmd_retcode_tbl[] = {
 	[CXLMI_RET_MBUNSUPPORTED] = "unsupported on the mailbox it was issued on",
 	[CXLMI_RET_PAYLOADLEN] = "invalid payload length",
 	[CXLMI_RET_LOG] = "invalid or unsupported log page",
-	[CXLMI_RET_INTERRUPTED] = "asynchronous event occured",
+	[CXLMI_RET_INTERRUPTED] = "asynchronous event occurred",
 	[CXLMI_RET_FEATUREVERSION] = "unsupported feature version",
 	[CXLMI_RET_FEATURESELVALUE] = "unsupported feature selection value",
 	[CXLMI_RET_FEATURETRANSFERIP] = "feature transfer in progress",

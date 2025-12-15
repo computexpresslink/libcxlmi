@@ -180,7 +180,7 @@ static int show_device_info(struct cxlmi_endpoint *ep)
 	if (rc)
 		return rc;
 
-	printf("Fimware info:\n");
+	printf("Firmware info:\n");
 	printf("\tslots supported: %d\n", fw_info.slots_supported);
 	printf("\trevision: %s\n", fw_info.fw_rev1);
 
@@ -1033,7 +1033,7 @@ int main(int argc, char **argv)
 			goto exit_free_ctx;
 		}
 	} else {
-		fprintf(stderr, "must provide MCTP endpoint nid:eid touple\n");
+		fprintf(stderr, "must provide MCTP endpoint nid:eid tuple\n");
 		goto exit_free_ctx;
 	}
 

@@ -20,7 +20,7 @@ static char *DAX_DEVICE_CMDS[] = {
 };
 
 /*
- * Prompts user for the number of extents they want to add/relase with a max.
+ * Prompts user for the number of extents they want to add/release with a max.
  * of 10. Prompts for each start/end DPA in MiB, keeping track of each one in
  * ext_list.
  * Returns the number of extents in ext_list. If user specifies invalid
@@ -453,7 +453,7 @@ int main(int argc, char **argv)
             goto exit_free_ctx;
         }
     } else {
-        fprintf(stderr, "must provide MCTP endpoint nid:eid touple\n");
+        fprintf(stderr, "must provide MCTP endpoint nid:eid tuple\n");
         rc = -1;
         goto exit_free_ctx;
     }
