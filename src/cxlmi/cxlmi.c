@@ -562,8 +562,14 @@ static int send_mctp_tunnel1(struct cxlmi_endpoint *ep,
 	len = recvfrom(mctp->fmapi_sd, t_rsp_msg, t_rsp_msg_sz, 0,
 		       (struct sockaddr *)&addrrx, &addrlen);
 
+	/*
+	 * For the outer tunnel response, don't use fixed-length check.
+	 * The inner response length varies depending on whether the tunneled
+	 * command succeeded or failed (error responses have no payload).
+	 * Only check minimum length for the outer CCI + tunnel header.
+	 */
 	rc = sanity_check_mctp_rsp(ep, t_req_msg, t_rsp_msg, len,
-				   len_min == len_max, len_min);
+				   false, sizeof(*t_rsp_msg) + sizeof(*t_rsp));
 	if (rc)
 		goto free_rsp;
 
@@ -676,14 +682,14 @@ static int send_mctp_tunnel2(struct cxlmi_endpoint *ep,
 
 	len = recvfrom(mctp->fmapi_sd, outer_rsp, outer_rsp_sz, 0,
 		       (struct sockaddr *)&addrrx, &addrlen);
-	if (len < len_min) {
-		cxlmi_msg(ep->ctx, LOG_ERR, "Not enough data in reply\n");
-		rc = -1 ;
-		goto free_outer_rsp;
-	}
 
+	/*
+	 * For the outer tunnel response, don't use fixed-length check.
+	 * The inner response length varies depending on whether the tunneled
+	 * command succeeded or failed (error responses have no payload).
+	 */
 	rc = sanity_check_mctp_rsp(ep, outer_req, outer_rsp, len,
-				   len_min == len_max, len_min);
+				   false, sizeof(*outer_rsp) + sizeof(*outer_t_rsp));
 	if (rc)
 		goto free_outer_rsp;
 
@@ -701,9 +707,13 @@ static int send_mctp_tunnel2(struct cxlmi_endpoint *ep,
 		goto free_outer_rsp;
 	}
 
+	/*
+	 * For the inner (first-level) tunnel, also don't use fixed-length check.
+	 * The innermost response length varies based on command success/failure.
+	 */
 	rc = sanity_check_mctp_rsp(ep, outer_t_req->message,
 				   outer_t_rsp->message, len,
-				   len_min == len_max, len_min);
+				   false, sizeof(*inner_rsp) + sizeof(*inner_t_rsp));
 	if (rc)
 		goto free_outer_rsp;
 
