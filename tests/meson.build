@@ -17,3 +17,24 @@ mock_tests = executable(
 )
 
 test('mock-tests', mock_tests)
+
+executable(
+    'cxl-test-generic',
+    ['cxl-test-generic.c'],
+    dependencies: libcxlmi_dep,
+    include_directories: [inc]
+)
+
+executable(
+    'cxl-test-memdev',
+    ['cxl-test-memdev.c'],
+    dependencies: libcxlmi_dep,
+    include_directories: [inc]
+)
+
+executable(
+    'cxl-test-fmapi',
+    ['cxl-test-fmapi.c'],
+    dependencies: libcxlmi_dep,
+    include_directories: [inc]
+)
