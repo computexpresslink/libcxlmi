@@ -135,16 +135,19 @@ static inline bool ep_supports_op(struct cxlmi_endpoint *ep, uint16_t opcode)
 		return op_support;
 
 	rc = cxlmi_cmd_get_supported_logs(ep, NULL, gsl);
-	if (rc)
+	if (rc) {
+		free(gsl);
 		return op_support;
+	}
 
 	rc = parse_supported_logs(gsl, &cel_size);
-	if (rc)
+	if (rc) {
+		free(gsl);
 		return op_support;
-	else {
-		/* we know there is a CEL */
-		rc = support_opcode(ep, cel_size, opcode, &op_support);
 	}
+
+	/* we know there is a CEL */
+	(void)support_opcode(ep, cel_size, opcode, &op_support);
 
 	free(gsl);
 	return op_support;

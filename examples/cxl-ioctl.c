@@ -500,25 +500,25 @@ int main(int argc, char **argv)
 	printf("ep '%s'\n", argv[1]);
 
 	/* yes, only 1 endpoint, but might add more */
-	rc = show_some_info_from_all_devices(ctx);
+	(void)show_some_info_from_all_devices(ctx);
 
-	rc = play_with_device_timestamp(ep);
+	(void)play_with_device_timestamp(ep);
 
-	rc = play_with_poison_mgmt(ep);
+	(void)play_with_poison_mgmt(ep);
 
-	rc = get_device_logs(ep);
+	(void)get_device_logs(ep);
 
-	rc = get_log_capabilities(ep);
+	(void)get_log_capabilities(ep);
 
-	rc = clear_log(ep);
+	(void)clear_log(ep);
 
-	rc = populate_log(ep);
+	(void)populate_log(ep);
 
-	rc = get_alert_config(ep);
+	(void)get_alert_config(ep);
 
-	rc = set_alert_config(ep);
+	(void)set_alert_config(ep);
 
-	rc = toggle_abort(ep);
+	(void)toggle_abort(ep);
 
 	rc = play_with_scan_media(ep);
 

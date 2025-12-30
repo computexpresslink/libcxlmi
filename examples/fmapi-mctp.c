@@ -367,7 +367,7 @@ static bool input_is_yes(char* buf, int *rc)
 static int create_dax_device(void) {
     char buf[MAX_CHARS] = {0};
     char** argv = NULL;
-    int i, j, rc, argc;
+    int i, j, rc = 0, argc;
 
     printf("Create DAX Device for this region? [y/n] ");
     if (input_is_yes(buf, &rc)) {
@@ -412,14 +412,21 @@ int main(int argc, char **argv)
 {
     struct cxlmi_ctx *ctx;
     struct cxlmi_endpoint *ep, *tmp;
-    extent *ext_list = calloc(MAX_EXTENTS, sizeof(extent));
+    extent *ext_list;
     char buf[MAX_CHARS];
     uint8_t cmd;
     int rc = 0, num_extents;
 
+    ext_list = calloc(MAX_EXTENTS, sizeof(extent));
+    if (!ext_list) {
+        fprintf(stderr, "cannot allocate extent list\n");
+        return EXIT_FAILURE;
+    }
+
     ctx = cxlmi_new_ctx(stdout, DEFAULT_LOGLEVEL);
     if (!ctx) {
         fprintf(stderr, "cannot create new context object\n");
+        free(ext_list);
         return EXIT_FAILURE;
     }
 

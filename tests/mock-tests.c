@@ -487,17 +487,14 @@ static int test_cmd_get_supported_logs(void)
 {
 	struct cxlmi_cmd_get_supported_logs_rsp *rsp, *ret;
 	size_t struct_sz;
-	int rc;
+	int rc, result = 1;
 
 	/* Allocate space for header + 2 entries (flexible array member) */
 	struct_sz = sizeof(*rsp) + 2 * sizeof(rsp->entries[0]);
 	rsp = calloc(1, struct_sz);
 	ret = calloc(1, struct_sz);
-	if (!rsp || !ret) {
-		free(rsp);
-		free(ret);
-		return 1;
-	}
+	if (!rsp || !ret)
+		goto cleanup;
 
 	rsp->num_supported_log_entries = 2;
 	/* Fill in some test UUIDs */
@@ -506,19 +503,37 @@ static int test_cmd_get_supported_logs(void)
 	memset(rsp->entries[1].uuid, 0xBB, sizeof(rsp->entries[1].uuid));
 	rsp->entries[1].log_size = 0x200;
 
-	ASSERT_EQ(setup(), 0, "setup failed");
+	if (setup() != 0) {
+		fprintf(stderr, "\n    ASSERT FAILED: setup failed\n");
+		goto cleanup;
+	}
 	cxlmi_mock_set_response(test_ep, 0x04, 0x00, CXLMI_RET_SUCCESS, rsp, struct_sz);
 	rc = cxlmi_cmd_get_supported_logs(test_ep, NULL, ret);
 	teardown();
 
-	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
-	ASSERT_EQ(ret->num_supported_log_entries, 2, "num entries mismatch");
-	ASSERT_EQ(ret->entries[0].log_size, 0x100, "entry 0 log_size mismatch");
-	ASSERT_EQ(ret->entries[1].log_size, 0x200, "entry 1 log_size mismatch");
+	if (rc != CXLMI_RET_SUCCESS) {
+		fprintf(stderr, "\n    ASSERT FAILED: command failed (got %d, expected %d)\n",
+			rc, CXLMI_RET_SUCCESS);
+		goto cleanup;
+	}
+	if (ret->num_supported_log_entries != 2) {
+		fprintf(stderr, "\n    ASSERT FAILED: num entries mismatch\n");
+		goto cleanup;
+	}
+	if (ret->entries[0].log_size != 0x100) {
+		fprintf(stderr, "\n    ASSERT FAILED: entry 0 log_size mismatch\n");
+		goto cleanup;
+	}
+	if (ret->entries[1].log_size != 0x200) {
+		fprintf(stderr, "\n    ASSERT FAILED: entry 1 log_size mismatch\n");
+		goto cleanup;
+	}
 
+	result = 0;
+cleanup:
 	free(rsp);
 	free(ret);
-	return 0;
+	return result;
 }
 
 static int test_cmd_get_log_capabilities(void)
@@ -1133,7 +1148,7 @@ static int test_cmd_get_log_cel(void)
 	struct cxlmi_cmd_get_log_req req = {0};
 	struct cxlmi_cmd_get_log_cel_rsp rsp = {0};
 	struct cxlmi_cmd_get_log_cel_rsp *ret;
-	int rc;
+	int rc, result = 1;
 
 	rsp.opcode = 0x0001; /* Identify */
 	rsp.command_effect = 0x0000;
@@ -1142,17 +1157,30 @@ static int test_cmd_get_log_cel(void)
 	req.length = sizeof(rsp);
 
 	ret = calloc(1, sizeof(*ret) + req.length);
-	ASSERT_TRUE(ret != NULL, "allocation failed");
+	if (!ret) {
+		fprintf(stderr, "\n    ASSERT FAILED: allocation failed\n");
+		return 1;
+	}
 
-	ASSERT_EQ(setup(), 0, "setup failed");
+	if (setup() != 0) {
+		fprintf(stderr, "\n    ASSERT FAILED: setup failed\n");
+		goto cleanup;
+	}
 	cxlmi_mock_set_response(test_ep, 0x04, 0x01, CXLMI_RET_SUCCESS,
 				&rsp, sizeof(rsp));
 	rc = cxlmi_cmd_get_log_cel(test_ep, NULL, &req, ret);
 	teardown();
 
-	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
+	if (rc != CXLMI_RET_SUCCESS) {
+		fprintf(stderr, "\n    ASSERT FAILED: command failed (got %d, expected %d)\n",
+			rc, CXLMI_RET_SUCCESS);
+		goto cleanup;
+	}
+
+	result = 0;
+cleanup:
 	free(ret);
-	return 0;
+	return result;
 }
 
 static int test_cmd_get_supported_logs_sublist(void)
@@ -7884,7 +7912,7 @@ static int test_endian_supported_logs_size(void)
 	uint8_t wire_rsp[8 + 20] = {0}; /* header + 1 entry */
 	struct cxlmi_cmd_get_supported_logs_rsp *ret;
 	size_t ret_sz;
-	int rc;
+	int rc, result = 1;
 
 	/* num_supported_log_entries: 1 */
 	wire_rsp[0] = 0x01; wire_rsp[1] = 0x00;
@@ -7896,20 +7924,38 @@ static int test_endian_supported_logs_size(void)
 
 	ret_sz = sizeof(*ret) + sizeof(ret->entries[0]);
 	ret = calloc(1, ret_sz);
-	ASSERT_TRUE(ret != NULL, "alloc failed");
+	if (!ret) {
+		fprintf(stderr, "\n    ASSERT FAILED: alloc failed\n");
+		return 1;
+	}
 
-	ASSERT_EQ(setup(), 0, "setup failed");
+	if (setup() != 0) {
+		fprintf(stderr, "\n    ASSERT FAILED: setup failed\n");
+		goto cleanup;
+	}
 	cxlmi_mock_set_response(test_ep, 0x04, 0x00, CXLMI_RET_SUCCESS,
 				wire_rsp, sizeof(wire_rsp));
 	rc = cxlmi_cmd_get_supported_logs(test_ep, NULL, ret);
 	teardown();
 
-	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
-	ASSERT_EQ(ret->num_supported_log_entries, 1, "num entries wrong");
-	ASSERT_EQ(ret->entries[0].log_size, 0xAABBCCDD, "log_size endianness wrong");
+	if (rc != CXLMI_RET_SUCCESS) {
+		fprintf(stderr, "\n    ASSERT FAILED: command failed (got %d, expected %d)\n",
+			rc, CXLMI_RET_SUCCESS);
+		goto cleanup;
+	}
+	if (ret->num_supported_log_entries != 1) {
+		fprintf(stderr, "\n    ASSERT FAILED: num entries wrong\n");
+		goto cleanup;
+	}
+	if (ret->entries[0].log_size != 0xAABBCCDD) {
+		fprintf(stderr, "\n    ASSERT FAILED: log_size endianness wrong\n");
+		goto cleanup;
+	}
 
+	result = 0;
+cleanup:
 	free(ret);
-	return 0;
+	return result;
 }
 
 /*
