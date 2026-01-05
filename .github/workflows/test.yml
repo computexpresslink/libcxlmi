@@ -1,0 +1,69 @@
+name: Test
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  sanitizers:
+    name: Sanitizers (${{ matrix.sanitizer }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - sanitizer: address
+            name: AddressSanitizer
+          - sanitizer: undefined
+            name: UndefinedBehaviorSanitizer
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson clang libdbus-1-dev
+
+      - name: Configure with ${{ matrix.name }}
+        run: meson setup build -Db_sanitize=${{ matrix.sanitizer }} -Db_lundef=false -Dlibdbus=enabled
+        env:
+          CC: clang
+
+      - name: Build
+        run: meson compile -C build
+
+      - name: Run mock tests
+        run: ./build/tests/mock-tests
+        env:
+          ASAN_OPTIONS: abort_on_error=1:halt_on_error=1
+          UBSAN_OPTIONS: abort_on_error=1:halt_on_error=1:print_stacktrace=1
+
+  valgrind:
+    name: Valgrind
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson valgrind libdbus-1-dev
+
+      - name: Configure
+        run: meson setup build -Dlibdbus=enabled
+
+      - name: Build
+        run: meson compile -C build
+
+      - name: Run mock tests under Valgrind
+        run: |
+          valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all \
+            --track-origins=yes --errors-for-leak-kinds=definite,possible \
+            ./build/tests/mock-tests

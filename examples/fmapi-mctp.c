@@ -20,7 +20,7 @@ static char *DAX_DEVICE_CMDS[] = {
 };
 
 /*
- * Prompts user for the number of extents they want to add/relase with a max.
+ * Prompts user for the number of extents they want to add/release with a max.
  * of 10. Prompts for each start/end DPA in MiB, keeping track of each one in
  * ext_list.
  * Returns the number of extents in ext_list. If user specifies invalid
@@ -367,7 +367,7 @@ static bool input_is_yes(char* buf, int *rc)
 static int create_dax_device(void) {
     char buf[MAX_CHARS] = {0};
     char** argv = NULL;
-    int i, j, rc, argc;
+    int i, j, rc = 0, argc;
 
     printf("Create DAX Device for this region? [y/n] ");
     if (input_is_yes(buf, &rc)) {
@@ -412,14 +412,21 @@ int main(int argc, char **argv)
 {
     struct cxlmi_ctx *ctx;
     struct cxlmi_endpoint *ep, *tmp;
-    extent *ext_list = calloc(MAX_EXTENTS, sizeof(extent));
+    extent *ext_list;
     char buf[MAX_CHARS];
     uint8_t cmd;
     int rc = 0, num_extents;
 
+    ext_list = calloc(MAX_EXTENTS, sizeof(extent));
+    if (!ext_list) {
+        fprintf(stderr, "cannot allocate extent list\n");
+        return EXIT_FAILURE;
+    }
+
     ctx = cxlmi_new_ctx(stdout, DEFAULT_LOGLEVEL);
     if (!ctx) {
         fprintf(stderr, "cannot create new context object\n");
+        free(ext_list);
         return EXIT_FAILURE;
     }
 
@@ -453,7 +460,7 @@ int main(int argc, char **argv)
             goto exit_free_ctx;
         }
     } else {
-        fprintf(stderr, "must provide MCTP endpoint nid:eid touple\n");
+        fprintf(stderr, "must provide MCTP endpoint nid:eid tuple\n");
         rc = -1;
         goto exit_free_ctx;
     }

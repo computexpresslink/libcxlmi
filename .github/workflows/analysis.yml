@@ -1,0 +1,108 @@
+name: Analysis
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson lcov gcovr libdbus-1-dev
+
+      - name: Configure with coverage
+        run: meson setup build -Db_coverage=true -Dlibdbus=enabled
+
+      - name: Build
+        run: meson compile -C build
+
+      - name: Run tests
+        run: meson test -C build
+
+      - name: Generate coverage report
+        run: |
+          gcovr --xml --output build/meson-logs/coverage.xml \
+            --root . \
+            --filter 'src/' \
+            --exclude 'tests/' \
+            --exclude 'examples/' \
+            build
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: build/meson-logs/coverage.xml
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  static-analysis:
+    name: Static Analysis
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson clang clang-tools libdbus-1-dev
+
+      - name: Run Clang Static Analyzer
+        run: |
+          # Exclude meson-private to avoid false positives from meson's test files
+          scan-build --status-bugs --exclude build/meson-private \
+            meson setup build -Dlibdbus=enabled
+          scan-build --status-bugs --exclude build/meson-private \
+            -o scan-results meson compile -C build 2>&1 || {
+            echo "=== Static Analysis Errors Found ==="
+            echo ""
+            for report in scan-results/*/report-*.html; do
+              if [ -f "$report" ]; then
+                echo "--- $report ---"
+                # Extract bug info from HTML report
+                grep -E "BUGDESC|BUGTYPE|BUGFILE|BUGLINE" "$report" | \
+                  sed 's/<!-- //g; s/ -->//g'
+                echo ""
+              fi
+            done
+            exit 1
+          }
+
+  clang-tidy:
+    name: Clang-Tidy
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson clang clang-tidy libdbus-1-dev
+
+      - name: Configure
+        run: meson setup build -Dlibdbus=enabled
+        env:
+          CC: clang
+
+      - name: Run clang-tidy
+        run: |
+          # Generate compile_commands.json is automatic with meson
+          # Run clang-analyzer checks (security and correctness)
+          find src -name '*.c' -exec clang-tidy --quiet {} \
+            -p build \
+            --checks='-*,clang-analyzer-*,-clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling' \
+            --warnings-as-errors='*' \;

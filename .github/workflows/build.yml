@@ -1,0 +1,138 @@
+name: Build
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Build (${{ matrix.compiler }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # x86-64
+          - os: ubuntu-24.04
+            compiler: gcc
+            cc: gcc
+          - os: ubuntu-24.04
+            compiler: clang
+            cc: clang
+          - os: ubuntu-22.04
+            compiler: gcc
+            cc: gcc
+          # ARM64
+          - os: ubuntu-24.04-arm
+            compiler: gcc
+            cc: gcc
+          - os: ubuntu-24.04-arm
+            compiler: clang
+            cc: clang
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson libdbus-1-dev
+
+      - name: Configure
+        run: meson setup build -Dlibdbus=enabled --werror
+        env:
+          CC: ${{ matrix.cc }}
+
+      - name: Build
+        run: meson compile -C build
+
+      - name: Run mock tests
+        run: meson test -C build
+
+  build-options:
+    name: Options (${{ matrix.name }}, ${{ matrix.arch }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # x86-64 configurations
+          - name: minimal
+            arch: x86-64
+            os: ubuntu-24.04
+            configure: -Dlibdbus=disabled
+          - name: dbus-openbmc
+            arch: x86-64
+            os: ubuntu-24.04
+            configure: -Dlibdbus=enabled -Dmctpd=openbmc
+          - name: dbus-codeconstruct
+            arch: x86-64
+            os: ubuntu-24.04
+            configure: -Dlibdbus=enabled -Dmctpd=codeconstruct
+          - name: cxl2.0-compat
+            arch: x86-64
+            os: ubuntu-24.04
+            configure: -Dlibdbus=enabled -Dcxl2_0_mode=enabled
+          - name: cxl2.0-compat+dbus-openbmc
+            arch: x86-64
+            os: ubuntu-24.04
+            configure: -Dlibdbus=enabled -Dmctpd=openbmc -Dcxl2_0_mode=enabled
+          - name: cxl2.0-compat+dbus-codeconstruct
+            arch: x86-64
+            os: ubuntu-24.04
+            configure: -Dlibdbus=enabled -Dmctpd=codeconstruct -Dcxl2_0_mode=enabled
+          - name: cxl2.0-compat+minimal
+            arch: x86-64
+            os: ubuntu-24.04
+            configure: -Dlibdbus=disabled -Dcxl2_0_mode=enabled
+          # ARM64 configurations
+          - name: minimal
+            arch: arm64
+            os: ubuntu-24.04-arm
+            configure: -Dlibdbus=disabled
+          - name: dbus-openbmc
+            arch: arm64
+            os: ubuntu-24.04-arm
+            configure: -Dlibdbus=enabled -Dmctpd=openbmc
+          - name: dbus-codeconstruct
+            arch: arm64
+            os: ubuntu-24.04-arm
+            configure: -Dlibdbus=enabled -Dmctpd=codeconstruct
+          - name: cxl2.0-compat
+            arch: arm64
+            os: ubuntu-24.04-arm
+            configure: -Dlibdbus=enabled -Dcxl2_0_mode=enabled
+          - name: cxl2.0-compat+dbus-openbmc
+            arch: arm64
+            os: ubuntu-24.04-arm
+            configure: -Dlibdbus=enabled -Dmctpd=openbmc -Dcxl2_0_mode=enabled
+          - name: cxl2.0-compat+dbus-codeconstruct
+            arch: arm64
+            os: ubuntu-24.04-arm
+            configure: -Dlibdbus=enabled -Dmctpd=codeconstruct -Dcxl2_0_mode=enabled
+          - name: cxl2.0-compat+minimal
+            arch: arm64
+            os: ubuntu-24.04-arm
+            configure: -Dlibdbus=disabled -Dcxl2_0_mode=enabled
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson libdbus-1-dev
+
+      - name: Configure
+        run: meson setup build ${{ matrix.configure }} --werror
+
+      - name: Build
+        run: meson compile -C build
+
+      - name: Run mock tests
+        run: meson test -C build

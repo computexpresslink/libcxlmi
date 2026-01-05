@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include <time.h>
 #include <poll.h>
+#include <limits.h>
 
 #include <sys/ioctl.h>
 #include <sys/socket.h>
@@ -37,6 +38,7 @@
 #include <libcxlmi.h>
 
 #include "private.h"
+#include "mock.h"
 
 #if !defined(AF_MCTP)
 #define AF_MCTP 45
@@ -294,7 +296,9 @@ static void mctp_close(struct cxlmi_endpoint *ep)
 
 CXLMI_EXPORT void cxlmi_close(struct cxlmi_endpoint *ep)
 {
-	if (ep->transport_data) {
+	if (cxlmi_is_mock_endpoint(ep)) {
+		mock_close(ep);
+	} else if (ep->transport_data) {
 		mctp_close(ep);
 		free(ep->transport_data);
 	} else {
@@ -384,8 +388,13 @@ static int send_mctp_direct(struct cxlmi_endpoint *ep, bool fmapi,
 
 	memset(rsp_msg, 0, rsp_msg_sz);
 
-	len = sendto(sd, req_msg, req_msg_sz, 0,
-		     (struct sockaddr *)&addr, sizeof(addr));
+	if (sendto(sd, req_msg, req_msg_sz, 0,
+		   (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+		errno_save = errno;
+		cxlmi_msg(ep->ctx, LOG_ERR, "Failed to send on MCTP socket");
+		errno = errno_save;
+		return -1;
+	}
 
 	pollfds[0].fd = sd;
 	pollfds[0].events = POLLIN;
@@ -553,8 +562,14 @@ static int send_mctp_tunnel1(struct cxlmi_endpoint *ep,
 	len = recvfrom(mctp->fmapi_sd, t_rsp_msg, t_rsp_msg_sz, 0,
 		       (struct sockaddr *)&addrrx, &addrlen);
 
+	/*
+	 * For the outer tunnel response, don't use fixed-length check.
+	 * The inner response length varies depending on whether the tunneled
+	 * command succeeded or failed (error responses have no payload).
+	 * Only check minimum length for the outer CCI + tunnel header.
+	 */
 	rc = sanity_check_mctp_rsp(ep, t_req_msg, t_rsp_msg, len,
-				   len_min == len_max, len_min);
+				   false, sizeof(*t_rsp_msg) + sizeof(*t_rsp));
 	if (rc)
 		goto free_rsp;
 
@@ -667,14 +682,14 @@ static int send_mctp_tunnel2(struct cxlmi_endpoint *ep,
 
 	len = recvfrom(mctp->fmapi_sd, outer_rsp, outer_rsp_sz, 0,
 		       (struct sockaddr *)&addrrx, &addrlen);
-	if (len < len_min) {
-		cxlmi_msg(ep->ctx, LOG_ERR, "Not enough data in reply\n");
-		rc = -1 ;
-		goto free_outer_rsp;
-	}
 
+	/*
+	 * For the outer tunnel response, don't use fixed-length check.
+	 * The inner response length varies depending on whether the tunneled
+	 * command succeeded or failed (error responses have no payload).
+	 */
 	rc = sanity_check_mctp_rsp(ep, outer_req, outer_rsp, len,
-				   len_min == len_max, len_min);
+				   false, sizeof(*outer_rsp) + sizeof(*outer_t_rsp));
 	if (rc)
 		goto free_outer_rsp;
 
@@ -692,9 +707,13 @@ static int send_mctp_tunnel2(struct cxlmi_endpoint *ep,
 		goto free_outer_rsp;
 	}
 
+	/*
+	 * For the inner (first-level) tunnel, also don't use fixed-length check.
+	 * The innermost response length varies based on command success/failure.
+	 */
 	rc = sanity_check_mctp_rsp(ep, outer_t_req->message,
 				   outer_t_rsp->message, len,
-				   len_min == len_max, len_min);
+				   false, sizeof(*inner_rsp) + sizeof(*inner_t_rsp));
 	if (rc)
 		goto free_outer_rsp;
 
@@ -712,7 +731,7 @@ static int send_mctp_tunnel2(struct cxlmi_endpoint *ep,
 
 	if (inner_t_rsp->length != len) {
 		cxlmi_msg(ep->ctx, LOG_ERR,
-		  "Tunnel lenght not consistent with received length\n");
+		  "Tunnel length not consistent with received length\n");
 		rc = -1;
 		goto free_outer_rsp;
 	}
@@ -861,7 +880,7 @@ send_ioctl_tunnel1(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	rc = sanity_check_mctp_rsp(ep, t_req->message, t_rsp->message, len,
 			      len_max == len_min, len_min);
 	if (rc) {
-		cxlmi_msg(ep->ctx, LOG_ERR, "Inner tunnel repsonse failed\n");
+		cxlmi_msg(ep->ctx, LOG_ERR, "Inner tunnel response failed\n");
 		goto free_tunnel_rsp;
 	}
 
@@ -882,7 +901,7 @@ send_ioctl_tunnel1(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 
 /*
  * 2 level tunnel - so there are two tunnel_command_req, tunnel_comamnd_rsp
- * burried in an ioctl message
+ * buried in an ioctl message
  */
 static int
 send_ioctl_tunnel2(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
@@ -971,7 +990,7 @@ send_ioctl_tunnel2(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	}
 	len = cmd.out.size;
 
-	/* Check overal message size */
+	/* Check overall message size */
 	if (len < len_min) {
 		cxlmi_msg(ep->ctx, LOG_ERR,
 		       "IOCTL output too small %d < %ld\n", len, len_min);
@@ -1022,7 +1041,7 @@ send_ioctl_tunnel2(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	rc = sanity_check_mctp_rsp(ep, inner_t_req->message, inner_t_rsp->message, len,
 			      len_max == len_min, len_min);
 	if (rc) {
-		cxlmi_msg(ep->ctx, LOG_ERR, "Inner tunnel repsonse failed\n");
+		cxlmi_msg(ep->ctx, LOG_ERR, "Inner tunnel response failed\n");
 		goto free_tunnel_rsp;
 	}
 	extract_rsp_msg_from_tunnel(inner_rsp, rsp_msg, rsp_msg_sz);
@@ -1078,7 +1097,10 @@ int send_cmd_cci(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	if (cxlmi_ep_has_quirk(ep, CXLMI_QUIRK_MIN_INTER_COMMAND_TIME))
 		cxlmi_insert_delay(ep);
 
-	if (ep->transport_data) {
+	if (cxlmi_is_mock_endpoint(ep)) {
+		rc = send_mock_cmd(ep, req_msg, req_msg_sz,
+				   rsp_msg, rsp_msg_sz, rsp_msg_sz_min);
+	} else if (ep->transport_data) {
 		if (!ti || ti->level == 0)
 			rc = send_mctp_direct(ep, fmapi_cmd, req_msg, req_msg_sz,
 				      rsp_msg, rsp_msg_sz, rsp_msg_sz_min);
@@ -1488,8 +1510,6 @@ int cxlmi_scan_mctp(struct cxlmi_ctx *ctx)
 	/* objects container */
 	dbus_message_iter_recurse(&args, &objs);
 
-	rc = 0;
-
 	do {
 		DBusMessageIter ent;
 		int opened;
@@ -1532,7 +1552,7 @@ CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_open(struct cxlmi_ctx *ctx,
 {
 	struct cxlmi_endpoint *ep, *tmp;
 	int errno_save;
-	char filename[40];
+	char filename[PATH_MAX];
 
 	/* ensure no duplicates */
 	cxlmi_for_each_endpoint(ctx, tmp) {
@@ -1593,7 +1613,7 @@ CXLMI_EXPORT int cxlmi_scan(struct cxlmi_ctx *ctx)
 	while ((entry = readdir(dir)) != NULL) {
 		struct cxlmi_endpoint *ep;
 		struct stat statbuf;
-		char fullpath[512];
+		char fullpath[PATH_MAX];
 
 		/* Skip . and .. */
 		if (entry->d_name[0] == '.')
@@ -1653,7 +1673,7 @@ static const char *const cxlmi_cmd_retcode_tbl[] = {
 	[CXLMI_RET_MBUNSUPPORTED] = "unsupported on the mailbox it was issued on",
 	[CXLMI_RET_PAYLOADLEN] = "invalid payload length",
 	[CXLMI_RET_LOG] = "invalid or unsupported log page",
-	[CXLMI_RET_INTERRUPTED] = "asynchronous event occured",
+	[CXLMI_RET_INTERRUPTED] = "asynchronous event occurred",
 	[CXLMI_RET_FEATUREVERSION] = "unsupported feature version",
 	[CXLMI_RET_FEATURESELVALUE] = "unsupported feature selection value",
 	[CXLMI_RET_FEATURETRANSFERIP] = "feature transfer in progress",
@@ -1686,7 +1706,7 @@ CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_next_endpoint(struct cxlmi_ctx *ctx,
 void arm_cci_request(struct cxlmi_endpoint *ep, struct cxlmi_cci_msg *req,
 		     size_t req_pl_sz, uint8_t cmdset, uint8_t cmd)
 {
-	if (ep->transport_data) {
+	if (ep->transport_data && !cxlmi_is_mock_endpoint(ep)) {
 		struct cxlmi_transport_mctp *mctp = ep->transport_data;
 
 		*req = (struct cxlmi_cci_msg) {
@@ -1703,11 +1723,17 @@ void arm_cci_request(struct cxlmi_endpoint *ep, struct cxlmi_cci_msg *req,
 			req->pl_length[2] = (req_pl_sz >> 16) & 0xff;
 		}
 	} else {
-		/* while CCIs arent sent directly over ioctl, add general info */
+		/* ioctl and mock: add general info */
 		*req = (struct cxlmi_cci_msg) {
 			.command = cmd,
 			.command_set = cmdset,
 			.vendor_ext_status = 0xabcd,
 		};
+
+		if (req_pl_sz) {
+			req->pl_length[0] = req_pl_sz & 0xff;
+			req->pl_length[1] = (req_pl_sz >> 8) & 0xff;
+			req->pl_length[2] = (req_pl_sz >> 16) & 0xff;
+		}
 	}
 }

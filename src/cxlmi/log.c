@@ -22,8 +22,6 @@
 #define LOG_CLOCK CLOCK_MONOTONIC
 #endif
 
-static struct cxlmi_ctx *ctx;
-
 void __attribute__((format(printf, 4, 5)))
 __cxlmi_msg(struct cxlmi_ctx *c, int lvl,
 	   const char *func, const char *format, ...)
@@ -46,8 +44,6 @@ __cxlmi_msg(struct cxlmi_ctx *c, int lvl,
 	_cleanup_free_ char *message = NULL;
 	int idx = 0;
 
-	if (!c)
-		c = ctx;
 	if (c)
 		fp = c->fp;
 

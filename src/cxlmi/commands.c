@@ -14,6 +14,12 @@
 
 #define CXL_CAPACITY_MULTIPLIER   (256 * 1024 * 1024)
 
+/* Max poison records to retrieve - based on typical mailbox sizes */
+#define MAX_POISON_RECORDS 256
+
+/* Max scan media error records - same as poison records */
+#define MAX_SCAN_MEDIA_RECORDS 256
+
 CXLMI_EXPORT int cxlmi_cmd_identify(struct cxlmi_endpoint *ep,
 				    struct cxlmi_tunnel_info *ti,
 				    struct cxlmi_cmd_identify_rsp *ret)
@@ -242,7 +248,7 @@ CXLMI_EXPORT int cxlmi_cmd_clear_event_records(struct cxlmi_endpoint *ep,
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(*req_pl), EVENTS, CLEAR_RECORDS);
+	arm_cci_request(ep, req, sizeof(*req_pl) + handles_sz, EVENTS, CLEAR_RECORDS);
 	req_pl = (struct cxlmi_cmd_clear_event_records_req *)req->payload;
 
 	req_pl->event_log = in->event_log;
@@ -443,22 +449,23 @@ CXLMI_EXPORT int cxlmi_cmd_get_fw_info(struct cxlmi_endpoint *ep,
 	ret->slots_supported = rsp_pl->slots_supported;
 	ret->slot_info = rsp_pl->slot_info;
 	ret->caps = rsp_pl->caps;
-	pstrcpy(ret->fw_rev1, sizeof(rsp_pl->fw_rev1), rsp_pl->fw_rev1);
-	pstrcpy(ret->fw_rev2, sizeof(rsp_pl->fw_rev2), rsp_pl->fw_rev2);
-	pstrcpy(ret->fw_rev3, sizeof(rsp_pl->fw_rev3), rsp_pl->fw_rev3);
-	pstrcpy(ret->fw_rev4, sizeof(rsp_pl->fw_rev4), rsp_pl->fw_rev4);
+	memcpy(ret->fw_rev1, rsp_pl->fw_rev1, sizeof(rsp_pl->fw_rev1));
+	memcpy(ret->fw_rev2, rsp_pl->fw_rev2, sizeof(rsp_pl->fw_rev2));
+	memcpy(ret->fw_rev3, rsp_pl->fw_rev3, sizeof(rsp_pl->fw_rev3));
+	memcpy(ret->fw_rev4, rsp_pl->fw_rev4, sizeof(rsp_pl->fw_rev4));
 
 	return rc;
 }
 
 CXLMI_EXPORT int cxlmi_cmd_transfer_fw(struct cxlmi_endpoint *ep,
 				       struct cxlmi_tunnel_info *ti,
-				       struct cxlmi_cmd_transfer_fw_req *in)
+				       struct cxlmi_cmd_transfer_fw_req *in,
+				       size_t data_sz)
 {
 	struct cxlmi_cmd_transfer_fw_req *req_pl;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	struct cxlmi_cci_msg rsp;
-	ssize_t req_sz, data_sz = struct_size(in, data, 0);
+	ssize_t req_sz;
 	int rc = -1;
 
 	req_sz = sizeof(*req_pl) + data_sz + sizeof(*req);
@@ -466,7 +473,7 @@ CXLMI_EXPORT int cxlmi_cmd_transfer_fw(struct cxlmi_endpoint *ep,
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(*req_pl), FIRMWARE_UPDATE, TRANSFER);
+	arm_cci_request(ep, req, sizeof(*req_pl) + data_sz, FIRMWARE_UPDATE, TRANSFER);
 	req_pl = (struct cxlmi_cmd_transfer_fw_req *)req->payload;
 
 	req_pl->action = in->action;
@@ -632,7 +639,7 @@ CXLMI_EXPORT int cxlmi_cmd_get_log(struct cxlmi_endpoint *ep,
 		return rc;
 
 	rsp_pl = (void *)rsp->payload;
-	memcpy(ret, rsp_pl, in->length * sizeof(*rsp_pl));
+	memcpy(ret, rsp_pl, in->length);
 
 	return rc;
 }
@@ -913,7 +920,7 @@ CXLMI_EXPORT int cxlmi_cmd_get_feature(struct cxlmi_endpoint *ep,
 	req_pl->offset = cpu_to_le16(in->offset);
 	req_pl->count = cpu_to_le16(in->count);
 	req_pl->selection = in->selection;
-	arm_cci_request(ep, req, req_sz, FEATURES, GET_FEATURE);
+	arm_cci_request(ep, req, sizeof(*req_pl), FEATURES, GET_FEATURE);
 
 	rsp_sz_min = sizeof(*rsp);
 	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
@@ -950,7 +957,7 @@ CXLMI_EXPORT int cxlmi_cmd_set_feature(struct cxlmi_endpoint *ep,
 	req_pl->offset = cpu_to_le16(in->offset);
 	req_pl->version = in->version;
 	memcpy(req_pl->feature_data, in->feature_data, feature_data_sz);
-	arm_cci_request(ep, req, req_sz, FEATURES, SET_FEATURE);
+	arm_cci_request(ep, req, sizeof(*req_pl) + feature_data_sz, FEATURES, SET_FEATURE);
 
 	rsp_sz = sizeof(*rsp);
 	rsp = calloc(1, rsp_sz);
@@ -1113,22 +1120,25 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_lsa(struct cxlmi_endpoint *ep,
 
 CXLMI_EXPORT int cxlmi_cmd_memdev_set_lsa(struct cxlmi_endpoint *ep,
 					  struct cxlmi_tunnel_info *ti,
-					  struct cxlmi_cmd_memdev_set_lsa_req *in)
+					  struct cxlmi_cmd_memdev_set_lsa_req *in,
+					  size_t data_sz)
 {
 	struct cxlmi_cmd_memdev_set_lsa_req *req_pl;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	struct cxlmi_cci_msg rsp;
-	size_t req_sz, data_sz = struct_size(in, data, 0);
+	size_t req_sz, req_pl_sz;
 
-	req_sz = sizeof(*req) + data_sz + sizeof(*in);
+	req_pl_sz = sizeof(*req_pl) + data_sz;
+	req_sz = sizeof(*req) + req_pl_sz;
 	req = calloc(1, req_sz);
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(*in), CCLS, SET_LSA);
+	arm_cci_request(ep, req, req_pl_sz, CCLS, SET_LSA);
 
 	req_pl = (struct cxlmi_cmd_memdev_set_lsa_req *)req->payload;
 	req_pl->offset = cpu_to_le32(in->offset);
+	memcpy(req_pl->data, in->data, data_sz);
 
 	return send_cmd_cci(ep, ti, req, req_sz,
 			    &rsp, sizeof(rsp), sizeof(rsp));
@@ -1331,7 +1341,8 @@ cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
 	req_pl->get_poison_list_phy_addr = cpu_to_le64(in->get_poison_list_phy_addr);
 	req_pl->get_poison_list_phy_addr_len = cpu_to_le64(in->get_poison_list_phy_addr_len);
 
-	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) +
+		 (MAX_POISON_RECORDS * sizeof(rsp_pl->records[0]));
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
 		return -1;
@@ -1348,7 +1359,7 @@ cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
 		le64_to_cpu(rsp_pl->overflow_timestamp);
 	ret->more_err_media_record_cnt = le16_to_cpu(rsp_pl->more_err_media_record_cnt);
 
-	for (i = 0; i < rsp_pl->more_err_media_record_cnt; i++) {
+	for (i = 0; i < ret->more_err_media_record_cnt; i++) {
 		ret->records[i].media_err_addr =
 			le64_to_cpu(rsp_pl->records[i].media_err_addr);
 		ret->records[i].media_err_len =
@@ -1486,7 +1497,8 @@ CXLMI_EXPORT int cxlmi_cmd_get_scan_media_results(struct cxlmi_endpoint *ep,
 	ssize_t rsp_sz;
 
 	arm_cci_request(ep, &req, 0, MEDIA_AND_POISON, GET_SCAN_MEDIA_RESULTS);
-	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) +
+		 (MAX_SCAN_MEDIA_RECORDS * sizeof(rsp_pl->record[0]));
 
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
@@ -1520,7 +1532,7 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_sanitize(struct cxlmi_endpoint *ep,
 {
 	struct cxlmi_cci_msg req, rsp;
 
-	arm_cci_request(ep, &req, 0, SANITIZE, SANITIZE);
+	arm_cci_request(ep, &req, 0, SANITIZE, SANITIZE_OP);
 
 	return send_cmd_cci(ep, ti, &req, sizeof(req),
 			    &rsp, sizeof(rsp), sizeof(rsp));
@@ -1566,12 +1578,13 @@ int cxlmi_cmd_memdev_media_operations_discovery(struct cxlmi_endpoint *ep,
 	req_pl->discovery_osa.start_index = cpu_to_le16(in->discovery_osa.start_index);
 	req_pl->discovery_osa.num_ops = cpu_to_le16(in->discovery_osa.num_ops);
 
-	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp);
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) +
+		 in->discovery_osa.num_ops * sizeof(*rsp_pl->entry);
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
 		return -1;
 
-	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, sizeof(*rsp) + sizeof(*rsp_pl));
 	if (rc)
 		return rc;
 
@@ -1598,15 +1611,17 @@ int cxlmi_cmd_memdev_media_operations_sanitize(struct cxlmi_endpoint *ep,
 	struct cxlmi_cmd_memdev_media_operations_sanitize_req *req_pl;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	struct cxlmi_cci_msg rsp;
-	size_t req_sz;
+	size_t req_sz, req_pl_sz;
 	int i;
 
-	req_sz = sizeof(*req) + sizeof(*in);
+	req_pl_sz = sizeof(*req_pl) +
+		    in->dpa_range_count * sizeof(*in->dpa_range_list);
+	req_sz = sizeof(*req) + req_pl_sz;
 	req = calloc(1, req_sz);
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(*in), SANITIZE, MEDIA_OPERATIONS);
+	arm_cci_request(ep, req, req_pl_sz, SANITIZE, MEDIA_OPERATIONS);
 
 	req_pl = (struct cxlmi_cmd_memdev_media_operations_sanitize_req *)req->payload;
 	req_pl->media_operation_class = in->media_operation_class;
@@ -1774,33 +1789,29 @@ cxlmi_cmd_memdev_passphrase_secure_erase(struct cxlmi_endpoint *ep,
 CXLMI_EXPORT int
 cxlmi_cmd_memdev_security_send(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
-			      struct cxlmi_cmd_memdev_security_send_req *in)
+			      struct cxlmi_cmd_memdev_security_send_req *in,
+			      size_t data_sz)
 {
-       struct cxlmi_cmd_memdev_security_send_req *req_pl;
-       _cleanup_free_ struct cxlmi_cci_msg *req = NULL;
-       struct cxlmi_cci_msg rsp;
-       size_t req_sz;
-       size_t in_data_size;
-       size_t full_in_payload_size;
+	struct cxlmi_cmd_memdev_security_send_req *req_pl;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
+	struct cxlmi_cci_msg rsp;
+	size_t req_sz, req_pl_sz;
 
-       in_data_size = struct_size(in, data, 0);
+	req_pl_sz = sizeof(*req_pl) + data_sz;
+	req_sz = sizeof(*req) + req_pl_sz;
+	req = calloc(1, req_sz);
+	if (!req)
+		return -1;
 
-       full_in_payload_size = sizeof(*in) + in_data_size;
+	arm_cci_request(ep, req, req_pl_sz, SECURITY, SECURITY_SEND);
 
-       req_sz = sizeof(*req) + full_in_payload_size;
-       req = calloc(1, req_sz);
-       if (!req)
-	       return -1;
+	req_pl = (struct cxlmi_cmd_memdev_security_send_req *)req->payload;
 
-       arm_cci_request(ep, req, full_in_payload_size, SECURITY, SECURITY_SEND);
+	req_pl->security_protocol = in->security_protocol;
+	req_pl->sp_specific = cpu_to_le16(in->sp_specific);
+	memcpy(req_pl->data, in->data, data_sz);
 
-       req_pl = (struct cxlmi_cmd_memdev_security_send_req *)req->payload;
-
-       req_pl->security_protocol = in->security_protocol;
-       req_pl->sp_specific = cpu_to_le16(in->sp_specific);
-       memcpy(req_pl->data, in->data, in_data_size);
-
-       return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
 }
 
 /*
@@ -2034,7 +2045,9 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_add_dc_response(struct cxlmi_endpoint *ep,
        if (!req)
 	       return -1;
 
-       arm_cci_request(ep, req, sizeof(*req_pl), DCD_CONFIG, ADD_DYN_CAP_RSP);
+       arm_cci_request(ep, req, sizeof(*req_pl) +
+		       in->updated_extent_list_size * sizeof(in->extents[0]),
+		       DCD_CONFIG, ADD_DYN_CAP_RSP);
        req_pl = (struct cxlmi_cmd_memdev_add_dc_response_req *)req->payload;
        req_pl->updated_extent_list_size = cpu_to_le32(in->updated_extent_list_size);
        req_pl->flags = in->flags;
@@ -2063,7 +2076,9 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_release_dc(struct cxlmi_endpoint *ep,
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(*req_pl), DCD_CONFIG, RELEASE_DYN_CAP);
+	arm_cci_request(ep, req, sizeof(*req_pl) +
+			in->updated_extent_list_size * sizeof(in->extents[0]),
+			DCD_CONFIG, RELEASE_DYN_CAP);
 	req_pl = (struct cxlmi_cmd_memdev_release_dc_req *)req->payload;
 	req_pl->updated_extent_list_size = cpu_to_le32(in->updated_extent_list_size);
 	req_pl->flags = in->flags;
@@ -2517,7 +2532,7 @@ int cxlmi_cmd_fmapi_send_ld_cxlio_mem_request(struct cxlmi_endpoint *ep,
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(*req_pl), MLD_PORT, SEND_LD_CXLIO_MEM_REQ);
+	arm_cci_request(ep, req, sizeof(*req_pl) + datalen, MLD_PORT, SEND_LD_CXLIO_MEM_REQ);
 	req_pl = (struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_req *)req->payload;
 
 	req_pl->port_id = in->port_id;
@@ -2601,7 +2616,8 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_ld_allocations(struct cxlmi_endpoint *ep,
 	req_pl->start_ld_id = in->start_ld_id;
 	req_pl->ld_allocation_list_limit = in->ld_allocation_list_limit;
 
-	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp);
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) +
+		 in->ld_allocation_list_limit * sizeof(*rsp_pl->ld_allocation_list);
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
 		return -1;
@@ -2645,7 +2661,8 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_ld_allocations(struct cxlmi_endpoint *ep,
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(*req_pl),
+	arm_cci_request(ep, req, sizeof(*req_pl) +
+			in->number_ld * sizeof(*in->ld_allocation_list),
 			MLD_COMPONENTS, SET_LD_ALLOCATIONS);
 	req_pl = (struct cxlmi_cmd_fmapi_set_ld_allocations_req *)req->payload;
 
@@ -2867,7 +2884,8 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_qos_allocated_bw(struct cxlmi_endpoint *ep,
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(*req_pl),
+	arm_cci_request(ep, req, sizeof(*req_pl) +
+			in->number_ld * sizeof(*in->qos_allocation_fraction),
 			MLD_COMPONENTS, SET_QOS_ALLOCATED_BW);
 	req_pl = (struct cxlmi_cmd_fmapi_set_qos_allocated_bw_req *)req->payload;
 
@@ -2962,7 +2980,8 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 	if (!req)
 		return -1;
 
-	arm_cci_request(ep, req, sizeof(*req_pl),
+	arm_cci_request(ep, req, sizeof(*req_pl) +
+			in->number_ld * sizeof(*in->qos_limit_fraction),
 			MLD_COMPONENTS, SET_QOS_BW_LIMIT);
 	req_pl = (struct cxlmi_cmd_fmapi_set_qos_bw_limit_req *)req->payload;
 
@@ -3553,7 +3572,7 @@ CXLMI_EXPORT int cxlmi_cmd_vendor_specific(struct cxlmi_endpoint *ep,
 	req = calloc(1, req_sz);
 	if (!req)
 		return -1;
-	arm_cci_request(ep, req, in ? 0 : in_size, opcode >> 8, opcode & 0xFF);
+	arm_cci_request(ep, req, in ? in_size : 0, opcode >> 8, opcode & 0xFF);
 	if (in)
 		memcpy(req->payload, in, in_size);
 

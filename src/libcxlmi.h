@@ -389,7 +389,7 @@ struct cxlmi_tunnel_info {
  * Tunneling Commands to an LD in an MLD through a CXL Switch.
  *
  * @name: tunnel variable name
- * @port: switch downstream port number (outter tunnel)
+ * @port: switch downstream port number (outer tunnel)
  * @ld: Logical Device (LD) id within an MLD (inner tunnel)
  */
 #define DEFINE_CXLMI_TUNNEL_SWITCH_MLD(name, port, ld)			\
@@ -452,7 +452,7 @@ int cxlmi_cmd_get_fw_info(struct cxlmi_endpoint *ep,
 			  struct cxlmi_cmd_get_fw_info_rsp *out);
 int cxlmi_cmd_transfer_fw(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
-			  struct cxlmi_cmd_transfer_fw_req *in);
+			  struct cxlmi_cmd_transfer_fw_req *in, size_t data_sz);
 int cxlmi_cmd_activate_fw(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
 			  struct cxlmi_cmd_activate_fw_req *in);
@@ -522,7 +522,8 @@ int cxlmi_cmd_memdev_get_lsa(struct cxlmi_endpoint *ep,
 			     void *ret);
 int cxlmi_cmd_memdev_set_lsa(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,
-			     struct cxlmi_cmd_memdev_set_lsa_req *in);
+			     struct cxlmi_cmd_memdev_set_lsa_req *in,
+			     size_t data_sz);
 
 int cxlmi_cmd_memdev_get_health_info(struct cxlmi_endpoint *ep,
 			     struct cxlmi_tunnel_info *ti,
@@ -575,7 +576,8 @@ int cxlmi_cmd_memdev_media_operations_sanitize(struct cxlmi_endpoint *ep,
 
 int cxlmi_cmd_memdev_security_send(struct cxlmi_endpoint *ep,
 				   struct cxlmi_tunnel_info *ti,
-				   struct cxlmi_cmd_memdev_security_send_req *in);
+				   struct cxlmi_cmd_memdev_security_send_req *in,
+				   size_t data_sz);
 int cxlmi_cmd_memdev_security_receive(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
 			      struct cxlmi_cmd_memdev_security_receive_req *in,
@@ -713,6 +715,10 @@ int cxlmi_cmd_fmapi_get_multiheaded_info(struct cxlmi_endpoint *ep,
 			 struct cxlmi_tunnel_info *ti,
 			 struct cxlmi_cmd_fmapi_get_multiheaded_info_req *in,
 			 struct cxlmi_cmd_fmapi_get_multiheaded_info_rsp *ret);
+int cxlmi_cmd_fmapi_get_head_info(struct cxlmi_endpoint *ep,
+			 struct cxlmi_tunnel_info *ti,
+			 struct cxlmi_cmd_fmapi_get_head_info_req *in,
+			 struct cxlmi_cmd_fmapi_get_head_info_rsp *ret);
 
 int cxlmi_cmd_fmapi_get_dcd_info(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,

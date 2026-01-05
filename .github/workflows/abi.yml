@@ -1,0 +1,62 @@
+name: ABI
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  abi-check:
+    name: ABI Compatibility
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson libdbus-1-dev abigail-tools
+
+      - name: Checkout base branch (PR)
+        if: github.event_name == 'pull_request'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.base_ref }}
+          path: base
+
+      - name: Checkout base commit (push)
+        if: github.event_name == 'push'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.before }}
+          path: base
+
+      - name: Build base
+        run: |
+          cd base
+          meson setup build -Dlibdbus=enabled
+          meson compile -C build
+
+      - name: Checkout current
+        uses: actions/checkout@v6
+        with:
+          path: current
+
+      - name: Build current
+        run: |
+          cd current
+          meson setup build -Dlibdbus=enabled
+          meson compile -C build
+
+      - name: Check ABI compatibility
+        run: |
+          abidiff --headers-dir1 base/src --headers-dir2 current/src \
+            base/build/src/libcxlmi.so current/build/src/libcxlmi.so \
+            --no-added-syms \
+            --drop-private-types || {
+              echo "::warning::ABI changes detected. Please review if this is intentional."
+              exit 0
+            }

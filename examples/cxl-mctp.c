@@ -180,7 +180,7 @@ static int show_device_info(struct cxlmi_endpoint *ep)
 	if (rc)
 		return rc;
 
-	printf("Fimware info:\n");
+	printf("Firmware info:\n");
 	printf("\tslots supported: %d\n", fw_info.slots_supported);
 	printf("\trevision: %s\n", fw_info.fw_rev1);
 
@@ -759,6 +759,7 @@ static int test_fmapi_initiate_dc_add_and_release(struct cxlmi_endpoint *ep)
 	printf("Show Extents --\n");
 	if (print_ext_list(ep, 0, 2, 0)) {
 		rc = -1;
+		goto cleanup;
 	}
 
 	rls_req = calloc(1, sizeof(*rls_req) + 2 * sizeof(rls_req->extents[0]));
@@ -835,7 +836,7 @@ static int test_fmapi_initiate_dc_add_and_release(struct cxlmi_endpoint *ep)
 	rls_req->extents[0].start_dpa = 0;
 	rls_req->extents[0].len = 128 * MiB;
 
-	rc = cxlmi_cmd_fmapi_initiate_dc_release(ep, NULL, rls_req);
+	(void)cxlmi_cmd_fmapi_initiate_dc_release(ep, NULL, rls_req);
 
 	/* Extent list should be empty */
 	while ((curr_num_extents = get_num_dc_extents(ep)) == 1);
@@ -1033,20 +1034,20 @@ int main(int argc, char **argv)
 			goto exit_free_ctx;
 		}
 	} else {
-		fprintf(stderr, "must provide MCTP endpoint nid:eid touple\n");
+		fprintf(stderr, "must provide MCTP endpoint nid:eid tuple\n");
 		goto exit_free_ctx;
 	}
 
 	cxlmi_for_each_endpoint_safe(ctx, ep, tmp) {
-		rc = show_device_info(ep);
+		(void)show_device_info(ep);
 
-		rc = play_with_device_timestamp(ep);
+		(void)play_with_device_timestamp(ep);
 
-		rc = get_device_logs(ep);
+		(void)get_device_logs(ep);
 
-		rc = play_with_poison_mgmt(ep);
+		(void)play_with_poison_mgmt(ep);
 
-		rc = toggle_abort(ep);
+		(void)toggle_abort(ep);
 
 		if (ep_supports_op(ep, 0x4800))
 			play_with_dcd(ep);
