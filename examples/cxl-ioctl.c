@@ -163,21 +163,21 @@ static int play_with_scan_media(struct cxlmi_endpoint *ep)
 {
 	int rc;
 
-	struct cxlmi_cmd_get_scan_media_capabilities_req req ={
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_req req ={
 		.get_scan_media_capabilities_start_physaddr = 0x0,
 		.get_scan_media_capabilities_physaddr_length = 64,
 	};
-	struct cxlmi_cmd_get_scan_media_capabilities_rsp rsp;
-	struct cxlmi_cmd_scan_media_req media = {
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_rsp rsp;
+	struct cxlmi_cmd_memdev_scan_media_req media = {
 		.scan_media_physaddr = 0x0,
 		.scan_media_physaddr_length = 64,
 		.scan_media_flags = 0x0,
 	};
-	struct cxlmi_cmd_get_scan_media_results_rsp results;
+	struct cxlmi_cmd_memdev_get_scan_media_results_rsp results;
 
-	memset(&req, 0, sizeof(struct cxlmi_cmd_get_scan_media_capabilities_req));
+	memset(&req, 0, sizeof(struct cxlmi_cmd_memdev_get_scan_media_capabilities_req));
 
-	rc = cxlmi_cmd_get_scan_media_capabilities(ep, NULL, &req, &rsp);
+	rc = cxlmi_cmd_memdev_get_scan_media_capabilities(ep, NULL, &req, &rsp);
 	if(rc)
 		return rc;
 
@@ -185,8 +185,8 @@ static int play_with_scan_media(struct cxlmi_endpoint *ep)
 	       "estimated scan media time : %d ms\n",
 	       rsp.estimated_scan_media_time);
 
-	memset(&media, 0, sizeof(struct cxlmi_cmd_scan_media_req));
-	rc = cxlmi_cmd_scan_media(ep, NULL, &media);
+	memset(&media, 0, sizeof(struct cxlmi_cmd_memdev_scan_media_req));
+	rc = cxlmi_cmd_memdev_scan_media(ep, NULL, &media);
 
 	if(rc){
 		return rc;
@@ -194,7 +194,7 @@ static int play_with_scan_media(struct cxlmi_endpoint *ep)
 
 	sleep(rsp.estimated_scan_media_time);
 
-	rc = cxlmi_cmd_get_scan_media_results(ep, NULL, &results);
+	rc = cxlmi_cmd_memdev_get_scan_media_results(ep, NULL, &results);
 
 	if(rc){
 		return rc;

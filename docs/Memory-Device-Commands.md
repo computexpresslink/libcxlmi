@@ -367,7 +367,7 @@ int cxlmi_cmd_memdev_clear_poison(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_get_scan_media_capabilities_req {
+struct cxlmi_cmd_memdev_get_scan_media_capabilities_req {
 	uint64_t get_scan_media_capabilities_start_physaddr;
 	uint64_t get_scan_media_capabilities_physaddr_length;
 };
@@ -376,7 +376,7 @@ struct cxlmi_cmd_get_scan_media_capabilities_req {
 Return payload:
 
    ```C
-struct cxlmi_cmd_get_scan_media_capabilities_rsp {
+struct cxlmi_cmd_memdev_get_scan_media_capabilities_rsp {
 	uint32_t estimated_scan_media_time;
 };
    ```
@@ -384,10 +384,10 @@ struct cxlmi_cmd_get_scan_media_capabilities_rsp {
 Command name:
 
    ```C
-int cxlmi_cmd_get_scan_media_capabilities(struct cxlmi_endpoint *ep,
+int cxlmi_cmd_memdev_get_scan_media_capabilities(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti,
-				  struct cxlmi_cmd_get_scan_media_capabilities_req *in,
-				  struct cxlmi_cmd_get_scan_media_capabilities_rsp *ret);
+				  struct cxlmi_cmd_memdev_get_scan_media_capabilities_req *in,
+				  struct cxlmi_cmd_memdev_get_scan_media_capabilities_rsp *ret);
    ```
 
 ## Scan Media (4304h)
@@ -395,7 +395,7 @@ int cxlmi_cmd_get_scan_media_capabilities(struct cxlmi_endpoint *ep,
 Input payload:
 
    ```C
-struct cxlmi_cmd_scan_media_req {
+struct cxlmi_cmd_memdev_scan_media_req {
 	uint64_t scan_media_physaddr;
 	uint64_t scan_media_physaddr_length;
 	uint8_t scan_media_flags;
@@ -405,9 +405,9 @@ struct cxlmi_cmd_scan_media_req {
 Command name:
 
    ```C
-int cxlmi_cmd_scan_media(struct cxlmi_endpoint *ep,
+int cxlmi_cmd_memdev_scan_media(struct cxlmi_endpoint *ep,
 			 struct cxlmi_tunnel_info *ti,
-			 struct cxlmi_cmd_scan_media_req *in);
+			 struct cxlmi_cmd_memdev_scan_media_req *in);
    ```
 
 ## Get Scan Media Results (4305h)
@@ -421,7 +421,7 @@ struct cxlmi_media_error_record {
 	uint8_t rsvd[4];
 };
 
-struct cxlmi_cmd_get_scan_media_results_rsp {
+struct cxlmi_cmd_memdev_get_scan_media_results_rsp {
 	uint64_t scan_media_restart_physaddr;
 	uint64_t scan_media_restart_physaddr_length;
 	uint8_t scan_media_flags;
@@ -435,9 +435,9 @@ struct cxlmi_cmd_get_scan_media_results_rsp {
 Command name:
 
    ```C
-int cxlmi_cmd_get_scan_media_results(struct cxlmi_endpoint *ep,
+int cxlmi_cmd_memdev_get_scan_media_results(struct cxlmi_endpoint *ep,
 				     struct cxlmi_tunnel_info *ti,
-				     struct cxlmi_cmd_get_scan_media_results_rsp *ret);
+				     struct cxlmi_cmd_memdev_get_scan_media_results_rsp *ret);
    ```
 
 

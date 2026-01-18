@@ -341,14 +341,14 @@ static void test_inject_clear_poison(struct cxlmi_endpoint *ep)
 
 static void test_get_scan_media_caps(struct cxlmi_endpoint *ep)
 {
-	struct cxlmi_cmd_get_scan_media_capabilities_req req = {0};
-	struct cxlmi_cmd_get_scan_media_capabilities_rsp rsp = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_req req = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_rsp rsp = {0};
 	int rc;
 
 	req.get_scan_media_capabilities_start_physaddr = 0;
 	req.get_scan_media_capabilities_physaddr_length = 0x10000;
 
-	rc = cxlmi_cmd_get_scan_media_capabilities(ep, get_tunnel_info(), &req, &rsp);
+	rc = cxlmi_cmd_memdev_get_scan_media_capabilities(ep, get_tunnel_info(), &req, &rsp);
 	if (is_unsupported(rc)) {
 		TEST_SKIP("get_scan_media_caps", "not supported");
 		return;
@@ -695,7 +695,7 @@ static void test_set_shutdown_state(struct cxlmi_endpoint *ep)
 
 static void test_scan_media(struct cxlmi_endpoint *ep)
 {
-	struct cxlmi_cmd_scan_media_req req = {0};
+	struct cxlmi_cmd_memdev_scan_media_req req = {0};
 	int retries = 3;
 	int rc;
 
@@ -704,7 +704,7 @@ static void test_scan_media(struct cxlmi_endpoint *ep)
 	req.scan_media_flags = 0;
 
 	do {
-		rc = cxlmi_cmd_scan_media(ep, get_tunnel_info(), &req);
+		rc = cxlmi_cmd_memdev_scan_media(ep, get_tunnel_info(), &req);
 		if (rc == CXLMI_RET_BUSY) {
 			if (!wait_for_bg_done(ep, 5000))
 				usleep(500000);
@@ -731,7 +731,7 @@ static void test_scan_media(struct cxlmi_endpoint *ep)
 
 static void test_get_scan_media_results(struct cxlmi_endpoint *ep)
 {
-	struct cxlmi_cmd_get_scan_media_results_rsp *rsp;
+	struct cxlmi_cmd_memdev_get_scan_media_results_rsp *rsp;
 	int rc;
 
 	rsp = calloc(1, sizeof(*rsp) + 16 * sizeof(rsp->record[0]));
@@ -740,7 +740,7 @@ static void test_get_scan_media_results(struct cxlmi_endpoint *ep)
 		return;
 	}
 
-	rc = cxlmi_cmd_get_scan_media_results(ep, get_tunnel_info(), rsp);
+	rc = cxlmi_cmd_memdev_get_scan_media_results(ep, get_tunnel_info(), rsp);
 	if (is_unsupported(rc)) {
 		TEST_SKIP("get_scan_media_results", "not supported");
 		free(rsp);

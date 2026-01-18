@@ -371,7 +371,7 @@ class TestMemdevCommands(unittest.TestCase):
 
     def test_scan_media(self):
         """Test Scan Media (Opcode 4304h)"""
-        req = cxlmi.struct_cxlmi_cmd_scan_media_req()
+        req = cxlmi.struct_cxlmi_cmd_memdev_scan_media_req()
         req.scan_media_physaddr = 0x1000
         req.scan_media_physaddr_length = 0x10000
         req.scan_media_flags = 0x00

@@ -774,8 +774,8 @@ static int test_cmd_memdev_clear_poison(void)
 
 static int test_cmd_get_scan_media_capabilities(void)
 {
-	struct cxlmi_cmd_get_scan_media_capabilities_req req = {0};
-	struct cxlmi_cmd_get_scan_media_capabilities_rsp rsp = {0}, ret;
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_req req = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_rsp rsp = {0}, ret;
 	int rc;
 
 	req.get_scan_media_capabilities_start_physaddr = 0x0;
@@ -784,7 +784,7 @@ static int test_cmd_get_scan_media_capabilities(void)
 
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x43, 0x03, CXLMI_RET_SUCCESS, &rsp, sizeof(rsp));
-	rc = cxlmi_cmd_get_scan_media_capabilities(test_ep, NULL, &req, &ret);
+	rc = cxlmi_cmd_memdev_get_scan_media_capabilities(test_ep, NULL, &req, &ret);
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
@@ -794,7 +794,7 @@ static int test_cmd_get_scan_media_capabilities(void)
 
 static int test_cmd_scan_media(void)
 {
-	struct cxlmi_cmd_scan_media_req req = {0};
+	struct cxlmi_cmd_memdev_scan_media_req req = {0};
 	int rc;
 
 	req.scan_media_physaddr = 0x0;
@@ -802,7 +802,7 @@ static int test_cmd_scan_media(void)
 
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x43, 0x04, CXLMI_RET_BACKGROUND, NULL, 0);
-	rc = cxlmi_cmd_scan_media(test_ep, NULL, &req);
+	rc = cxlmi_cmd_memdev_scan_media(test_ep, NULL, &req);
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_BACKGROUND, "expected background op");
@@ -1370,7 +1370,7 @@ static int test_cmd_get_poison_list(void)
 
 static int test_cmd_get_scan_media_results(void)
 {
-	struct cxlmi_cmd_get_scan_media_results_rsp rsp = {0}, ret;
+	struct cxlmi_cmd_memdev_get_scan_media_results_rsp rsp = {0}, ret;
 	int rc;
 
 	rsp.scan_media_restart_physaddr = 0x1000;
@@ -1381,7 +1381,7 @@ static int test_cmd_get_scan_media_results(void)
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x43, 0x05, CXLMI_RET_SUCCESS,
 				&rsp, sizeof(rsp));
-	rc = cxlmi_cmd_get_scan_media_results(test_ep, NULL, &ret);
+	rc = cxlmi_cmd_memdev_get_scan_media_results(test_ep, NULL, &ret);
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
@@ -3291,7 +3291,7 @@ static int test_edge_get_log_cel_empty(void)
 /* Test get_scan_media_results with zero errors */
 static int test_edge_get_scan_media_results_empty(void)
 {
-	struct cxlmi_cmd_get_scan_media_results_rsp rsp = {0}, ret;
+	struct cxlmi_cmd_memdev_get_scan_media_results_rsp rsp = {0}, ret;
 	int rc;
 
 	rsp.scan_media_restart_physaddr = 0;
@@ -3302,7 +3302,7 @@ static int test_edge_get_scan_media_results_empty(void)
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x43, 0x05, CXLMI_RET_SUCCESS,
 				&rsp, sizeof(rsp));
-	rc = cxlmi_cmd_get_scan_media_results(test_ep, NULL, &ret);
+	rc = cxlmi_cmd_memdev_get_scan_media_results(test_ep, NULL, &ret);
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
@@ -3981,7 +3981,7 @@ static int test_payload_clear_poison(void)
 
 static int test_payload_scan_media(void)
 {
-	struct cxlmi_cmd_scan_media_req req = {0};
+	struct cxlmi_cmd_memdev_scan_media_req req = {0};
 	uint8_t payload[64];
 	size_t payload_size = sizeof(payload);
 	uint64_t addr, len;
@@ -3993,7 +3993,7 @@ static int test_payload_scan_media(void)
 
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x43, 0x04, CXLMI_RET_SUCCESS, NULL, 0);
-	rc = cxlmi_cmd_scan_media(test_ep, NULL, &req);
+	rc = cxlmi_cmd_memdev_scan_media(test_ep, NULL, &req);
 
 	cxlmi_mock_get_last_command(test_ep, NULL, NULL, payload, &payload_size);
 	teardown();
@@ -4384,8 +4384,8 @@ static int test_payload_memdev_get_lsa(void)
 
 static int test_payload_get_scan_media_capabilities(void)
 {
-	struct cxlmi_cmd_get_scan_media_capabilities_req req = {0};
-	struct cxlmi_cmd_get_scan_media_capabilities_rsp ret = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_req req = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_rsp ret = {0};
 	uint8_t payload[64];
 	size_t payload_size = sizeof(payload);
 	uint64_t addr, len;
@@ -4396,7 +4396,7 @@ static int test_payload_get_scan_media_capabilities(void)
 
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x43, 0x03, CXLMI_RET_SUCCESS, &ret, sizeof(ret));
-	rc = cxlmi_cmd_get_scan_media_capabilities(test_ep, NULL, &req, &ret);
+	rc = cxlmi_cmd_memdev_get_scan_media_capabilities(test_ep, NULL, &req, &ret);
 
 	cxlmi_mock_get_last_command(test_ep, NULL, NULL, payload, &payload_size);
 	teardown();
@@ -6440,8 +6440,8 @@ static int test_response_fmapi_get_qos_control(void)
 
 static int test_response_get_scan_media_capabilities(void)
 {
-	struct cxlmi_cmd_get_scan_media_capabilities_req req = {0};
-	struct cxlmi_cmd_get_scan_media_capabilities_rsp rsp = {0}, ret = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_req req = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_rsp rsp = {0}, ret = {0};
 	int rc;
 
 	rsp.estimated_scan_media_time = cpu_to_le32(3600);
@@ -6452,7 +6452,7 @@ static int test_response_get_scan_media_capabilities(void)
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x43, 0x03, CXLMI_RET_SUCCESS,
 				&rsp, sizeof(rsp));
-	rc = cxlmi_cmd_get_scan_media_capabilities(test_ep, NULL, &req, &ret);
+	rc = cxlmi_cmd_memdev_get_scan_media_capabilities(test_ep, NULL, &req, &ret);
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
@@ -6463,7 +6463,7 @@ static int test_response_get_scan_media_capabilities(void)
 
 static int test_response_get_scan_media_results(void)
 {
-	struct cxlmi_cmd_get_scan_media_results_rsp rsp = {0}, ret = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_results_rsp rsp = {0}, ret = {0};
 	int rc;
 
 	rsp.scan_media_restart_physaddr = cpu_to_le64(0x2000);
@@ -6474,7 +6474,7 @@ static int test_response_get_scan_media_results(void)
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x43, 0x05, CXLMI_RET_SUCCESS,
 				&rsp, sizeof(rsp));
-	rc = cxlmi_cmd_get_scan_media_results(test_ep, NULL, &ret);
+	rc = cxlmi_cmd_memdev_get_scan_media_results(test_ep, NULL, &ret);
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
@@ -8427,7 +8427,7 @@ static int test_endian_get_poison_list_response(void)
  */
 static int test_endian_scan_media_request(void)
 {
-	struct cxlmi_cmd_scan_media_req req = {0};
+	struct cxlmi_cmd_memdev_scan_media_req req = {0};
 	uint8_t cmd_payload[256];
 	size_t cmd_payload_size = sizeof(cmd_payload);
 	uint8_t cmd_set, cmd;
@@ -8439,7 +8439,7 @@ static int test_endian_scan_media_request(void)
 
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x43, 0x04, CXLMI_RET_SUCCESS, NULL, 0);
-	rc = cxlmi_cmd_scan_media(test_ep, NULL, &req);
+	rc = cxlmi_cmd_memdev_scan_media(test_ep, NULL, &req);
 	cxlmi_mock_get_last_command(test_ep, &cmd_set, &cmd, cmd_payload, &cmd_payload_size);
 	teardown();
 
@@ -8479,14 +8479,14 @@ static int test_endian_scan_media_request(void)
  */
 static int test_endian_get_scan_media_results(void)
 {
-	uint8_t wire_rsp_buf[sizeof(struct cxlmi_cmd_get_scan_media_results_rsp) +
+	uint8_t wire_rsp_buf[sizeof(struct cxlmi_cmd_memdev_get_scan_media_results_rsp) +
 			    2 * sizeof(struct cxlmi_media_error_record)];
-	uint8_t ret_buf[sizeof(struct cxlmi_cmd_get_scan_media_results_rsp) +
+	uint8_t ret_buf[sizeof(struct cxlmi_cmd_memdev_get_scan_media_results_rsp) +
 			2 * sizeof(struct cxlmi_media_error_record)];
-	struct cxlmi_cmd_get_scan_media_results_rsp *wire_rsp =
-		(struct cxlmi_cmd_get_scan_media_results_rsp *)wire_rsp_buf;
-	struct cxlmi_cmd_get_scan_media_results_rsp *ret =
-		(struct cxlmi_cmd_get_scan_media_results_rsp *)ret_buf;
+	struct cxlmi_cmd_memdev_get_scan_media_results_rsp *wire_rsp =
+		(struct cxlmi_cmd_memdev_get_scan_media_results_rsp *)wire_rsp_buf;
+	struct cxlmi_cmd_memdev_get_scan_media_results_rsp *ret =
+		(struct cxlmi_cmd_memdev_get_scan_media_results_rsp *)ret_buf;
 	int rc;
 
 	memset(wire_rsp_buf, 0, sizeof(wire_rsp_buf));
@@ -8507,7 +8507,7 @@ static int test_endian_get_scan_media_results(void)
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x43, 0x05, CXLMI_RET_SUCCESS,
 				wire_rsp_buf, sizeof(wire_rsp_buf));
-	rc = cxlmi_cmd_get_scan_media_results(test_ep, NULL, ret);
+	rc = cxlmi_cmd_memdev_get_scan_media_results(test_ep, NULL, ret);
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
@@ -9552,8 +9552,8 @@ static int test_endian_fmapi_dc_list_tags_response(void)
  */
 static int test_endian_get_scan_media_capabilities_request(void)
 {
-	struct cxlmi_cmd_get_scan_media_capabilities_req req = {0};
-	struct cxlmi_cmd_get_scan_media_capabilities_rsp ret = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_req req = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_rsp ret = {0};
 	uint8_t cmd_set, cmd;
 	uint8_t payload[32];
 	size_t payload_size = sizeof(payload);
@@ -9566,7 +9566,7 @@ static int test_endian_get_scan_media_capabilities_request(void)
 	/* MEDIA_AND_POISON=0x43, GET_SCAN_MEDIA_CAPABILITIES=0x03 */
 	cxlmi_mock_set_response(test_ep, 0x43, 0x03, CXLMI_RET_SUCCESS,
 				NULL, 0);
-	rc = cxlmi_cmd_get_scan_media_capabilities(test_ep, NULL, &req, &ret);
+	rc = cxlmi_cmd_memdev_get_scan_media_capabilities(test_ep, NULL, &req, &ret);
 	(void)rc;
 
 	cxlmi_mock_get_last_command(test_ep, &cmd_set, &cmd, payload, &payload_size);
@@ -9603,9 +9603,9 @@ static int test_endian_get_scan_media_capabilities_request(void)
  */
 static int test_endian_get_scan_media_capabilities_response(void)
 {
-	struct cxlmi_cmd_get_scan_media_capabilities_rsp wire_rsp = {0};
-	struct cxlmi_cmd_get_scan_media_capabilities_rsp ret = {0};
-	struct cxlmi_cmd_get_scan_media_capabilities_req req = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_rsp wire_rsp = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_rsp ret = {0};
+	struct cxlmi_cmd_memdev_get_scan_media_capabilities_req req = {0};
 	int rc;
 
 	wire_rsp.estimated_scan_media_time = cpu_to_le32(0xDEADBEEF);
@@ -9616,7 +9616,7 @@ static int test_endian_get_scan_media_capabilities_response(void)
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x43, 0x03, CXLMI_RET_SUCCESS,
 				&wire_rsp, sizeof(wire_rsp));
-	rc = cxlmi_cmd_get_scan_media_capabilities(test_ep, NULL, &req, &ret);
+	rc = cxlmi_cmd_memdev_get_scan_media_capabilities(test_ep, NULL, &req, &ret);
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");

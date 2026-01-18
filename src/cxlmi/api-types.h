@@ -416,17 +416,17 @@ struct cxlmi_cmd_memdev_clear_poison_req {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.4.4 Get Scan Media Capabilities (Opcode 4303h) */
-struct cxlmi_cmd_get_scan_media_capabilities_req {
+struct cxlmi_cmd_memdev_get_scan_media_capabilities_req {
 	uint64_t get_scan_media_capabilities_start_physaddr;
 	uint64_t get_scan_media_capabilities_physaddr_length;
 } __attribute__((packed));
 
-struct cxlmi_cmd_get_scan_media_capabilities_rsp {
+struct cxlmi_cmd_memdev_get_scan_media_capabilities_rsp {
 	uint32_t estimated_scan_media_time;
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.4.5 Scan Media (Opcode 4304h) */
-struct cxlmi_cmd_scan_media_req {
+struct cxlmi_cmd_memdev_scan_media_req {
 	uint64_t scan_media_physaddr;
 	uint64_t scan_media_physaddr_length;
 	uint8_t scan_media_flags;
@@ -440,7 +440,7 @@ struct cxlmi_media_error_record {
 } __attribute__((packed));
 
 /* CXL r3.1 Section 8.2.9.9.4.6 Get Scan Media Results (Opcode 4305h) */
-struct cxlmi_cmd_get_scan_media_results_rsp {
+struct cxlmi_cmd_memdev_get_scan_media_results_rsp {
 	uint64_t scan_media_restart_physaddr;
 	uint64_t scan_media_restart_physaddr_length;
 	uint8_t scan_media_flags;

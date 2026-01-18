@@ -551,16 +551,16 @@ int cxlmi_cmd_memdev_inject_poison(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_memdev_clear_poison(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti,
 				  struct cxlmi_cmd_memdev_clear_poison_req *in);
-int cxlmi_cmd_get_scan_media_capabilities(struct cxlmi_endpoint *ep,
+int cxlmi_cmd_memdev_get_scan_media_capabilities(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti,
-				  struct cxlmi_cmd_get_scan_media_capabilities_req *in,
-				  struct cxlmi_cmd_get_scan_media_capabilities_rsp *ret);
-int cxlmi_cmd_scan_media(struct cxlmi_endpoint *ep,
+				  struct cxlmi_cmd_memdev_get_scan_media_capabilities_req *in,
+				  struct cxlmi_cmd_memdev_get_scan_media_capabilities_rsp *ret);
+int cxlmi_cmd_memdev_scan_media(struct cxlmi_endpoint *ep,
 			 struct cxlmi_tunnel_info *ti,
-			 struct cxlmi_cmd_scan_media_req *in);
-int cxlmi_cmd_get_scan_media_results(struct cxlmi_endpoint *ep,
+			 struct cxlmi_cmd_memdev_scan_media_req *in);
+int cxlmi_cmd_memdev_get_scan_media_results(struct cxlmi_endpoint *ep,
 				     struct cxlmi_tunnel_info *ti,
-				     struct cxlmi_cmd_get_scan_media_results_rsp *ret);
+				     struct cxlmi_cmd_memdev_get_scan_media_results_rsp *ret);
 
 int cxlmi_cmd_memdev_sanitize(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti);

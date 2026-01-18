@@ -648,9 +648,9 @@ The Python bindings expose all CXL commands across four command sets:
 - `cxlmi_cmd_get_poison_list()` - Get poison list
 - `cxlmi_cmd_memdev_inject_poison()` - Inject poison
 - `cxlmi_cmd_memdev_clear_poison()` - Clear poison
-- `cxlmi_cmd_get_scan_media_capabilities()` - Get scan media capabilities
-- `cxlmi_cmd_scan_media()` - Scan media
-- `cxlmi_cmd_get_scan_media_results()` - Get scan media results
+- `cxlmi_cmd_memdev_get_scan_media_capabilities()` - Get scan media capabilities
+- `cxlmi_cmd_memdev_scan_media()` - Scan media
+- `cxlmi_cmd_memdev_get_scan_media_results()` - Get scan media results
 - `cxlmi_cmd_memdev_sanitize()` - Sanitize memory
 - `cxlmi_cmd_memdev_secure_erase()` - Secure erase
 - `cxlmi_cmd_memdev_media_operations_discovery()` - Media operations discovery
