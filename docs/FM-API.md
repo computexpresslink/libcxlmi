@@ -444,7 +444,7 @@ struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_req {
 	uint8_t field_1[0x2];
 	uint16_t ld_id;
 	uint16_t transaction_len;
-	uint16_t transaction_addr;
+	uint64_t transaction_addr;
 	uint8_t transaction_data[];
 };
    ```

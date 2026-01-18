@@ -5282,7 +5282,8 @@ static int test_payload_fmapi_send_ld_cxlio_mem_request(void)
 		(struct cxlmi_cmd_fmapi_send_ld_cxlio_mem_request_rsp *)ret_buf;
 	uint8_t payload[32];
 	size_t payload_size = sizeof(payload);
-	uint16_t ld_id, trans_len, trans_addr;
+	uint16_t ld_id, trans_len;
+	uint64_t trans_addr;
 	int rc;
 
 	memset(req_buf, 0, sizeof(req_buf));
@@ -5306,16 +5307,16 @@ static int test_payload_fmapi_send_ld_cxlio_mem_request(void)
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
-	/* Header (9 bytes) + data (8 bytes) */
-	ASSERT_EQ(payload_size, 9 + 8, "payload size mismatch");
+	/* Header (15 bytes) + data (8 bytes) */
+	ASSERT_EQ(payload_size, 15 + 8, "payload size mismatch");
 	ASSERT_EQ(payload[0], 0x03, "port_id mismatch");
 	ld_id = le16_to_cpu(*(leint16_t *)&payload[3]);
 	ASSERT_EQ(ld_id, 0x0102, "ld_id mismatch");
 	trans_len = le16_to_cpu(*(leint16_t *)&payload[5]);
 	ASSERT_EQ(trans_len, 8, "transaction_len mismatch");
-	trans_addr = le16_to_cpu(*(leint16_t *)&payload[7]);
+	trans_addr = le64_to_cpu(*(leint64_t *)&payload[7]);
 	ASSERT_EQ(trans_addr, 0x1000, "transaction_addr mismatch");
-	ASSERT_EQ(payload[9], 0x99, "data[0] mismatch");
+	ASSERT_EQ(payload[15], 0x99, "data[0] mismatch");
 
 	return 0;
 }

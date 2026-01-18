@@ -2586,7 +2586,7 @@ int cxlmi_cmd_fmapi_send_ld_cxlio_mem_request(struct cxlmi_endpoint *ep,
 	memcpy(req_pl->field_1, in->field_1, sizeof(in->field_1));
 	req_pl->ld_id = cpu_to_le16(in->ld_id);
 	req_pl->transaction_len = cpu_to_le16(in->transaction_len);
-	req_pl->transaction_addr = cpu_to_le16(in->transaction_addr);
+	req_pl->transaction_addr = cpu_to_le64(in->transaction_addr);
 	memcpy(req_pl->transaction_data, in->transaction_data, datalen);
 
 	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) + datalen;
