@@ -403,6 +403,28 @@ struct cxlmi_tunnel_info {
 #define DEFINE_CXLMI_TUNNEL_MHD(name)					\
 	struct cxlmi_tunnel_info name =  __TUNNEL_INITIALIZER(-1, -1, 1, 1)
 
+/**
+ * Inline tunnel specifiers for use directly in function calls.
+ *
+ * Usage:
+ *   cxlmi_cmd_identify(ep, CXLMI_NO_TUNNEL, &rsp);
+ *   cxlmi_cmd_memdev_identify(ep, CXLMI_TUNNEL_MLD(ld), &rsp);
+ *   cxlmi_cmd_fmapi_get_ld_info(ep, CXLMI_TUNNEL_SWITCH(port), &rsp);
+ *   cxlmi_cmd_memdev_identify(ep, CXLMI_TUNNEL_SWITCH_MLD(port, ld), &rsp);
+ */
+#define CXLMI_NO_TUNNEL  NULL
+
+#define CXLMI_TUNNEL_MLD(ld) \
+	(&(struct cxlmi_tunnel_info)__TUNNEL_INITIALIZER(-1, ld, 1, 0))
+
+#define CXLMI_TUNNEL_SWITCH(port) \
+	(&(struct cxlmi_tunnel_info)__TUNNEL_INITIALIZER(port, -1, 1, 0))
+
+#define CXLMI_TUNNEL_SWITCH_MLD(port, ld) \
+	(&(struct cxlmi_tunnel_info)__TUNNEL_INITIALIZER(port, ld, 2, 0))
+
+#define CXLMI_TUNNEL_MHD \
+	(&(struct cxlmi_tunnel_info)__TUNNEL_INITIALIZER(-1, -1, 1, 1))
 
 /*
  * Definitions for Generic Component Commands, per CXL r3.1 Table 8-37.
