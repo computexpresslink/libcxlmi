@@ -264,7 +264,8 @@ enum {
 	#define SET_DOMAIN_VALIDATION_SV           0x5
 	#define GET_VCS_DOMAIN_VALIDATION_SV_STATE 0x6
 	#define GET_DOMAIN_VALIDATION_SV           0x7
-	VIRTUAL_SWITCH = 0x52,
+    VIRTUAL_SWITCH = 0x52,
+	#define GET_VCS_INFO  0x0
 	#define BIND_VPPB     0x1
 	#define UNBIND_VPPB   0x2
     MLD_PORT = 0x53,

@@ -657,6 +657,11 @@ int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_get_domain_validation_sv_req *in,
 			struct cxlmi_cmd_fmapi_get_domain_validation_sv_rsp *ret);
+
+int cxlmi_cmd_fmapi_get_vcs_info(struct cxlmi_endpoint *ep,
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_fmapi_get_vcs_info_req *in,
+				 struct cxlmi_cmd_fmapi_get_vcs_info_rsp *ret);
 int cxlmi_cmd_fmapi_bind_vppb(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_fmapi_bind_vppb_req *in);

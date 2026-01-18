@@ -12,6 +12,7 @@ command set, as per the latest specification.
    * [Get VCS Domain Validation SV State (5106h)](#get-vcs-domain-validation-sv-state-5106h)
    * [Get Domain Validation SV (5107h)](#get-domain-validation-sv-5107h)
 * [Virtual Switch (52h)](#virtual-switch-52h)
+   * [Get Virtual CXL Switch Info (5200h)](#get-virtual-cxl-switch-info-5200h)
    * [Bind vPPB (5201h)](#bind-vppb-5201h)
    * [Unbind vPPB (5202)](#unbind-vppb-5202)
 * [MLD Port (53h)](#mld-port-53h)
@@ -263,6 +264,53 @@ int cxlmi_cmd_fmapi_get_domain_validation_sv(struct cxlmi_endpoint *ep,
    ```
 
 # Virtual Switch (52h)
+
+## Get Virtual CXL Switch Info (5200h)
+
+Input payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_get_vcs_info_req {
+	uint8_t start_vppb;
+	uint8_t vppb_list_limit;
+	uint8_t num_vcs;
+	uint8_t vcs_id_list[];
+};
+   ```
+
+Return payload:
+
+   ```C
+struct cxlmi_cmd_fmapi_vppb_info {
+	uint8_t binding_status;
+	uint8_t bound_port_id;
+	uint8_t bound_ld_id;
+	uint8_t rsv1;
+};
+
+struct cxlmi_cmd_fmapi_vcs_info_block {
+	uint8_t vcs_id;
+	uint8_t vcs_state;
+	uint8_t usp_id;
+	uint8_t num_vppbs;
+	struct cxlmi_cmd_fmapi_vppb_info vppbs[];
+};
+
+struct cxlmi_cmd_fmapi_get_vcs_info_rsp {
+	uint8_t num_vcs;
+	uint8_t rsv1[3];
+	struct cxlmi_cmd_fmapi_vcs_info_block vcs_info_list[];
+};
+   ```
+
+Command name:
+
+   ```C
+int cxlmi_cmd_fmapi_get_vcs_info(struct cxlmi_endpoint *ep,
+				 struct cxlmi_tunnel_info *ti,
+				 struct cxlmi_cmd_fmapi_get_vcs_info_req *in,
+				 struct cxlmi_cmd_fmapi_get_vcs_info_rsp *ret);
+   ```
 
 ## Bind vPPB (5201h)
 
