@@ -1086,7 +1086,7 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_lsa(struct cxlmi_endpoint *ep,
 					  void *ret)
 {
 	struct cxlmi_cmd_memdev_get_lsa_req *req_pl;
-	_cleanup_free_ struct cxlmi_cci_msg *req;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
 	ssize_t req_sz, rsp_sz;
 	int rc;
@@ -3212,7 +3212,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
 {
 	struct cxlmi_cmd_fmapi_get_host_dc_region_config_req *req_pl;
 	struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp *rsp_pl;
-	_cleanup_free_ struct cxlmi_cci_msg *req;
+	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
 	ssize_t req_sz, rsp_sz, rsp_sz_min;
 	int i, rc = -1;
@@ -3330,6 +3330,8 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *e
 		return -1;
 
 	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, min_rsp_sz);
+	if (rc)
+		return rc;
 
 	rsp_pl = (struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *) rsp->payload;
 	ret->host_id = le16_to_cpu(rsp_pl->host_id);
