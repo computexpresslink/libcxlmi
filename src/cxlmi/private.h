@@ -183,7 +183,7 @@ enum {
     INFOSTAT    = 0x00,
 	#define IS_IDENTIFY                    0x1
 	#define BACKGROUND_OPERATION_STATUS    0x2
-	#define GET_RESP_MSG_LIMIT             003
+	#define GET_RESP_MSG_LIMIT             0x3
 	#define SET_RESP_MSG_LIMIT             0x4
 	#define BACKGROUND_OPERATION_ABORT     0x5
     EVENTS      = 0x01,

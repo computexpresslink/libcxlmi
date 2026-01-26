@@ -2114,7 +2114,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_identify_sw_device(struct cxlmi_endpoint *ep,
 
 	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz, rsp_sz);
 	if (rc)
-		return -1;
+		return rc;
 
 	rsp_pl = (struct cxlmi_cmd_fmapi_identify_sw_device_rsp *)rsp->payload;
 
@@ -2727,7 +2727,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_ld_allocations(struct cxlmi_endpoint *ep,
 	}
 
 	rsp_sz = sizeof(*rsp_pl) + sizeof(*rsp) +
-		in->number_ld * sizeof(*in->ld_allocation_list);;
+		in->number_ld * sizeof(*in->ld_allocation_list);
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
 		return -1;
