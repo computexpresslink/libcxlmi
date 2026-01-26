@@ -2420,7 +2420,7 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_vcs_info(struct cxlmi_endpoint *ep,
 	struct cxlmi_cmd_fmapi_get_vcs_info_rsp *rsp_pl;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
-	ssize_t req_sz, rsp_sz, rsp_pl_sz;
+	ssize_t req_sz, rsp_sz, rsp_pl_sz, rsp_sz_min;
 	int rc = -1;
 
 	req_sz = sizeof(*req) + sizeof(*req_pl) + in->num_vcs;
@@ -2442,11 +2442,14 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_vcs_info(struct cxlmi_endpoint *ep,
 		in->num_vcs * (sizeof(struct cxlmi_cmd_fmapi_vcs_info_block) +
 			       in->vppb_list_limit * sizeof(struct cxlmi_cmd_fmapi_vppb_info));
 	rsp_sz = sizeof(*rsp) + rsp_pl_sz;
+        rsp_sz_min = sizeof(*rsp) + sizeof(*rsp_pl) +
+            sizeof(struct cxlmi_cmd_fmapi_vcs_info_block) +
+                sizeof(struct cxlmi_cmd_fmapi_vppb_info);
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
 		return -1;
 
-	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz_min);
 	if (rc)
 		return rc;
 
