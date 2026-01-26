@@ -179,6 +179,8 @@ CXLMI_EXPORT int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 	ssize_t rsp_sz, req_sz;
 	int i, rc;
 
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 1);
+
 	req_sz = sizeof(*req) + sizeof(*req_pl);
 	req = calloc(1, req_sz);
 	if (!req)
@@ -741,6 +743,8 @@ CXLMI_EXPORT int cxlmi_cmd_clear_log(struct cxlmi_endpoint *ep,
 	struct cxlmi_cci_msg rsp;
 	size_t req_sz;
 
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x10);
+
 	req_sz = sizeof(*req) + sizeof(*in);
 	req = calloc(1, req_sz);
 	if (!req)
@@ -763,6 +767,8 @@ CXLMI_EXPORT int cxlmi_cmd_populate_log(struct cxlmi_endpoint *ep,
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	struct cxlmi_cci_msg rsp;
 	size_t req_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x10);
 
 	req_sz = sizeof(*req) + sizeof(*in);
 	req = calloc(1, req_sz);
@@ -1154,6 +1160,8 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_health_info(struct cxlmi_endpoint *ep,
 	int rc;
 	ssize_t rsp_sz;
 
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 18);
+
 	arm_cci_request(ep, &req, 0, HEALTH_INFO_ALERTS, GET_HEALTH_INFO);
 
 	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
@@ -1192,6 +1200,8 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_alert_config(struct cxlmi_endpoint *ep,
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
 	int rc;
 	ssize_t rsp_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 16);
 
 	arm_cci_request(ep, &req, 0, HEALTH_INFO_ALERTS, GET_ALERT_CONFIG);
 
@@ -1239,6 +1249,8 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_set_alert_config(struct cxlmi_endpoint *ep,
 	struct cxlmi_cci_msg rsp;
 	size_t req_sz;
 
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 12);
+
 	req_sz = sizeof(*req) + sizeof(*in);
 	req = calloc(1, req_sz);
 	if (!req)
@@ -1274,6 +1286,8 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_shutdown_state(struct cxlmi_endpoint *ep,
 	int rc;
 	ssize_t rsp_sz;
 
+	CXLMI_BUILD_BUG_ON(sizeof(*ret) != 1);
+
 	arm_cci_request(ep, &req, 0, HEALTH_INFO_ALERTS, GET_SHUTDOWN_STATE);
 
 	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
@@ -1302,6 +1316,8 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_set_shutdown_state(struct cxlmi_endpoint *ep,
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	struct cxlmi_cci_msg rsp;
 	size_t req_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 1);
 
 	req_sz = sizeof(*req) + sizeof(*in);
 	req = calloc(1, req_sz);
@@ -1378,6 +1394,8 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_inject_poison(struct cxlmi_endpoint *ep,
 	struct cxlmi_cci_msg rsp;
 	size_t req_sz;
 
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 8);
+
 	req_sz = sizeof(*req) + sizeof(*in);
 	req = calloc(1, req_sz);
 	if (!req)
@@ -1400,6 +1418,8 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_clear_poison(struct cxlmi_endpoint *ep,
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	struct cxlmi_cci_msg rsp;
 	size_t req_sz;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 72);
 
 	req_sz = sizeof(*req) + sizeof(*in);
 	req = calloc(1, req_sz);
@@ -3072,6 +3092,8 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_multiheaded_info(struct cxlmi_endpoint *ep,
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
 	ssize_t req_sz, rsp_sz;
 	int rc = -1;
+
+	CXLMI_BUILD_BUG_ON(sizeof(*in) != 2);
 
 	req_sz = sizeof(*req_pl) + sizeof(*req);
 	req = calloc(1, req_sz);
