@@ -214,6 +214,11 @@ static int mctp_check_timeout(struct cxlmi_endpoint *ep,
 CXLMI_EXPORT int cxlmi_endpoint_set_timeout(struct cxlmi_endpoint *ep,
 					    unsigned int timeout_ms)
 {
+	if (!ep) {
+		errno = EINVAL;
+		return -1;
+	}
+
 	if (ep->transport_data) {
 		int rc;
 
@@ -227,6 +232,11 @@ CXLMI_EXPORT int cxlmi_endpoint_set_timeout(struct cxlmi_endpoint *ep,
 
 CXLMI_EXPORT unsigned int cxlmi_endpoint_get_timeout(struct cxlmi_endpoint *ep)
 {
+	if (!ep) {
+		errno = EINVAL;
+		return 0;
+	}
+
 	return ep->timeout_ms;
 }
 
@@ -237,11 +247,17 @@ static bool cxlmi_ep_has_quirk(struct cxlmi_endpoint *ep, unsigned long quirk)
 
 CXLMI_EXPORT bool cxlmi_endpoint_has_fmapi(struct cxlmi_endpoint *ep)
 {
+	if (!ep)
+		return false;
+
 	return ep->has_fmapi;
 }
 
 CXLMI_EXPORT bool cxlmi_endpoint_enable_fmapi(struct cxlmi_endpoint *ep)
 {
+	if (!ep)
+		return false;
+
 	if (cxlmi_endpoint_has_fmapi(ep)) /* nop */
 		return true;
 
@@ -271,6 +287,9 @@ err:
 
 CXLMI_EXPORT bool cxlmi_endpoint_disable_fmapi(struct cxlmi_endpoint *ep)
 {
+	if (!ep)
+		return false;
+
 	if (!cxlmi_endpoint_has_fmapi(ep)) /* nop */
 		return true;
 
@@ -301,6 +320,9 @@ static void mctp_close(struct cxlmi_endpoint *ep)
 
 CXLMI_EXPORT void cxlmi_close(struct cxlmi_endpoint *ep)
 {
+	if (!ep)
+		return;
+
 	if (cxlmi_is_mock_endpoint(ep)) {
 		mock_close(ep);
 	} else if (ep->transport_data) {
@@ -1142,6 +1164,9 @@ int send_cmd_cci(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 
 CXLMI_EXPORT void cxlmi_set_probe_enabled(struct cxlmi_ctx *ctx, bool enabled)
 {
+	if (!ctx)
+		return;
+
 	ctx->probe_enabled = enabled;
 }
 
@@ -1706,13 +1731,19 @@ CXLMI_EXPORT const char *cxlmi_cmd_retcode_tostr(enum cxlmi_cmd_retcode code)
 
 CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_first_endpoint(struct cxlmi_ctx *ctx)
 {
+	if (!ctx)
+		return NULL;
+
 	return list_top(&ctx->endpoints, struct cxlmi_endpoint, entry);
 }
 
 CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_next_endpoint(struct cxlmi_ctx *ctx,
 						struct cxlmi_endpoint *ep)
 {
-	return ep ? list_next(&ctx->endpoints, ep, entry) : NULL;
+	if (!ctx || !ep)
+		return NULL;
+
+	return list_next(&ctx->endpoints, ep, entry);
 }
 
 void arm_cci_request(struct cxlmi_endpoint *ep, struct cxlmi_cci_msg *req,
