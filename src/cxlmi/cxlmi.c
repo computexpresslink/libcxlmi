@@ -1070,6 +1070,7 @@ static bool cxlmi_cmd_is_fmapi(int cmdset)
 	case PHYSICAL_SWITCH:
         case VIRTUAL_SWITCH:
 	case MLD_PORT:
+	case MLD_COMPONENTS:
 	case MHD:
 	case DCD_MANAGEMENT:
 		return true;
