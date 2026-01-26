@@ -33,6 +33,7 @@
 
 #include <ccan/array_size/array_size.h>
 #include <ccan/minmax/minmax.h>
+#include <ccan/endian/endian.h>
 #include <ccan/list/list.h>
 
 #include <libcxlmi.h>
@@ -614,7 +615,7 @@ static int send_mctp_tunnel1(struct cxlmi_endpoint *ep,
 	t_req = (struct cxlmi_cmd_fmapi_tunnel_command_req *)t_req_msg->payload;
 	t_rsp = (struct cxlmi_cmd_fmapi_tunnel_command_rsp *)t_rsp_msg->payload;
 
-	if (t_rsp->length != len) {
+	if (le16_to_cpu(t_rsp->length) != len) {
 		cxlmi_msg(ep->ctx, LOG_ERR,
 		  "Tunnel length is not consistent with received length\n");
 		rc = -1;
@@ -732,7 +733,7 @@ static int send_mctp_tunnel2(struct cxlmi_endpoint *ep,
 	outer_t_req = (struct cxlmi_cmd_fmapi_tunnel_command_req *)outer_req->payload;
 	outer_t_rsp = (struct cxlmi_cmd_fmapi_tunnel_command_rsp *)outer_rsp->payload;
 
-	if (outer_t_rsp->length != len) {
+	if (le16_to_cpu(outer_t_rsp->length) != len) {
 		cxlmi_msg(ep->ctx, LOG_ERR,
 		  "Tunnel length not consistent with received length\n");
 		rc = -1;
@@ -761,7 +762,7 @@ static int send_mctp_tunnel2(struct cxlmi_endpoint *ep,
 	len_min -= sizeof(*inner_rsp) + sizeof(*inner_t_rsp);
 	len_max -= sizeof(*inner_rsp) + sizeof(*inner_t_rsp);
 
-	if (inner_t_rsp->length != len) {
+	if (le16_to_cpu(inner_t_rsp->length) != len) {
 		cxlmi_msg(ep->ctx, LOG_ERR,
 		  "Tunnel length not consistent with received length\n");
 		rc = -1;
@@ -837,6 +838,7 @@ send_ioctl_tunnel1(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	struct cxlmi_cmd_fmapi_tunnel_command_rsp *t_rsp;
 	size_t t_req_sz, t_rsp_sz, len_min, len_max;
 	struct cxl_send_command cmd;
+	uint16_t tunnel_len;
 	int rc, len;
 
 	cxlmi_msg(ep->ctx, LOG_DEBUG,
@@ -897,18 +899,20 @@ send_ioctl_tunnel1(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	len -= sizeof(*t_rsp);
 	len_min -= sizeof(*t_rsp);
 	len_max -= sizeof(*t_rsp);
-	if (t_rsp->length != len) {
+
+	tunnel_len = le16_to_cpu(t_rsp->length);
+	if (tunnel_len != len) {
 		cxlmi_msg(ep->ctx, LOG_ERR,
 		  "Tunnel length not consistent with ioctl data returned\n");
 		rc = -1;
 		goto free_tunnel_rsp;
 	}
-	if (t_rsp->length < len_min) {
+	if (tunnel_len < len_min) {
 		cxlmi_msg(ep->ctx, LOG_ERR,
-			  "Got back too little data ain the tunnel\n");
+			  "Got back too little data in the tunnel\n");
 		rc = -1;
 		goto free_tunnel_rsp;
-	};
+	}
 	rc = sanity_check_mctp_rsp(ep, t_req->message, t_rsp->message, len,
 			      len_max == len_min, len_min);
 	if (rc) {
@@ -947,6 +951,7 @@ send_ioctl_tunnel2(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	struct cxlmi_cmd_fmapi_tunnel_command_rsp *outer_t_rsp, *inner_t_rsp;
 	size_t outer_t_req_sz, outer_t_rsp_sz, len_min, len_max;
 	struct cxl_send_command cmd;
+	uint16_t outer_tunnel_len;
 	int rc, len;
 
 	cxlmi_msg(ep->ctx, LOG_DEBUG,
@@ -1035,16 +1040,17 @@ send_ioctl_tunnel2(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	len_min -= sizeof(*outer_t_rsp);
 	len_max -= sizeof(*outer_t_rsp);
 
-	if (outer_t_rsp->length != len) {
+	outer_tunnel_len = le16_to_cpu(outer_t_rsp->length);
+	if (outer_tunnel_len != len) {
 		cxlmi_msg(ep->ctx, LOG_ERR,
 		  "Tunnel length not consistent with ioctl data returned\n");
 		rc = -1;
 		goto free_tunnel_rsp;
 	}
-	if (outer_t_rsp->length < len_min) {
+	if (outer_tunnel_len < len_min) {
 		cxlmi_msg(ep->ctx, LOG_ERR,
-		  "Got back to little data in the tunnel overall %d %ld %d\n",
-		       outer_t_rsp->length, len_min, cmd.out.size);
+		  "Got back too little data in the tunnel overall %d %ld %d\n",
+		       outer_tunnel_len, len_min, cmd.out.size);
 		rc = -1;
 		goto free_tunnel_rsp;
 	}
@@ -1064,7 +1070,7 @@ send_ioctl_tunnel2(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	inner_t_req = (struct cxlmi_cmd_fmapi_tunnel_command_req *)inner_req->payload;
 	inner_rsp = outer_t_rsp->message;
 	inner_t_rsp = (struct cxlmi_cmd_fmapi_tunnel_command_rsp *)inner_rsp->payload;
-	if (inner_t_rsp->length != len) {
+	if (le16_to_cpu(inner_t_rsp->length) != len) {
 		cxlmi_msg(ep->ctx, LOG_ERR,
 		  "Tunnel length not consistent with ioctl data returned\n");
 		rc = -1;
