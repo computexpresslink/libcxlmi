@@ -198,6 +198,7 @@ static struct cxlmi_endpoint *init_endpoint(struct cxlmi_ctx *ctx)
 
 	list_node_init(&ep->entry);
 	ep->ctx = ctx;
+	ep->fd = -1;
 	ep->timeout_ms = 5000;
 	list_add(&ctx->endpoints, &ep->entry);
 
@@ -277,6 +278,7 @@ CXLMI_EXPORT bool cxlmi_endpoint_disable_fmapi(struct cxlmi_endpoint *ep)
 		struct cxlmi_transport_mctp *mctp = ep->transport_data;
 
 		close(mctp->fmapi_sd);
+		mctp->fmapi_sd = -1;
 		memset(&mctp->fmapi_addr, 0, sizeof(mctp->fmapi_addr));
 	}
 
@@ -288,10 +290,13 @@ static void mctp_close(struct cxlmi_endpoint *ep)
 {
 	struct cxlmi_transport_mctp *mctp = ep->transport_data;
 
-	if (cxlmi_endpoint_has_fmapi(ep))
+	if (cxlmi_endpoint_has_fmapi(ep)) {
 		close(mctp->fmapi_sd);
+		mctp->fmapi_sd = -1;
+	}
 
 	close(mctp->sd);
+	mctp->sd = -1;
 }
 
 CXLMI_EXPORT void cxlmi_close(struct cxlmi_endpoint *ep)
@@ -301,11 +306,16 @@ CXLMI_EXPORT void cxlmi_close(struct cxlmi_endpoint *ep)
 	} else if (ep->transport_data) {
 		mctp_close(ep);
 		free(ep->transport_data);
+		ep->transport_data = NULL;
 	} else {
-		if (ep->fd > 0)
+		if (ep->fd >= 0) {
 			close(ep->fd);
-		if (ep->devname)
+			ep->fd = -1;
+		}
+		if (ep->devname) {
 			free(ep->devname);
+			ep->devname = NULL;
+		}
 	}
 
 	list_del(&ep->entry);
@@ -1573,7 +1583,7 @@ CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_open(struct cxlmi_ctx *ctx,
 	snprintf(filename, sizeof(filename), "/dev/cxl/%s", devname);
 
 	ep->fd = open(filename, O_RDWR);
-	if (ep->fd <= 0) {
+	if (ep->fd < 0) {
 		errno_save = errno;
 		cxlmi_msg(ctx, LOG_ERR, "could not open %s\n", filename);
 		goto err_close_ep;
