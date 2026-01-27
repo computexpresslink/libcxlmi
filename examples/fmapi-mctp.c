@@ -125,10 +125,8 @@ int send_add(int num_extents, extent *ext_list, struct cxlmi_endpoint *ep)
     add_req = calloc(1, sizeof(*add_req) +
                      num_extents * sizeof(add_req->extents[0]));
 
-    if (!add_req) {
-        free(ext_list);
+    if (!add_req)
         return -1;
-    }
 
     add_req->host_id = 0;
     add_req->selection_policy = CXL_EXTENT_SELECTION_POLICY_PRESCRIPTIVE;
@@ -165,10 +163,8 @@ int send_release(int num_extents, extent *ext_list, struct cxlmi_endpoint *ep)
     release_req = calloc(1, sizeof(*release_req) +
         num_extents * sizeof(release_req->extents[0]));
 
-    if (!release_req) {
-        free(ext_list);
+    if (!release_req)
         return -1;
-    }
 
     release_req->host_id = 0;
     release_req->flags = CXL_EXTENT_REMOVAL_POLICY_PRESCRIPTIVE;
@@ -378,7 +374,7 @@ static int create_dax_device(void) {
 
             argc = split_cmd_to_argv(DAX_DEVICE_CMDS[i], &argv);
 
-            if (argc < 0) {
+            if (argc <= 0 || !argv || !argv[0]) {
                 printf("Failed to split command\n");
                 return -1;
             }
