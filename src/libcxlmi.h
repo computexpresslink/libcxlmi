@@ -785,8 +785,8 @@ int cxlmi_cmd_fmapi_dc_list_tags(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_vendor_specific(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
 			      uint16_t opcode,
-			      void *in, ssize_t in_size,
-			      void *ret, ssize_t ret_size);
+			      void *in, size_t in_size,
+			      void *ret, size_t ret_size);
 
 #ifdef __cplusplus
 }

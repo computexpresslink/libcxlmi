@@ -3622,15 +3622,14 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_config(struct cxlmi_endpoint *ep,
 CXLMI_EXPORT int cxlmi_cmd_vendor_specific(struct cxlmi_endpoint *ep,
 					   struct cxlmi_tunnel_info *ti,
 					   uint16_t opcode,
-					   void *in, ssize_t in_size,
-					   void *ret, ssize_t ret_size)
+					   void *in, size_t in_size,
+					   void *ret, size_t ret_size)
 {
-
 	int rc = -1;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
-	ssize_t req_sz = sizeof(*req);
-	ssize_t rsp_sz = sizeof(*rsp);
+	size_t req_sz = sizeof(*req);
+	size_t rsp_sz = sizeof(*rsp);
 
 	/* C000h-FFFFh describe vendor-specific commands */
 	if (opcode < 0xC000)
