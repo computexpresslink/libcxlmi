@@ -36,7 +36,7 @@ jobs:
             cc: clang
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
@@ -121,7 +121,7 @@ jobs:
             configure: -Dlibdbus=disabled -Dcxl2_0_mode=enabled
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - name: Install dependencies
         run: |
