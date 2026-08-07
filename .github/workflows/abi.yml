@@ -22,14 +22,14 @@ jobs:
 
       - name: Checkout base branch (PR)
         if: github.event_name == 'pull_request'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.base_ref }}
           path: base
 
       - name: Checkout base commit (push)
         if: github.event_name == 'push'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.before }}
           path: base
@@ -41,7 +41,7 @@ jobs:
           meson compile -C build
 
       - name: Checkout current
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           path: current
 
