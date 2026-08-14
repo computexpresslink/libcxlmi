@@ -284,7 +284,7 @@ static int split_cmd_to_argv(char* cmd, char*** argvp)
         if (!argv[argc]) {
             printf("Failed to allocate argv.\n");
             for (i = 0; i < argc; i++) {
-                free(argv[argc]);
+                free(argv[i]);
             }
             free(cmd_cpy);
             free(argv);
@@ -298,6 +298,12 @@ static int split_cmd_to_argv(char* cmd, char*** argvp)
 
     argv[argc] = NULL;
     free(cmd_cpy);
+
+    if (argc == 0) {
+        free(argv);
+        return -1;
+    }
+
     *argvp = argv;
     return argc;
 }
