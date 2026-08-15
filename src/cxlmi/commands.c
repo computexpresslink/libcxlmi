@@ -176,7 +176,7 @@ CXLMI_EXPORT int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 	struct cxlmi_cmd_get_event_records_req *req_pl;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
-	ssize_t rsp_sz, req_sz;
+	ssize_t rsp_sz, rsp_sz_min, req_sz;
 	int i, rc;
 
 	CXLMI_BUILD_BUG_ON(sizeof(*in) != 1);
@@ -194,12 +194,14 @@ CXLMI_EXPORT int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 	 * This command shall retrieve as many event records from the
 	 * event log that fit into the mailbox output payload (1mb).
 	 */
-	rsp_sz = sizeof(*rsp) + (CXLMI_MAX_SUPPORTED_EVENT_RECORDS * sizeof(*rsp_pl->records));
+	rsp_sz = sizeof(*rsp) + sizeof(struct cxlmi_cmd_get_event_records_rsp) +
+		 (CXLMI_MAX_SUPPORTED_EVENT_RECORDS * sizeof(*rsp_pl->records));
+	rsp_sz_min = sizeof(*rsp) + sizeof(struct cxlmi_cmd_get_event_records_rsp);
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
 		return -1;
 
-	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz_min);
 	if (rc)
 		return rc;
 
