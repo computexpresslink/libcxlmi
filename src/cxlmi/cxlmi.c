@@ -798,9 +798,9 @@ static int send_ioctl_direct(struct cxlmi_endpoint *ep,
 		.raw.opcode = req_msg->command | (req_msg->command_set << 8),
 		/* The payload is the same, but take off the CCI message header */
 		.in.size = req_msg_sz - sizeof(*req_msg),
-		.in.payload = (__u64)req_msg->payload,
+		.in.payload = (__u64)(uintptr_t)req_msg->payload,
 		.out.size = rsp_msg_sz - sizeof(*rsp_msg),
-		.out.payload = (__u64)rsp_msg->payload,
+		.out.payload = (__u64)(uintptr_t)rsp_msg->payload,
 	};
 
 	rc = ioctl(ep->fd, CXL_MEM_SEND_COMMAND, &cmd);
@@ -873,9 +873,9 @@ send_ioctl_tunnel1(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	cmd = (struct cxl_send_command) {
 		.id = CXL_MEM_COMMAND_ID_RAW,
 		.raw.opcode = 0 | (0x53 << 8),
-		.in.payload = (__u64)t_req,
+		.in.payload = (__u64)(uintptr_t)t_req,
 		.in.size = t_req_sz,
-		.out.payload = (__u64)t_rsp,
+		.out.payload = (__u64)(uintptr_t)t_rsp,
 		.out.size = t_rsp_sz,
 	};
 	rc = ioctl(ep->fd, CXL_MEM_SEND_COMMAND, &cmd);
@@ -1011,9 +1011,9 @@ send_ioctl_tunnel2(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 	cmd = (struct cxl_send_command) {
 		.id = CXL_MEM_COMMAND_ID_RAW,
 		.raw.opcode = 0 | (0x53 << 8),
-		.in.payload = (__u64)outer_t_req,
+		.in.payload = (__u64)(uintptr_t)outer_t_req,
 		.in.size = outer_t_req_sz,
-		.out.payload = (__u64)outer_t_rsp,
+		.out.payload = (__u64)(uintptr_t)outer_t_rsp,
 		.out.size = outer_t_rsp_sz,
 	};
 	rc = ioctl(ep->fd, CXL_MEM_SEND_COMMAND, &cmd);
