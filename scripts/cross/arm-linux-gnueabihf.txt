@@ -1,0 +1,23 @@
+# Meson cross file: 32-bit ARMv7 (armhf) build, e.g. for a BMC.
+# Debian/Ubuntu: apt-get install gcc-arm-linux-gnueabihf
+# Usage: meson setup build --cross-file scripts/cross/arm-linux-gnueabihf.txt
+# Dependencies need armhf multiarch packages, or disable them
+# (-Dlibdbus=disabled). Add -Ddefault_library=static -Dc_link_args=-static
+# for a self-contained test binary that does not depend on the target's libc.
+
+[binaries]
+c = 'arm-linux-gnueabihf-gcc'
+ar = 'arm-linux-gnueabihf-ar'
+strip = 'arm-linux-gnueabihf-strip'
+# Use both spellings so this works on Meson < 1.1.1 and prints no deprecation on >= 1.3.
+pkgconfig = 'pkg-config'
+pkg-config = 'pkg-config'
+
+[properties]
+pkg_config_libdir = '/usr/lib/arm-linux-gnueabihf/pkgconfig'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'arm'
+cpu = 'armv7l'
+endian = 'little'
