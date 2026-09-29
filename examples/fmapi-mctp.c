@@ -1,3 +1,4 @@
+#include <inttypes.h>
 #include <sys/wait.h>
 #include "examples.h"
 #define MAX_CHARS 50
@@ -226,8 +227,8 @@ static int get_extent_info(struct cxlmi_endpoint *ep, bool print)
 
         for (i = 0; i < rsp->extents_returned; i++) {
             printf("\t\tExtent %d Info:\n", i);
-            printf("\t\t\tStart DPA: 0x%08lx\n", rsp->extents[i].start_dpa);
-            printf("\t\t\tLength: 0x%08lx\n", rsp->extents[i].len);
+            printf("\t\t\tStart DPA: 0x%08" PRIx64 "\n", rsp->extents[i].start_dpa);
+            printf("\t\t\tLength: 0x%08" PRIx64 "\n", rsp->extents[i].len);
         }
     }
     rc = rsp->total_extents;

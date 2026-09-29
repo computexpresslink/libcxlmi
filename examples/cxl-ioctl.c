@@ -2,6 +2,7 @@
 /*
  * This file is part of libcxlmi.
  */
+#include <inttypes.h>
 #include <libcxlmi.h>
 #include "examples.h"
 
@@ -30,9 +31,9 @@ static int show_memdev_info(struct cxlmi_endpoint *ep)
 		return rc;
 
 	printf("FW revision: %s\n", id.fw_revision);
-	printf("total capacity: %ld Mb\n", 256 * id.total_capacity);
-	printf("\tvolatile: %ld Mb\n", 256 * id.volatile_capacity);
-	printf("\tpersistent: %ld Mb\n", 256 * id.persistent_capacity);
+	printf("total capacity: %" PRIu64 " Mb\n", 256 * id.total_capacity);
+	printf("\tvolatile: %" PRIu64 " Mb\n", 256 * id.volatile_capacity);
+	printf("\tpersistent: %" PRIu64 " Mb\n", 256 * id.persistent_capacity);
 	printf("lsa size: %d bytes\n", id.lsa_size);
 	printf("poison injection limit: %d\n", id.inject_poison_limit);
 	printf("poison caps 0x%x\n", id.poison_caps);
@@ -55,7 +56,7 @@ static int show_some_info_from_all_devices(struct cxlmi_ctx *ctx)
 		if (rc)
 			break;
 
-		printf("serial number: 0x%lx\n", (uint64_t)id.serial_num);
+		printf("serial number: 0x%" PRIx64 "\n", id.serial_num);
 
 		switch (id.component_type) {
 		case 0x00:
@@ -127,7 +128,7 @@ static int play_with_device_timestamp(struct cxlmi_endpoint *ep)
 	rc = cxlmi_cmd_get_timestamp(ep, NULL, &get_ts);
 	if (rc)
 		return rc;
-	printf("device timestamp: %lu\n", get_ts.timestamp);
+	printf("device timestamp: %" PRIu64 "\n", get_ts.timestamp);
 	orig_ts = get_ts.timestamp;
 
 	rc = cxlmi_cmd_set_timestamp(ep, NULL, &set_ts);
@@ -138,7 +139,7 @@ static int play_with_device_timestamp(struct cxlmi_endpoint *ep)
 	rc = cxlmi_cmd_get_timestamp(ep, NULL, &get_ts);
 	if (rc)
 		return rc;
-	printf("new device timestamp: %lu\n", get_ts.timestamp);
+	printf("new device timestamp: %" PRIu64 "\n", get_ts.timestamp);
 
 	memset(&set_ts, 0, sizeof(set_ts));
 	set_ts.timestamp = orig_ts;
@@ -154,7 +155,7 @@ static int play_with_device_timestamp(struct cxlmi_endpoint *ep)
 	rc = cxlmi_cmd_get_timestamp(ep, NULL, &get_ts);
 	if (rc)
 		return rc;
-	printf("reset back to original device timestamp: %lu\n", get_ts.timestamp);
+	printf("reset back to original device timestamp: %" PRIu64 "\n", get_ts.timestamp);
 
 	return 0;
 }
@@ -200,8 +201,8 @@ static int play_with_scan_media(struct cxlmi_endpoint *ep)
 		return rc;
 	}
 
-	printf("Get scan media results - \n restart phy address : 0x%lx\n"
-	       "Physical address length : %ld\n scan media flags : %d\n"
+	printf("Get scan media results - \n restart phy address : 0x%" PRIx64 "\n"
+	       "Physical address length : %" PRIu64 "\n scan media flags : %d\n"
 	       "media error count : %d",
 	       results.scan_media_restart_physaddr,
 	       results.scan_media_restart_physaddr_length,
@@ -440,7 +441,7 @@ static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 		if (rc[i])
 			return rc[i];
 		else {
-			printf("Inject poison physical address - %d - %ld\n",
+			printf("Inject poison physical address - %d - %" PRIu64 "\n",
 			       i, inject_poison[i].inject_poison_phy_addr);
 		}
 
@@ -452,11 +453,11 @@ static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 		else {
 			printf("Get poison list flags - %d\n",
 					get_poison_list_rsp[i].poison_list_flags);
-			printf("Get poison list overflow timestamp - %ld\n",
+			printf("Get poison list overflow timestamp - %" PRIu64 "\n",
 					get_poison_list_rsp[i].overflow_timestamp);
 			printf("Get poison list more media err count - %d\n",
 					get_poison_list_rsp[i].more_err_media_record_cnt);
-			printf("Get poison list media err records err address - %ld\n",
+			printf("Get poison list media err records err address - %" PRIu64 "\n",
 					get_poison_list_rsp[i].records[0].media_err_addr);
 			printf("Get poison list media err records err length - %d\n",
 					get_poison_list_rsp[i].records[0].media_err_len);
