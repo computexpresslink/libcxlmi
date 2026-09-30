@@ -1,0 +1,8 @@
+# Overlay for scripts/cross/arm-linux-gnueabihf.txt: run the cross-built
+# test binaries under qemu-user on an x86-64 host.
+# Debian/Ubuntu: apt-get install qemu-user-static libc6-armhf-cross
+# Usage: meson setup build --cross-file scripts/cross/arm-linux-gnueabihf.txt \
+#                         --cross-file scripts/cross/qemu-arm.txt
+
+[binaries]
+exe_wrapper = ['qemu-arm-static', '-L', '/usr/arm-linux-gnueabihf']
