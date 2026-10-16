@@ -1,0 +1,25 @@
+# Meson cross file: 32-bit x86 (i686) build with a real cross toolchain,
+# for a non-x86 host such as an arm64 workstation targeting an i386 BMC.
+# Debian/Ubuntu: apt-get install gcc-i686-linux-gnu
+# Usage: meson setup build --cross-file scripts/cross/i686-linux-gnu.txt
+# Dependencies need i386 multiarch packages, or disable them
+# (-Dlibdbus=disabled). Add -Ddefault_library=static -Dc_link_args=-static
+# for a self-contained test binary that does not depend on the target's libc.
+# On an x86-64 host, scripts/cross/i686-multilib.txt (gcc -m32) is simpler.
+
+[binaries]
+c = 'i686-linux-gnu-gcc'
+ar = 'i686-linux-gnu-ar'
+strip = 'i686-linux-gnu-strip'
+# Use both spellings so this works on Meson < 1.1.1 and prints no deprecation on >= 1.3.
+pkgconfig = 'pkg-config'
+pkg-config = 'pkg-config'
+
+[properties]
+pkg_config_libdir = '/usr/lib/i386-linux-gnu/pkgconfig'
+
+[host_machine]
+system = 'linux'
+cpu_family = 'x86'
+cpu = 'i686'
+endian = 'little'
