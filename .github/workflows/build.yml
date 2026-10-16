@@ -54,6 +54,27 @@ jobs:
       - name: Run mock tests
         run: meson test -C build
 
+  build-32bit:
+    name: Build (gcc, i686)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y meson gcc-multilib libdbus-1-dev:i386
+
+      - name: Configure
+        run: meson setup build --cross-file scripts/cross/i686-multilib.txt -Dlibdbus=enabled --werror
+
+      - name: Build
+        run: meson compile -C build
+
+      - name: Run mock tests
+        run: meson test -C build
+
   build-options:
     name: Options (${{ matrix.name }}, ${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
