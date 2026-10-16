@@ -342,7 +342,8 @@ earlier (2.0) and later versions of CXL.
 
 Requirements
 ============
-1. arm64 or x86-64 architecture.
+1. x86-64 or arm64 architecture, or a 32-bit x86/ARM target built with
+   one of the cross files described under Build.
 
 2. Linux kernel v5.15+ for MCTP support (as well as header files).
 
@@ -374,6 +375,43 @@ Alternatively, to configure for static libraries:
 ```
 meson setup --default-library=static build
 ```
+To cross-compile for a 32-bit target such as a BMC, pass one of the cross
+files in `scripts/cross/` with `--cross-file`. The `qemu-*.txt` overlays
+additionally let `meson test` run the cross-built tests under qemu-user.
+
+On an x86-64 host:
+
+* 32-bit ARM (armhf), `apt-get install gcc-arm-linux-gnueabihf qemu-user-static`:
+```
+meson setup build --cross-file scripts/cross/arm-linux-gnueabihf.txt \
+                  --cross-file scripts/cross/qemu-arm.txt
+```
+* 32-bit x86 (i686), `apt-get install gcc-multilib`. The tests run natively,
+  so no qemu overlay is needed:
+```
+meson setup build --cross-file scripts/cross/i686-multilib.txt
+```
+
+On an arm64 host:
+
+* 32-bit ARM (armhf), `apt-get install gcc-arm-linux-gnueabihf qemu-user-static`.
+  Drop the `qemu-arm.txt` overlay if the CPU can execute AArch32 binaries
+  natively:
+```
+meson setup build --cross-file scripts/cross/arm-linux-gnueabihf.txt \
+                  --cross-file scripts/cross/qemu-arm.txt
+```
+* 32-bit x86 (i686), `apt-get install gcc-i686-linux-gnu qemu-user-static libc6-i386-cross`:
+```
+meson setup build --cross-file scripts/cross/i686-linux-gnu.txt \
+                  --cross-file scripts/cross/qemu-i386.txt
+```
+
+Dependencies such as libdbus need the matching multiarch packages (e.g.
+`libdbus-1-dev:i386`), or disable them with `-Dlibdbus=disabled`. Add
+`-Ddefault_library=static -Dc_link_args=-static` for a self-contained test
+binary that does not depend on the target's libc.
+
 Also, to configure with dbus support to enable MCTP scanning:
 ```
 meson setup -Dlibdbus=enabled -Dmctpd=(openbmc | codeconstruct) build
