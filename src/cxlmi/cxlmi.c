@@ -410,7 +410,8 @@ static int send_mctp_direct(struct cxlmi_endpoint *ep, bool fmapi,
 			    struct cxlmi_cci_msg *rsp_msg, size_t rsp_msg_sz,
 			    size_t rsp_msg_sz_min)
 {
-	int rc, errno_save, len;
+	int rc, errno_save;
+	ssize_t len;
 	struct sockaddr_mctp addrrx;
 	socklen_t addrlen = sizeof(addrrx);
 	struct cxlmi_transport_mctp *mctp = ep->transport_data;
@@ -450,6 +451,12 @@ static int send_mctp_direct(struct cxlmi_endpoint *ep, bool fmapi,
 
 	len = recvfrom(sd, rsp_msg, rsp_msg_sz, 0,
 		       (struct sockaddr *)&addrrx, &addrlen);
+	if (len < 0) {
+		errno_save = errno;
+		cxlmi_msg(ep->ctx, LOG_ERR, "Failed to receive on MCTP socket: %m\n");
+		errno = errno_save;
+		return -1;
+	}
 
 	return sanity_check_mctp_rsp(ep, req_msg, rsp_msg, len,
 				rsp_msg_sz == rsp_msg_sz_min, rsp_msg_sz_min);
@@ -540,7 +547,8 @@ static int send_mctp_tunnel1(struct cxlmi_endpoint *ep,
 	struct pollfd pollfds[1];
 	int timeout = ep->timeout_ms ? ep->timeout_ms : -1;
 	size_t t_req_msg_sz, t_rsp_msg_sz, len_max, len_min;
-	int len, rc, errno_save;
+	int rc, errno_save;
+	ssize_t len;
 	socklen_t addrlen = sizeof(addrrx);
 
 	cxlmi_msg(ep->ctx, LOG_DEBUG, "1 Level tunnel of opcode %02x%02x\n",
@@ -594,6 +602,13 @@ static int send_mctp_tunnel1(struct cxlmi_endpoint *ep,
 
 	len = recvfrom(mctp->fmapi_sd, t_rsp_msg, t_rsp_msg_sz, 0,
 		       (struct sockaddr *)&addrrx, &addrlen);
+	if (len < 0) {
+		errno_save = errno;
+		cxlmi_msg(ep->ctx, LOG_ERR, "Failed to receive on MCTP socket: %m\n");
+		errno = errno_save;
+		rc = -1;
+		goto free_rsp;
+	}
 
 	/*
 	 * For the outer tunnel response, don't use fixed-length check.
@@ -651,7 +666,8 @@ static int send_mctp_tunnel2(struct cxlmi_endpoint *ep,
 	struct pollfd pollfds[1];
 	struct sockaddr_mctp addrrx;
 	int timeout = ep->timeout_ms ? ep->timeout_ms : -1;
-	int errno_save, len, rc;
+	int errno_save, rc;
+	ssize_t len;
 	socklen_t addrlen = sizeof(addrrx);
 
 	cxlmi_msg(ep->ctx, LOG_DEBUG, "2 Level tunnel of opcode %02x%02x\n",
@@ -715,6 +731,13 @@ static int send_mctp_tunnel2(struct cxlmi_endpoint *ep,
 
 	len = recvfrom(mctp->fmapi_sd, outer_rsp, outer_rsp_sz, 0,
 		       (struct sockaddr *)&addrrx, &addrlen);
+	if (len < 0) {
+		errno_save = errno;
+		cxlmi_msg(ep->ctx, LOG_ERR, "Failed to receive on MCTP socket: %m\n");
+		errno = errno_save;
+		rc = -1;
+		goto free_outer_rsp;
+	}
 
 	/*
 	 * For the outer tunnel response, don't use fixed-length check.
