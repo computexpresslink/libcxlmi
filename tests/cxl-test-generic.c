@@ -36,7 +36,7 @@ static void test_identify(struct cxlmi_endpoint *ep)
 		printf("           device_id: 0x%04x\n", rsp.device_id);
 		printf("           subsys_vendor_id: 0x%04x\n", rsp.subsys_vendor_id);
 		printf("           subsys_id: 0x%04x\n", rsp.subsys_id);
-		printf("           serial_num: 0x%016lx\n", (unsigned long)rsp.serial_num);
+		printf("           serial_num: 0x%016" PRIx64 "\n", rsp.serial_num);
 		printf("           component_type: %u\n", rsp.component_type);
 	}
 }
@@ -150,7 +150,7 @@ static void test_get_timestamp(struct cxlmi_endpoint *ep)
 
 	TEST_PASS("get_timestamp");
 	if (verbose)
-		printf("           timestamp: %lu\n", (unsigned long)rsp.timestamp);
+		printf("           timestamp: %" PRIu64 "\n", rsp.timestamp);
 }
 
 static void test_set_timestamp(struct cxlmi_endpoint *ep)

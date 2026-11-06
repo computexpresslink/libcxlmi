@@ -2,6 +2,7 @@
 /*
  * This file is part of libcxlmi.
  */
+#include <inttypes.h>
 #include <libcxlmi.h>
 #include "examples.h"
 
@@ -17,9 +18,9 @@ static int show_memdev_info(struct cxlmi_endpoint *ep)
 		return rc;
 
 	printf("FW revision: %s\n", id.fw_revision);
-	printf("total capacity: %ld Mb\n", 256 * id.total_capacity);
-	printf("\tvolatile: %ld Mb\n", 256 * id.volatile_capacity);
-	printf("\tpersistent: %ld Mb\n", 256 * id.persistent_capacity);
+	printf("total capacity: %" PRIu64 " Mb\n", 256 * id.total_capacity);
+	printf("\tvolatile: %" PRIu64 " Mb\n", 256 * id.volatile_capacity);
+	printf("\tpersistent: %" PRIu64 " Mb\n", 256 * id.persistent_capacity);
 	printf("lsa size: %d bytes\n", id.lsa_size);
 	printf("poison injection limit: %d\n", id.inject_poison_limit);
 	printf("poison caps 0x%x\n", id.poison_caps);
@@ -150,7 +151,7 @@ static int show_device_info(struct cxlmi_endpoint *ep)
 	if (rc)
 		return rc;
 
-	printf("serial number: 0x%lx\n", (uint64_t)id.serial_num);
+	printf("serial number: 0x%" PRIx64 "\n", id.serial_num);
 
 	switch (id.component_type) {
 	case 0x00:
@@ -234,7 +235,7 @@ static int play_with_device_timestamp(struct cxlmi_endpoint *ep)
 	rc = cxlmi_cmd_get_timestamp(ep, NULL, &get_ts);
 	if (rc)
 		return rc;
-	printf("device timestamp: %lu\n", get_ts.timestamp);
+	printf("device timestamp: %" PRIu64 "\n", get_ts.timestamp);
 	orig_ts = get_ts.timestamp;
 
 	rc = cxlmi_cmd_set_timestamp(ep, NULL, &set_ts);
@@ -245,7 +246,7 @@ static int play_with_device_timestamp(struct cxlmi_endpoint *ep)
 	rc = cxlmi_cmd_get_timestamp(ep, NULL, &get_ts);
 	if (rc)
 		return rc;
-	printf("new device timestamp: %lu\n", get_ts.timestamp);
+	printf("new device timestamp: %" PRIu64 "\n", get_ts.timestamp);
 
 	memset(&set_ts, 0, sizeof(set_ts));
 	set_ts.timestamp = orig_ts;
@@ -261,7 +262,7 @@ static int play_with_device_timestamp(struct cxlmi_endpoint *ep)
 	rc = cxlmi_cmd_get_timestamp(ep, NULL, &get_ts);
 	if (rc)
 		return rc;
-	printf("reset back to original device timestamp: %lu\n", get_ts.timestamp);
+	printf("reset back to original device timestamp: %" PRIu64 "\n", get_ts.timestamp);
 
 	return 0;
 }
@@ -326,7 +327,8 @@ static int play_with_dcd(struct cxlmi_endpoint *ep)
 	printf("# of regions returned: %d\n", out->regions_returned);
 
 	for (i = 0; i < out->regions_returned; i++) {
-		printf("region %d: base %lu decode_len %lu region_len %lu block_size %lu\n",
+		printf("region %d: base %" PRIu64 " decode_len %" PRIu64
+		       " region_len %" PRIu64 " block_size %" PRIu64 "\n",
 				req.start_region_id + i,
 				out->region_configs[i].base,
 				out->region_configs[i].decode_len,
@@ -397,7 +399,7 @@ static int show_dc_extents(struct cxlmi_endpoint *ep)
 
 		printf("# of extents returned: %u\n", out->num_extents_returned);
 		for (i = 0; i < out->num_extents_returned; i++) {
-			printf("extent[%u] : [%lx, %lx]\n", i + req.start_extent_idx,
+			printf("extent[%u] : [%" PRIx64 ", %" PRIx64 "]\n", i + req.start_extent_idx,
 					out->extents[i].start_dpa,
 					out->extents[i].len);
 		}
@@ -508,7 +510,7 @@ static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 		if (rc[i])
 			return rc[i];
 		else {
-			printf("Inject poison physical address - %d - %ld\n",
+			printf("Inject poison physical address - %d - %" PRIu64 "\n",
 			       i, inject_poison[i].inject_poison_phy_addr);
 		}
 
@@ -520,11 +522,11 @@ static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 		else {
 			printf("Get poison list flags - %d\n",
 			       get_poison_list_rsp[i].poison_list_flags);
-			printf("Get poison list overflow timestamp - %ld\n",
+			printf("Get poison list overflow timestamp - %" PRIu64 "\n",
 			       get_poison_list_rsp[i].overflow_timestamp);
 			printf("Get poison list more media err count - %d\n",
 			       get_poison_list_rsp[i].more_err_media_record_cnt);
-			printf("Get poison list media err records err address - %ld\n",
+			printf("Get poison list media err records err address - %" PRIu64 "\n",
 			       get_poison_list_rsp[i].records[0].media_err_addr);
 			printf("Get poison list media err records err length - %d\n",
 			       get_poison_list_rsp[i].records[0].media_err_len);
@@ -561,10 +563,10 @@ static int test_fmapi_get_dcd_info(struct cxlmi_endpoint *ep)
 	printf("\tcapacity_selection_policies: %hu\n", out->capacity_selection_policies);
 	printf("\tcapacity_removal_policies: %hu\n", out->capacity_removal_policies);
 	printf("\tsanitize_on_release: %hhu\n", out->sanitize_on_release_config_mask);
-	printf("\ttotal dynamic capacity: %lu\n", out->total_dynamic_capacity);
-	printf("\tregion 0 supported block sizes: %lu\n",
+	printf("\ttotal dynamic capacity: %" PRIu64 "\n", out->total_dynamic_capacity);
+	printf("\tregion 0 supported block sizes: %" PRIu64 "\n",
 		out->region_0_supported_blk_sz_mask);
-	printf("\tregion 1 supported block sizes: %lu\n",
+	printf("\tregion 1 supported block sizes: %" PRIu64 "\n",
 		out->region_1_supported_blk_sz_mask);
 
 free_out:
@@ -603,10 +605,10 @@ static int test_fmapi_get_host_dc_region_config(struct cxlmi_endpoint *ep)
 
 	for (i = 0; i < dc_region_config_rsp->regions_returned; i++) {
 		printf("\t\tRegion %d:\n", i);
-		printf("\t\t\tBase: %lu\n", dc_region_config_rsp->region_configs[i].base);
-		printf("\t\t\tBlk_sz: %lu\n", dc_region_config_rsp->region_configs[i].block_size);
-		printf("\t\t\tLen: %lu\n", dc_region_config_rsp->region_configs[i].region_len);
-		printf("\t\t\tDecode_len: %lu\n", dc_region_config_rsp->region_configs[i].decode_len);
+		printf("\t\t\tBase: %" PRIu64 "\n", dc_region_config_rsp->region_configs[i].base);
+		printf("\t\t\tBlk_sz: %" PRIu64 "\n", dc_region_config_rsp->region_configs[i].block_size);
+		printf("\t\t\tLen: %" PRIu64 "\n", dc_region_config_rsp->region_configs[i].region_len);
+		printf("\t\t\tDecode_len: %" PRIu64 "\n", dc_region_config_rsp->region_configs[i].decode_len);
 		printf("\t\t\tFlags: %hhu\n", dc_region_config_rsp->region_configs[i].flags);
 	}
 
@@ -675,8 +677,8 @@ static int print_ext_list(struct cxlmi_endpoint *ep,
 
         for (i = 0; i < rsp->extents_returned; i++) {
             printf("\t\tExtent %d Info:\n", rsp->start_ext_index + i);
-            printf("\t\t\tStart DPA: %lu\n", rsp->extents[i].start_dpa);
-            printf("\t\t\tLength: %lu\n", rsp->extents[i].len);
+            printf("\t\t\tStart DPA: %" PRIu64 "\n", rsp->extents[i].start_dpa);
+            printf("\t\t\tLength: %" PRIu64 "\n", rsp->extents[i].len);
         }
 
         exts_returned += rsp->extents_returned;

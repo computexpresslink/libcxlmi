@@ -1,0 +1,8 @@
+# Overlay for scripts/cross/i686-linux-gnu.txt: run the cross-built
+# test binaries under qemu-user on a non-x86 host.
+# Debian/Ubuntu: apt-get install qemu-user-static libc6-i386-cross
+# Usage: meson setup build --cross-file scripts/cross/i686-linux-gnu.txt \
+#                         --cross-file scripts/cross/qemu-i386.txt
+
+[binaries]
+exe_wrapper = ['qemu-i386-static', '-L', '/usr/i686-linux-gnu']

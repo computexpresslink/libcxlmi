@@ -396,8 +396,8 @@ static void test_get_ld_info(struct cxlmi_endpoint *ep)
 
 	TEST_PASS("get_ld_info");
 	if (verbose) {
-		printf("           memory_size: %lu MB\n",
-		       (unsigned long)(rsp.memory_size * 256));
+		printf("           memory_size: %" PRIu64 " MB\n",
+		       rsp.memory_size * 256);
 		printf("           ld_count: %u\n", rsp.ld_count);
 	}
 }
@@ -895,8 +895,8 @@ static void test_get_dcd_info(struct cxlmi_endpoint *ep)
 		printf("           num_hosts: %u\n", rsp.num_hosts);
 		printf("           num_supported_dc_regions: %u\n",
 		       rsp.num_supported_dc_regions);
-		printf("           total_dynamic_capacity: %lu MB\n",
-		       (unsigned long)(rsp.total_dynamic_capacity * 256));
+		printf("           total_dynamic_capacity: %" PRIu64 " MB\n",
+		       rsp.total_dynamic_capacity * 256);
 	}
 }
 

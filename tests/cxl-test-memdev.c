@@ -38,12 +38,12 @@ static void test_identify(struct cxlmi_endpoint *ep)
 
 	TEST_PASS("identify");
 	if (verbose) {
-		printf("           total_capacity: %lu MB\n",
-		       (unsigned long)(rsp.total_capacity * 256));
-		printf("           volatile_capacity: %lu MB\n",
-		       (unsigned long)(rsp.volatile_capacity * 256));
-		printf("           persistent_capacity: %lu MB\n",
-		       (unsigned long)(rsp.persistent_capacity * 256));
+		printf("           total_capacity: %" PRIu64 " MB\n",
+		       rsp.total_capacity * 256);
+		printf("           volatile_capacity: %" PRIu64 " MB\n",
+		       rsp.volatile_capacity * 256);
+		printf("           persistent_capacity: %" PRIu64 " MB\n",
+		       rsp.persistent_capacity * 256);
 		printf("           lsa_size: %u bytes\n", rsp.lsa_size);
 		printf("           inject_poison_limit: %u\n", rsp.inject_poison_limit);
 	}
@@ -66,14 +66,14 @@ static void test_get_partition_info(struct cxlmi_endpoint *ep)
 
 	TEST_PASS("get_partition_info");
 	if (verbose) {
-		printf("           active_vmem: %lu MB\n",
-		       (unsigned long)(rsp.active_vmem * 256));
-		printf("           active_pmem: %lu MB\n",
-		       (unsigned long)(rsp.active_pmem * 256));
-		printf("           next_vmem: %lu MB\n",
-		       (unsigned long)(rsp.next_vmem * 256));
-		printf("           next_pmem: %lu MB\n",
-		       (unsigned long)(rsp.next_pmem * 256));
+		printf("           active_vmem: %" PRIu64 " MB\n",
+		       rsp.active_vmem * 256);
+		printf("           active_pmem: %" PRIu64 " MB\n",
+		       rsp.active_pmem * 256);
+		printf("           next_vmem: %" PRIu64 " MB\n",
+		       rsp.next_vmem * 256);
+		printf("           next_pmem: %" PRIu64 " MB\n",
+		       rsp.next_pmem * 256);
 	}
 }
 
@@ -856,8 +856,8 @@ static void test_media_operations_discovery(struct cxlmi_endpoint *ep)
 
 	TEST_PASS("media_operations_discovery");
 	if (verbose) {
-		printf("           dpa_range_granularity: %lu\n",
-		       (unsigned long)rsp->dpa_range_granularity);
+		printf("           dpa_range_granularity: %" PRIu64 "\n",
+		       rsp->dpa_range_granularity);
 		printf("           total_supported_ops: %u\n",
 		       rsp->total_supported_ops);
 		printf("           num_supported_ops: %u\n",

@@ -54,6 +54,80 @@ jobs:
       - name: Run mock tests
         run: meson test -C build
 
+  build-32bit:
+    name: Build (gcc, i686)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          sudo dpkg --add-architecture i386
+          sudo apt-get update
+          sudo apt-get install -y meson gcc-multilib libdbus-1-dev:i386
+
+      - name: Configure
+        run: meson setup build --cross-file scripts/cross/i686-multilib.txt -Dlibdbus=enabled --werror
+
+      - name: Build
+        run: meson compile -C build
+
+      - name: Run mock tests
+        run: meson test -C build
+
+  build-armhf:
+    name: Build (gcc, armhf cross + qemu-user, ${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: minimal
+            configure: -Dlibdbus=disabled
+            packages: ""
+          - name: dbus-openbmc
+            configure: -Dlibdbus=enabled -Dmctpd=openbmc
+            packages: libdbus-1-dev:armhf
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Enable armhf multiarch
+        if: matrix.packages != ''
+        run: |
+          sudo dpkg --add-architecture armhf
+          # The default mirrors only carry amd64; armhf lives on ports.
+          sudo sed -i 's/^Types: deb$/Types: deb\nArchitectures: amd64/' \
+            /etc/apt/sources.list.d/ubuntu.sources
+          # Pin one-line sources to amd64 too, leaving any existing arch= alone.
+          sudo sed -i -e 's/^deb \([^[]\)/deb [arch=amd64] \1/' \
+            -e '/^deb \[/{/arch=/!s/^deb \[/deb [arch=amd64 /}' \
+            /etc/apt/sources.list.d/*.list || true
+          sudo tee /etc/apt/sources.list.d/ubuntu-ports.sources > /dev/null <<EOF
+          Types: deb
+          URIs: http://ports.ubuntu.com/ubuntu-ports
+          Suites: noble noble-updates noble-security
+          Components: main universe
+          Architectures: armhf
+          EOF
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson gcc-arm-linux-gnueabihf qemu-user-static ${{ matrix.packages }}
+
+      - name: Configure
+        run: >
+          meson setup build
+          --cross-file scripts/cross/arm-linux-gnueabihf.txt
+          --cross-file scripts/cross/qemu-arm.txt
+          ${{ matrix.configure }} --werror
+
+      - name: Build
+        run: meson compile -C build
+
+      - name: Run mock tests
+        run: meson test -C build
+
   build-options:
     name: Options (${{ matrix.name }}, ${{ matrix.arch }})
     runs-on: ${{ matrix.os }}
