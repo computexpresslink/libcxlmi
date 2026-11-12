@@ -220,3 +220,5 @@ endif
 
 mode = ['rw-r--r--', 0, 0]
 install_headers('src/libcxlmi.h', install_mode: mode)
+install_headers('src/cxlmi/api-types.h', 'src/cxlmi/log.h',
+		subdir: 'cxlmi', install_mode: mode)

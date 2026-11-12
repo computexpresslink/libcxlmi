@@ -5,6 +5,9 @@
 #ifndef __LIBCXLMI_H__
 #define __LIBCXLMI_H__
 
+#include <stddef.h>
+#include <stdio.h>
+
 #include "cxlmi/api-types.h"
 #include "cxlmi/log.h"
 

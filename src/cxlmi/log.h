@@ -3,8 +3,8 @@
  * This file is part of libcxlmi.
  */
 
-#ifndef _LOG_H
-#define _LOG_H
+#ifndef _LIBCXLMI_LOG_H
+#define _LIBCXLMI_LOG_H
 
 #include <stdio.h>
 #include <stdbool.h>
