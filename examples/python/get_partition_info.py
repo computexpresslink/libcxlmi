@@ -69,8 +69,6 @@ def main():
         print(f"Usage: {sys.argv[0]} | {sys.argv[0]} <cxl_device>")
         return 1
 
-    device_name = sys.argv[1]
-
     ctx = cxlmi_new_ctx(None, 6)
     if not ctx:
         print("Failed to create context")
@@ -92,7 +90,7 @@ def main():
                 send_get_partition_info(ep)
                 cxlmi_close(ep)
     elif len(sys.argv) == 2:
-        device_name = int(sys.argv[1])
+        device_name = sys.argv[1]
         # Open IOCTL EP
         ep = cxlmi_open(ctx, device_name.encode())
         if not ep:
