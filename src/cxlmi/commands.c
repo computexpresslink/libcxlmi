@@ -177,6 +177,7 @@ CXLMI_EXPORT int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
 	ssize_t rsp_sz, rsp_sz_min, req_sz;
+	uint32_t pl_length;
 	int i, rc;
 
 	CXLMI_BUILD_BUG_ON(sizeof(*in) != 1);
@@ -206,6 +207,14 @@ CXLMI_EXPORT int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 		return rc;
 
 	rsp_pl = (struct cxlmi_cmd_get_event_records_rsp *)rsp->payload;
+	pl_length = cci_msg_pl_length(rsp);
+	if (le16_to_cpu(rsp_pl->record_count) >
+	    (pl_length - sizeof(*rsp_pl)) / sizeof(*rsp_pl->records)) {
+		cxlmi_msg(ep->ctx, LOG_ERR,
+			  "Event Record Count exceeds the response payload\n");
+		return -1;
+	}
+
 	ret->flags = rsp_pl->flags;
 	ret->overflow_err_count = le16_to_cpu(rsp_pl->overflow_err_count);
 	ret->first_overflow_timestamp =
