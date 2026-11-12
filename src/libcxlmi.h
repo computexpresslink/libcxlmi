@@ -69,6 +69,10 @@ struct cxlmi_endpoint *cxlmi_open_mctp(struct cxlmi_ctx *ctx,
  * This requires libcxlmi to be compiled with D-Bus support; if not, this
  * will return -1.
  *
+ * Both the OpenBMC D-Bus names (mctpd up to v1.1) and the Code Construct
+ * ones (mctpd v2.0 and later) are tried, starting with the one selected by
+ * the mctpd build option.
+ *
  * Return: The number of opened MCTP endpoints after the scan, or -1
  * upon failure.
  *

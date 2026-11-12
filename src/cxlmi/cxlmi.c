@@ -1427,7 +1427,11 @@ static int handle_mctp_endpoint(struct cxlmi_ctx *ctx, const char* objpath,
 			rc = read_variant_basic(&val, DBUS_TYPE_BYTE, &eid);
 			have_eid = true;
 		} else if (!strcmp(propname, "NetworkId")) {
+			/* 'u' as of mctpd 2.0, 'i' before that */
 			rc = read_variant_basic(&val, DBUS_TYPE_UINT32, &net);
+			if (rc)
+				rc = read_variant_basic(&val, DBUS_TYPE_INT32,
+							&net);
 			have_net = true;
 		} else if (!strcmp(propname, "SupportedMessageTypes")) {
 			have_cxlmi = has_message_type(&val, MCTP_TYPE_CXL_CCI);
@@ -1527,9 +1531,82 @@ static int handle_mctp_obj(struct cxlmi_ctx *ctx, DBusMessageIter *obj,
 	return 0;
 }
 
+/*
+ * mctpd has been reachable under two sets of D-Bus names: the OpenBMC ones
+ * up to v1.1, and its own as of v2.0. Try the configured one first, then
+ * the other, so that one build works with either daemon.
+ */
+static const struct {
+	const char *name;
+	const char *path;
+} mctpd_services[] = {
+	{ MCTP_DBUS_IFACE, MCTP_DBUS_PATH },
+	{ "au.com.codeconstruct.MCTP1", "/au/com/codeconstruct/mctp1" },
+	{ "xyz.openbmc_project.MCTP", "/xyz/openbmc_project/mctp" },
+};
+
+static bool mctpd_error_is_unowned(DBusError *err)
+{
+	return dbus_error_has_name(err, DBUS_ERROR_SERVICE_UNKNOWN) ||
+		dbus_error_has_name(err, DBUS_ERROR_NAME_HAS_NO_OWNER);
+}
+
+static DBusMessage *mctpd_get_managed_objects(struct cxlmi_ctx *ctx,
+					      DBusConnection *bus,
+					      DBusError *berr)
+{
+	DBusMessage *msg, *resp;
+	DBusError err;
+	size_t i;
+
+	for (i = 0; i < ARRAY_SIZE(mctpd_services); i++) {
+		if (i && !strcmp(mctpd_services[i].name,
+				 mctpd_services[0].name))
+			continue;
+
+		msg = dbus_message_new_method_call(mctpd_services[i].name,
+					mctpd_services[i].path,
+					"org.freedesktop.DBus.ObjectManager",
+					"GetManagedObjects");
+		if (!msg) {
+			cxlmi_msg(ctx, LOG_ERR,
+				  "Failed creating call message\n");
+			errno = ENOMEM;
+			return NULL;
+		}
+
+		dbus_error_init(&err);
+		resp = dbus_connection_send_with_reply_and_block(bus, msg,
+						DBUS_TIMEOUT_USE_DEFAULT,
+						&err);
+		dbus_message_unref(msg);
+		if (resp)
+			return resp;
+
+		/*
+		 * Only look elsewhere if nothing owns this name. If nothing
+		 * owns any of them, report that for the configured one.
+		 */
+		if (!mctpd_error_is_unowned(&err)) {
+			dbus_error_free(berr);
+			dbus_move_error(&err, berr);
+			break;
+		}
+
+		if (dbus_error_is_set(berr))
+			dbus_error_free(&err);
+		else
+			dbus_move_error(&err, berr);
+	}
+
+	cxlmi_msg(ctx, LOG_ERR, "Failed querying MCTP D-Bus: %s (%s)\n",
+		  berr->message, berr->name);
+	return NULL;
+}
+
 int cxlmi_scan_mctp(struct cxlmi_ctx *ctx)
 {
-	DBusMessage *msg, *resp = NULL;
+	DBusMessage *resp = NULL;
 	DBusConnection *bus = NULL;
 	DBusMessageIter args, objs;
 	dbus_bool_t drc;
@@ -1545,25 +1622,9 @@ int cxlmi_scan_mctp(struct cxlmi_ctx *ctx)
 		goto out;
 	}
 
-	msg = dbus_message_new_method_call(MCTP_DBUS_IFACE,
-					   MCTP_DBUS_PATH,
-					   "org.freedesktop.DBus.ObjectManager",
-					   "GetManagedObjects");
-	if (!msg) {
-		cxlmi_msg(ctx, LOG_ERR, "Failed creating call message\n");
-		errno = ENOMEM;
+	resp = mctpd_get_managed_objects(ctx, bus, &berr);
+	if (!resp)
 		goto out;
-	}
-
-	resp = dbus_connection_send_with_reply_and_block(bus, msg,
-							 DBUS_TIMEOUT_USE_DEFAULT,
-							 &berr);
-	dbus_message_unref(msg);
-	if (!resp) {
-		cxlmi_msg(ctx, LOG_ERR, "Failed querying MCTP D-Bus: %s (%s)\n",
-			  berr.message, berr.name);
-		goto out;
-	}
 
 	/* argument container */
 	drc = dbus_message_iter_init(resp, &args);
