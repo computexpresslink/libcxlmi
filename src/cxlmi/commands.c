@@ -379,7 +379,9 @@ cxlmi_cmd_set_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
 {
 	struct cxlmi_cmd_set_mctp_event_interrupt_policy_req *req_pl;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
-	struct cxlmi_cci_msg rsp;
+	uint8_t rsp_buf[sizeof(struct cxlmi_cci_msg) +
+			sizeof(struct cxlmi_cmd_set_mctp_event_interrupt_policy_req)];
+	struct cxlmi_cci_msg *rsp = (struct cxlmi_cci_msg *)rsp_buf;
 	size_t req_sz;
 	int rc = 0;
 
@@ -396,7 +398,12 @@ cxlmi_cmd_set_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
 	req_pl->event_interrupt_settings =
 		cpu_to_le16(in->event_interrupt_settings);
 
-	rc = send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+	/*
+	 * The output payload (CXL r3.1 Table 8-57) is the settings now in
+	 * effect; accept a device that sends it as well as one that does not.
+	 */
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, sizeof(rsp_buf),
+			  sizeof(*rsp));
 	return rc;
 }
 
