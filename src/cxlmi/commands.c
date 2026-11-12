@@ -177,6 +177,7 @@ CXLMI_EXPORT int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
 	ssize_t rsp_sz, rsp_sz_min, req_sz;
+	uint32_t pl_length;
 	int i, rc;
 
 	CXLMI_BUILD_BUG_ON(sizeof(*in) != 1);
@@ -206,6 +207,15 @@ CXLMI_EXPORT int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 		return rc;
 
 	rsp_pl = (struct cxlmi_cmd_get_event_records_rsp *)rsp->payload;
+	pl_length = rsp->pl_length[0] | (rsp->pl_length[1] << 8) |
+		((rsp->pl_length[2] & 0xf) << 16);
+	if (le16_to_cpu(rsp_pl->record_count) >
+	    (pl_length - sizeof(*rsp_pl)) / sizeof(*rsp_pl->records)) {
+		cxlmi_msg(ep->ctx, LOG_ERR,
+			  "Event Record Count exceeds the response payload\n");
+		return -1;
+	}
+
 	ret->flags = rsp_pl->flags;
 	ret->overflow_err_count = le16_to_cpu(rsp_pl->overflow_err_count);
 	ret->first_overflow_timestamp =
@@ -379,7 +389,9 @@ cxlmi_cmd_set_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
 {
 	struct cxlmi_cmd_set_mctp_event_interrupt_policy_req *req_pl;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
-	struct cxlmi_cci_msg rsp;
+	uint8_t rsp_buf[sizeof(struct cxlmi_cci_msg) +
+			sizeof(struct cxlmi_cmd_set_mctp_event_interrupt_policy_req)];
+	struct cxlmi_cci_msg *rsp = (struct cxlmi_cci_msg *)rsp_buf;
 	size_t req_sz;
 	int rc = 0;
 
@@ -396,7 +408,12 @@ cxlmi_cmd_set_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
 	req_pl->event_interrupt_settings =
 		cpu_to_le16(in->event_interrupt_settings);
 
-	rc = send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+	/*
+	 * The output payload (CXL r3.1 Table 8-57) is the settings now in
+	 * effect; accept a device that sends it as well as one that does not.
+	 */
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, sizeof(rsp_buf),
+			  sizeof(*rsp));
 	return rc;
 }
 
@@ -577,6 +594,7 @@ CXLMI_EXPORT int cxlmi_cmd_get_supported_logs(struct cxlmi_endpoint *ep,
 	struct cxlmi_cmd_get_supported_logs_rsp *rsp_pl;
 	struct cxlmi_cci_msg req;
 	_cleanup_free_ struct cxlmi_cci_msg *rsp;
+	uint32_t pl_length;
 	int rc, i;
 	ssize_t rsp_sz;
 
@@ -594,12 +612,21 @@ CXLMI_EXPORT int cxlmi_cmd_get_supported_logs(struct cxlmi_endpoint *ep,
 		return rc;
 
 	rsp_pl = (struct cxlmi_cmd_get_supported_logs_rsp *)rsp->payload;
+	pl_length = rsp->pl_length[0] | (rsp->pl_length[1] << 8) |
+		((rsp->pl_length[2] & 0xf) << 16);
+	if (le16_to_cpu(rsp_pl->num_supported_log_entries) >
+	    (pl_length - sizeof(*rsp_pl)) / sizeof(*rsp_pl->entries)) {
+		cxlmi_msg(ep->ctx, LOG_ERR,
+			  "Number of Supported Log Entries exceeds the response payload\n");
+		return -1;
+	}
+
 	memset(ret, 0, sizeof(*ret));
 
 	ret->num_supported_log_entries =
 		le16_to_cpu(rsp_pl->num_supported_log_entries);
 
-	for (i = 0; i < rsp_pl->num_supported_log_entries; i++) {
+	for (i = 0; i < ret->num_supported_log_entries; i++) {
 		memcpy(ret->entries[i].uuid, rsp_pl->entries[i].uuid,
 		       sizeof(rsp_pl->entries[i].uuid));
 		ret->entries[i].log_size =
@@ -828,7 +855,7 @@ cxlmi_cmd_get_supported_logs_sublist(struct cxlmi_endpoint *ep,
 		le16_to_cpu(rsp_pl->total_num_supported_log_entries);
 	ret->start_log_entry_index = rsp_pl->start_log_entry_index;
 
-	for (i = 0; i < rsp_pl->num_supported_log_entries; i++) {
+	for (i = 0; i < ret->num_supported_log_entries; i++) {
 		memcpy(ret->entries[i].uuid, rsp_pl->entries[i].uuid,
 		       sizeof(rsp_pl->entries[i].uuid));
 		ret->entries[i].log_size =
