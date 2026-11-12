@@ -67,3 +67,49 @@ jobs:
           valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all \
             --track-origins=yes --errors-for-leak-kinds=definite,possible \
             ./build/tests/mock-tests
+
+  python:
+    name: Python bindings
+    runs-on: ubuntu-24.04
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y meson clang libdbus-1-dev
+
+      - name: Install clang2py
+        run: |
+          # The clang Python bindings must match the system clang's major
+          # version (ctypeslib2 supports clang 17-19).
+          major=$(clang -dumpversion | cut -d. -f1)
+          python3 -m venv "$RUNNER_TEMP/venv"
+          "$RUNNER_TEMP/venv/bin/pip" install "clang==${major}.*" ctypeslib2
+          echo "$RUNNER_TEMP/venv/bin" >> "$GITHUB_PATH"
+
+      - name: Configure
+        run: meson setup build -Dpython=enabled -Dlibdbus=enabled --werror
+
+      - name: Build
+        run: meson compile -C build
+
+      - name: Run tests
+        run: meson test -C build --print-errorlogs
+
+      - name: Check the generated module loads the library by name
+        run: |
+          grep -q "ctypes.CDLL('libcxlmi.so')" build/src/python/cxlmi.py
+          if grep -n FIXME_STUB build/src/python/cxlmi.py; then
+            echo "clang2py could not bind the functions above" >&2
+            exit 1
+          fi
+
+      - name: Check the installed module
+        run: |
+          meson install -C build --destdir "$RUNNER_TEMP/dest"
+          py=$(find "$RUNNER_TEMP/dest" -name cxlmi.py)
+          lib=$(find "$RUNNER_TEMP/dest" -name libcxlmi.so)
+          PYTHONPATH=$(dirname "$py") LD_LIBRARY_PATH=$(dirname "$lib") \
+            python3 -c 'import cxlmi; c = cxlmi.cxlmi_new_ctx(None, 6); assert c; cxlmi.cxlmi_free_ctx(c)'
