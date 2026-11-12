@@ -38,3 +38,17 @@ executable(
     dependencies: libcxlmi_dep,
     include_directories: [inc]
 )
+
+# The test runs the build machine's python3, which cannot load a cross-built
+# libcxlmi; it would fail, or silently load an installed native copy.
+if build_python and not meson.is_cross_build()
+    test('python-bindings',
+        python,
+        args: [files('python/test_cxlmi.py'), '-v'],
+        depends: [cxlmi, python_bindings],
+        env: {
+            'PYTHONPATH': python_module_dir,
+            'LD_LIBRARY_PATH': meson.project_build_root() / 'src',
+        },
+    )
+endif
