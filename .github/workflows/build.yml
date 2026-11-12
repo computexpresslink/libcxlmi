@@ -54,6 +54,12 @@ jobs:
       - name: Run mock tests
         run: meson test -C build
 
+      - name: Check installed headers and library
+        run: scripts/check-install.sh build
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cc == 'clang' && 'clang++' || 'g++' }}
+
   build-32bit:
     name: Build (gcc, i686)
     runs-on: ubuntu-24.04
