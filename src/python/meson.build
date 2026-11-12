@@ -110,21 +110,12 @@ python_bindings = custom_target(
   input: src_h,
   output: out_py,
   command: [
-    clang2py,
-    '-l', 'cxlmi',
-    '@INPUT@',
-    '-o', meson.current_build_dir() + '/' + out_py,
+    python, files('gen-bindings.py'),
+    clang2py, cxlmi, '@INPUT@', '@OUTPUT@',
   ],
   build_by_default: true,
-)
-
-meson.add_install_script(
-    'sh', '-c',
-    'cp @0@/@1@ @2@/'.format(
-        meson.current_build_dir(),
-        out_py,
-        python_install_dir
-    )
+  install: true,
+  install_dir: python_install_dir,
 )
 
 # Make available for testing
