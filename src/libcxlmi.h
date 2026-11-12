@@ -73,7 +73,10 @@ struct cxlmi_endpoint *cxlmi_open_mctp(struct cxlmi_ctx *ctx,
  * ones (mctpd v2.0 and later) are tried, starting with the one selected by
  * the mctpd build option.
  *
- * Return: The number of opened MCTP endpoints after the scan, or -1
+ * This may be called again on the same context, eg. to pick up endpoints
+ * that have appeared since: endpoints that are already open are left alone.
+ *
+ * Return: The number of MCTP endpoints opened by this scan, or -1
  * upon failure.
  *
  * See &cxlmi_open_mctp

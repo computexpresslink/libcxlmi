@@ -1271,10 +1271,25 @@ static void endpoint_probe(struct cxlmi_endpoint *ep)
 		ep->has_fmapi = true;
 }
 
+static bool mctp_endpoint_is_open(struct cxlmi_ctx *ctx, unsigned int netid,
+				  uint8_t eid)
+{
+	struct cxlmi_endpoint *ep;
+
+	cxlmi_for_each_endpoint(ctx, ep) {
+		struct cxlmi_transport_mctp *mctp = ep->transport_data;
+
+		if (mctp && mctp->nid == netid && mctp->eid == eid)
+			return true;
+	}
+
+	return false;
+}
+
 CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_open_mctp(struct cxlmi_ctx *ctx,
 					    unsigned int netid, uint8_t eid)
 {
-	struct cxlmi_endpoint *ep, *tmp;
+	struct cxlmi_endpoint *ep;
 	struct cxlmi_transport_mctp *mctp;
 	int errno_save;
 	struct sockaddr_mctp cci_addr = {
@@ -1286,17 +1301,10 @@ CXLMI_EXPORT struct cxlmi_endpoint *cxlmi_open_mctp(struct cxlmi_ctx *ctx,
 	};
 
 	/* ensure no duplicates */
-	cxlmi_for_each_endpoint(ctx, tmp) {
-		if (tmp->transport_data) {
-			struct cxlmi_transport_mctp *mctp = tmp->transport_data;
-
-			if (mctp->nid == netid && mctp->eid == eid) {
-				cxlmi_msg(ctx, LOG_ERR,
-					  "mctp endpoint %d:%d already opened\n",
-					  netid, eid);
-				return NULL;
-			}
-		}
+	if (mctp_endpoint_is_open(ctx, netid, eid)) {
+		cxlmi_msg(ctx, LOG_ERR, "mctp endpoint %d:%d already opened\n",
+			  netid, eid);
+		return NULL;
 	}
 
 	ep = init_endpoint(ctx);
@@ -1455,6 +1463,11 @@ static int handle_mctp_endpoint(struct cxlmi_ctx *ctx, const char* objpath,
 			errno = ENOENT;
 			return -1;
 		}
+
+		/* already known, eg. from an earlier scan */
+		if (mctp_endpoint_is_open(ctx, net, eid))
+			return 0;
+
 		rc = cxlmi_mctp_add(ctx, net, eid);
 		if (rc < 0) {
 			int errno_save = errno;
