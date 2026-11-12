@@ -25,37 +25,34 @@ We use the ctypeslib2 tool to generate python bindings, this requires the follow
 - ctypeslib2
     - only compatible with clang 17-19 as of Feb. 2025
 
-Assuming you already have the clang compiler installed, for quick python package
-installation (this is agnostic to your clang compiler version, so YMMV):
+The upstream ctypeslib2 release from PyPI works; no fork is needed. ctypes itself
+is part of the Python standard library.
+
+For example, on Debian or Ubuntu:
 ```
-pip install src/python/requirements.txt
-```
+# Install clang (the distribution's version, e.g. 14 on Debian 12,
+# 18 on Ubuntu 24.04)
+sudo apt-get install clang
 
-Otherwise, to install everything manually, follow the example below for Debian:
-```
-# Install clang compiler
-sudo apt-get install clang-19 llvm-19 llvm-19-dev
-
-# Check clang version
-clang --version
-
-Debian clang version 19.1.7 (7)
-Target: x86_64-pc-linux-gnu
-Thread model: posix
-InstalledDir: /usr/lib/llvm-19/bin
-
-# Start a Python venv to install Python dependencies
+# Start a Python venv to install the Python dependencies
 python3 -m venv venv
+. venv/bin/activate
 
-# Install clang Python bindings with the *same* version as your system clang
-pip install clang==19.1.7
-
-# Install ctypes
-pip install ctypes
-
-# Install ctypeslib2 -- this fork includes a bug fix that has not yet been merged
-pip install "ctypeslib2 @ git+https://github.com/anisa-su993/anisa-ctypes2.git"
+# Install clang Python bindings with the *same* major version as the
+# clang on your PATH, plus ctypeslib2
+pip install "clang==$(clang -dumpversion | cut -d. -f1).*" ctypeslib2
 ```
+
+`pip install -r src/python/requirements.txt` also works, but it installs the
+newest clang bindings in the 17-19 range, which may not match your clang.
+
+If generating the bindings fails with your default `clang` and another version
+is installed alongside it (e.g. `/usr/lib/llvm-19/bin`), put that directory first
+in `PATH` when configuring.
+
+The bindings are generated from `src/libcxlmi.h` against the `libcxlmi.so` in
+the build tree, so no installed copy of libcxlmi is needed, and one that is
+installed does not affect the result.
 
 ### Build Configuration
 
@@ -74,11 +71,20 @@ meson test -C build
 
 ## Installation
 
-When Python bindings are enabled, the module is automatically installed to the Python site-packages directory:
+When Python bindings are enabled, `cxlmi.py` is installed into the site-packages
+directory of the `python3` found at configure time (the venv's, if one was active):
 
 ```bash
 meson install -C build
 ```
+
+`meson install --destdir` (or `DESTDIR`) is honoured, for staged installs and packaging.
+
+The module loads the library as `libcxlmi.so`, so the installed library must be on
+the dynamic loader's search path: install to a directory the loader searches (run
+`ldconfig` afterwards if needed), or set `LD_LIBRARY_PATH`. Conversely, a libcxlmi
+already installed in a system directory is picked up whenever `LD_LIBRARY_PATH`
+does not point elsewhere, so set it when using the module from a build tree.
 
 For development, you can use the module directly from the build directory without installing:
 
@@ -89,26 +95,20 @@ python3 your_script.py
 ```
 
 ## Troubleshooting
-ctypeslib2 is built on lib/ctypes, which part of the python standard library.
-If you are using Python 3.12+: the ctypes.CDLL._filepath attribute was deprecated,
-breaking upstream ctypeslib2 as of Novemeber 2025. This causes the following error:
 
-```
- File "/root/libcxlmi/venv/lib/python3.13/site-packages/ctypeslib/codegen/codegenerator.py", line 804, in get_sharedlib
-    print("_libraries[%r] =%s ctypes.CDLL(%r%s)" % (library._name, stub_comment, library._filepath, global_flag),
-                                                                                 ^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.13/ctypes/__init__.py", line 403, in __getattr__
-    func = self.__getitem__(name)
-  File "/usr/lib/python3.13/ctypes/__init__.py", line 408, in __getitem__
-    func = self._FuncPtr((name_or_ordinal, self))
-AttributeError: /usr/local/lib/x86_64-linux-gnu/libcxlmi.so: undefined symbol: _filepath
-```
+**`clang (X) and python-clang (Y) versions differ!`** at configure time: the clang
+Python bindings must have the same major version as the `clang` on your `PATH`.
+Reinstall them with `pip install "clang==$(clang -dumpversion | cut -d. -f1).*"`.
 
-To solve, please install this fork of ctypeslib2, which includes a fix:
+**`OSError: libcxlmi.so: cannot open shared object file`** on `import cxlmi`: the
+library is not on the loader's search path. Set `LD_LIBRARY_PATH` to the build's
+`src/` directory or the install's library directory, or run `ldconfig` after installing.
 
-```
-pip install "ctypeslib2 @ git+https://github.com/anisa-su993/anisa-ctypes2.git"
-```
+**`AttributeError: ...libcxlmi.so: undefined symbol: _filepath`** from clang2py:
+older libcxlmi builds passed clang2py the bare library name `-l cxlmi`, which upstream
+ctypeslib2 cannot handle, and which also made it pick up any libcxlmi already installed
+on the system. Current builds pass the path of the library they just built. If you
+see this error, update libcxlmi rather than ctypeslib2.
 
 ## Limitations
 
