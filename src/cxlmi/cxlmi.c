@@ -1399,8 +1399,8 @@ static int handle_mctp_endpoint(struct cxlmi_ctx *ctx, const char* objpath,
 	mctp_eid_t eid;
 	int net, rc = 0;
 
-	/* for each property */
-	for (;;) {
+	/* for each property; an empty dict has nothing to recurse into */
+	while (!dbus_object_is_type(props, DBUS_TYPE_INVALID)) {
 		DBusMessageIter prop, val;
 		const char *propname;
 
@@ -1433,11 +1433,15 @@ static int handle_mctp_endpoint(struct cxlmi_ctx *ctx, const char* objpath,
 			have_cxlmi = has_message_type(&val, MCTP_TYPE_CXL_CCI);
 		}
 
-		if (rc)
+		if (rc) {
+			cxlmi_msg(ctx, LOG_ERR,
+				  "Unexpected type for property %s of %s\n",
+				  propname, objpath);
+			errno = EPROTO;
 			return rc;
+		}
 
-		if (!dbus_message_iter_next(props))
-			break;
+		dbus_message_iter_next(props);
 	}
 
 	if (have_cxlmi) {
@@ -1488,8 +1492,8 @@ static int handle_mctp_obj(struct cxlmi_ctx *ctx, DBusMessageIter *obj,
 
 	dbus_message_iter_recurse(obj, &intfs);
 
-	/* for each interface */
-	for (;;) {
+	/* for each interface; an empty dict has nothing to recurse into */
+	while (!dbus_object_is_type(&intfs, DBUS_TYPE_INVALID)) {
 		DBusMessageIter props, intf;
 		const char *intfname;
 
@@ -1504,8 +1508,7 @@ static int handle_mctp_obj(struct cxlmi_ctx *ctx, DBusMessageIter *obj,
 		dbus_message_iter_get_basic(&intf, &intfname);
 
 		if (strcmp(intfname, MCTP_DBUS_IFACE_ENDPOINT)) {
-			if (!dbus_message_iter_next(&intfs))
-				break;
+			dbus_message_iter_next(&intfs);
 			continue;
 		}
 
@@ -1539,7 +1542,7 @@ int cxlmi_scan_mctp(struct cxlmi_ctx *ctx)
 	if (!bus) {
 		cxlmi_msg(ctx, LOG_ERR, "Failed connecting to D-Bus: %s (%s)\n",
 			  berr.message, berr.name);
-		return -1;
+		goto out;
 	}
 
 	msg = dbus_message_new_method_call(MCTP_DBUS_IFACE,
@@ -1548,7 +1551,8 @@ int cxlmi_scan_mctp(struct cxlmi_ctx *ctx)
 					   "GetManagedObjects");
 	if (!msg) {
 		cxlmi_msg(ctx, LOG_ERR, "Failed creating call message\n");
-		return -1;
+		errno = ENOMEM;
+		goto out;
 	}
 
 	resp = dbus_connection_send_with_reply_and_block(bus, msg,
@@ -1573,10 +1577,11 @@ int cxlmi_scan_mctp(struct cxlmi_ctx *ctx)
 		goto out;
 	}
 
-	/* objects container */
+	/* objects container; empty if mctpd has no endpoints */
 	dbus_message_iter_recurse(&args, &objs);
+	rc = 0;
 
-	do {
+	while (!dbus_object_is_type(&objs, DBUS_TYPE_INVALID)) {
 		DBusMessageIter ent;
 		int opened;
 
@@ -1587,7 +1592,8 @@ int cxlmi_scan_mctp(struct cxlmi_ctx *ctx)
 			break;
 
 		nopen += opened;
-	} while (dbus_message_iter_next(&objs));
+		dbus_message_iter_next(&objs);
+	}
 out:
 	errno_save = errno;
 	if (resp)
