@@ -18,6 +18,19 @@ mock_tests = executable(
 
 test('mock-tests', mock_tests)
 
+# cxlmi_scan_mctp() against a fake mctpd on a private D-Bus; the test
+# skips itself if there is no dbus-daemon to run.
+if libdbus_dep.found()
+    scan_mctp_tests = executable(
+        'scan-mctp-tests',
+        ['scan-mctp-tests.c'],
+        dependencies: [libcxlmi_dep, libdbus_dep],
+        include_directories: [inc]
+    )
+
+    test('scan-mctp-tests', scan_mctp_tests)
+endif
+
 executable(
     'cxl-test-generic',
     ['cxl-test-generic.c'],

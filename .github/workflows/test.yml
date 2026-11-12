@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y meson clang libdbus-1-dev
+          sudo apt-get install -y meson clang libdbus-1-dev dbus
 
       - name: Configure with ${{ matrix.name }}
         run: meson setup build -Db_sanitize=${{ matrix.sanitizer }} -Db_lundef=false -Dlibdbus=enabled
@@ -44,6 +44,12 @@ jobs:
           ASAN_OPTIONS: abort_on_error=1:halt_on_error=1
           UBSAN_OPTIONS: abort_on_error=1:halt_on_error=1:print_stacktrace=1
 
+      - name: Run MCTP scan tests
+        run: ./build/tests/scan-mctp-tests
+        env:
+          ASAN_OPTIONS: abort_on_error=1:halt_on_error=1
+          UBSAN_OPTIONS: abort_on_error=1:halt_on_error=1:print_stacktrace=1
+
   valgrind:
     name: Valgrind
     runs-on: ubuntu-24.04
@@ -54,7 +60,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y meson valgrind libdbus-1-dev
+          sudo apt-get install -y meson valgrind libdbus-1-dev dbus
 
       - name: Configure
         run: meson setup build -Dlibdbus=enabled
@@ -67,6 +73,12 @@ jobs:
           valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all \
             --track-origins=yes --errors-for-leak-kinds=definite,possible \
             ./build/tests/mock-tests
+
+      - name: Run MCTP scan tests under Valgrind
+        run: |
+          valgrind --error-exitcode=1 --leak-check=full --show-leak-kinds=all \
+            --track-origins=yes --errors-for-leak-kinds=definite,possible \
+            ./build/tests/scan-mctp-tests
 
   python:
     name: Python bindings

@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y meson libdbus-1-dev
+          sudo apt-get install -y meson libdbus-1-dev dbus
 
       - name: Configure
         run: meson setup build -Dlibdbus=enabled --werror
@@ -70,7 +70,7 @@ jobs:
         run: |
           sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install -y meson gcc-multilib libdbus-1-dev:i386
+          sudo apt-get install -y meson gcc-multilib libdbus-1-dev:i386 dbus
 
       - name: Configure
         run: meson setup build --cross-file scripts/cross/i686-multilib.txt -Dlibdbus=enabled --werror
@@ -93,7 +93,7 @@ jobs:
             packages: ""
           - name: dbus-openbmc
             configure: -Dlibdbus=enabled -Dmctpd=openbmc
-            packages: libdbus-1-dev:armhf
+            packages: libdbus-1-dev:armhf dbus
     steps:
       - uses: actions/checkout@v7
 
@@ -206,7 +206,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y meson libdbus-1-dev
+          sudo apt-get install -y meson libdbus-1-dev dbus
 
       - name: Configure
         run: meson setup build ${{ matrix.configure }} --werror
