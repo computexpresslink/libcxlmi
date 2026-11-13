@@ -393,8 +393,7 @@ static int sanity_check_mctp_rsp(struct cxlmi_endpoint *ep,
 			return -1;
 		}
 	}
-	pl_length = rsp->pl_length[0] | (rsp->pl_length[1] << 8) |
-		((rsp->pl_length[2] & 0xf) << 16);
+	pl_length = cci_msg_pl_length(rsp);
 	if (len - sizeof(*rsp) != pl_length) {
 		cxlmi_msg(ctx, LOG_ERR,
 			"Payload length not matching expected part of full message %zu %d\n",
@@ -1869,11 +1868,8 @@ void arm_cci_request(struct cxlmi_endpoint *ep, struct cxlmi_cci_msg *req,
 			.vendor_ext_status = 0xabcd,
 		};
 
-		if (req_pl_sz) {
-			req->pl_length[0] = req_pl_sz & 0xff;
-			req->pl_length[1] = (req_pl_sz >> 8) & 0xff;
-			req->pl_length[2] = (req_pl_sz >> 16) & 0xff;
-		}
+		if (req_pl_sz)
+			cci_msg_set_pl_length(req, req_pl_sz);
 	} else {
 		/* ioctl and mock: add general info */
 		*req = (struct cxlmi_cci_msg) {
@@ -1882,10 +1878,7 @@ void arm_cci_request(struct cxlmi_endpoint *ep, struct cxlmi_cci_msg *req,
 			.vendor_ext_status = 0xabcd,
 		};
 
-		if (req_pl_sz) {
-			req->pl_length[0] = req_pl_sz & 0xff;
-			req->pl_length[1] = (req_pl_sz >> 8) & 0xff;
-			req->pl_length[2] = (req_pl_sz >> 16) & 0xff;
-		}
+		if (req_pl_sz)
+			cci_msg_set_pl_length(req, req_pl_sz);
 	}
 }

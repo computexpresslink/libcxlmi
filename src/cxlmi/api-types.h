@@ -17,7 +17,7 @@ struct cxlmi_cci_msg {
 	uint8_t rsv1;
 	uint8_t command;
 	uint8_t command_set;
-	uint8_t pl_length[3]; /* 20 bit little endian, BO bit at bit 23 */
+	uint8_t pl_length[3]; /* 21 bit little endian, BO bit at bit 23 */
 	uint16_t return_code;
 	uint16_t vendor_ext_status;
 	uint8_t payload[];

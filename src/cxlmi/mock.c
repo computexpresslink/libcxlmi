@@ -230,9 +230,7 @@ int send_mock_cmd(struct cxlmi_endpoint *ep,
 	mock->last_command_set = req_msg->command_set;
 	mock->last_command = req_msg->command;
 
-	req_pl_size = req_msg->pl_length[0] |
-		      (req_msg->pl_length[1] << 8) |
-		      ((req_msg->pl_length[2] & 0xf) << 16);
+	req_pl_size = cci_msg_pl_length(req_msg);
 
 	free(mock->last_payload);
 	mock->last_payload = NULL;
@@ -279,9 +277,7 @@ int send_mock_cmd(struct cxlmi_endpoint *ep,
 				copy_size = rsp_msg_sz - sizeof(*rsp_msg);
 
 			memcpy(rsp_msg->payload, resp->payload, copy_size);
-			rsp_msg->pl_length[0] = copy_size & 0xff;
-			rsp_msg->pl_length[1] = (copy_size >> 8) & 0xff;
-			rsp_msg->pl_length[2] = (copy_size >> 16) & 0xf;
+			cci_msg_set_pl_length(rsp_msg, copy_size);
 		}
 	}
 
