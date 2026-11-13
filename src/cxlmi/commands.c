@@ -3324,6 +3324,25 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_dc_region_config(struct cxlmi_endpoint *ep,
 	return rc;
 }
 
+/* The payload length of a CCI message is a 20-bit field */
+#define CCI_MAX_PAYLOAD 0xfffff
+
+/*
+ * Size of a response message made of a fixed part and of up to @count
+ * entries. A count that is more than a message can carry is brought down
+ * to what fits, as the multiplication would otherwise wrap a 32-bit size_t
+ * and leave the buffer shorter than the entries read from it.
+ */
+static size_t cci_rsp_size(size_t fixed, size_t entry, uint32_t *count)
+{
+	uint32_t max = (CCI_MAX_PAYLOAD - fixed) / entry;
+
+	if (*count > max)
+		*count = max;
+
+	return sizeof(struct cxlmi_cci_msg) + fixed + *count * entry;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *ep,
 				    struct cxlmi_tunnel_info *ti,
 				    struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req *in,
@@ -3334,7 +3353,8 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *e
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
 	size_t req_sz, rsp_sz, min_rsp_sz;
-	int i, rc;
+	uint32_t i, count;
+	int rc;
 
 	CXLMI_BUILD_BUG_ON(sizeof(*in) != 12);
 
@@ -3350,7 +3370,9 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *e
 	req_pl->start_ext_index = cpu_to_le32(in->start_ext_index);
 
 	min_rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
-	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) + req_pl->extent_count * sizeof(rsp_pl->extents[0]);
+	count = in->extent_count;
+	rsp_sz = cci_rsp_size(sizeof(*rsp_pl), sizeof(rsp_pl->extents[0]),
+			      &count);
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
 		return -1;
@@ -3365,6 +3387,15 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dc_region_ext_list(struct cxlmi_endpoint *e
 	ret->extents_returned = le32_to_cpu(rsp_pl->extents_returned);
 	ret->total_extents = le32_to_cpu(rsp_pl->total_extents);
 	ret->list_generation_num = le32_to_cpu(rsp_pl->list_generation_num);
+
+	/* neither the response nor the caller has room for more */
+	if (ret->extents_returned > count) {
+		cxlmi_msg(ep->ctx, LOG_ERR,
+			  "%u extents returned, %u requested\n",
+			  ret->extents_returned, count);
+		ret->extents_returned = 0;
+		return -1;
+	}
 
 	for (i = 0; i < ret->extents_returned; i++) {
 		ret->extents[i].start_dpa = le64_to_cpu(rsp_pl->extents[i].start_dpa);
@@ -3523,7 +3554,8 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_dc_list_tags(struct cxlmi_endpoint *ep,
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
 	size_t req_sz, rsp_sz, min_rsp_sz;
-	int i, rc, num_tag_infos;
+	uint32_t i, count;
+	int rc;
 
 	CXLMI_BUILD_BUG_ON(sizeof(*in) != 0x08);
 
@@ -3537,19 +3569,30 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_dc_list_tags(struct cxlmi_endpoint *ep,
 	req_pl->start_idx = cpu_to_le32(in->start_idx);
 	req_pl->tags_count = cpu_to_le32(in->tags_count);
 
-	num_tag_infos = req_pl->tags_count;
+	count = in->tags_count;
 	min_rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl);
-	rsp_sz = min_rsp_sz + num_tag_infos * sizeof(rsp_pl->tags_list[0]);
+	rsp_sz = cci_rsp_size(sizeof(*rsp_pl), sizeof(rsp_pl->tags_list[0]),
+			      &count);
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
 		return -1;
 	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, min_rsp_sz);
+	if (rc)
+		return rc;
 
 	rsp_pl = (struct cxlmi_cmd_fmapi_dc_list_tags_rsp *)rsp->payload;
 	ret->generation_num = le32_to_cpu(rsp_pl->generation_num);
 	ret->total_num_tags = le32_to_cpu(rsp_pl->total_num_tags);
 	ret->num_tags_returned = le32_to_cpu(rsp_pl->num_tags_returned);
 	ret->validity_bitmap = rsp_pl->validity_bitmap;
+
+	/* neither the response nor the caller has room for more */
+	if (ret->num_tags_returned > count) {
+		cxlmi_msg(ep->ctx, LOG_ERR, "%u tags returned, %u requested\n",
+			  ret->num_tags_returned, count);
+		ret->num_tags_returned = 0;
+		return -1;
+	}
 
 	for (i = 0; i < ret->num_tags_returned; i++) {
 		memcpy(&ret->tags_list[i].tag, &rsp_pl->tags_list[i].tag, 0x10);

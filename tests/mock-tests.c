@@ -2345,6 +2345,174 @@ static int test_cmd_fmapi_dc_list_tags(void)
 	return 0;
 }
 
+/*
+ * The extent and tag lists below have a count from the caller, which sizes
+ * the response buffer, and a count from the device, which drives the copy.
+ */
+#define DC_EXT_LIST_SZ(n) \
+	(sizeof(struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp) + \
+	 (n) * sizeof(((struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *)0)->extents[0]))
+
+static int test_cmd_fmapi_get_dc_region_ext_list_too_many(void)
+{
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req req = {0};
+	uint8_t rsp_buf[DC_EXT_LIST_SZ(4)] = {0};
+	uint8_t ret_buf[DC_EXT_LIST_SZ(2)] = {0};
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *rsp = (void *)rsp_buf;
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *ret = (void *)ret_buf;
+	int rc, i;
+
+	/* room for one extent, then a canary where a second would go */
+	memset(&ret->extents[1], 0x5a, sizeof(ret->extents[1]));
+
+	req.extent_count = 1;
+
+	/* the device returns more than was asked for */
+	rsp->extents_returned = cpu_to_le32(4);
+	rsp->total_extents = cpu_to_le32(4);
+	for (i = 0; i < 4; i++)
+		rsp->extents[i].start_dpa = cpu_to_le64(0x1000 * (i + 1));
+
+	ASSERT_EQ(setup(), 0, "setup failed");
+	cxlmi_mock_set_response(test_ep, 0x56, 0x03, CXLMI_RET_SUCCESS,
+				rsp, DC_EXT_LIST_SZ(4));
+	rc = cxlmi_cmd_fmapi_get_dc_region_ext_list(test_ep, NULL, &req, ret);
+	teardown();
+
+	ASSERT_EQ(rc, -1, "more extents than requested not rejected");
+	ASSERT_EQ(ret->extents_returned, 0, "extents reported to the caller");
+	for (i = 0; i < (int)sizeof(ret->extents[1]); i++)
+		ASSERT_EQ(((uint8_t *)&ret->extents[1])[i], 0x5a,
+			  "wrote past the caller's buffer");
+
+	return 0;
+}
+
+static int test_cmd_fmapi_get_dc_region_ext_list_huge_count(void)
+{
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_req req = {0};
+	uint8_t rsp_buf[DC_EXT_LIST_SZ(2)] = {0};
+	uint8_t ret_buf[DC_EXT_LIST_SZ(2)] = {0};
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *rsp = (void *)rsp_buf;
+	struct cxlmi_cmd_fmapi_get_dc_region_ext_list_rsp *ret = (void *)ret_buf;
+	int rc;
+
+	/* times the size of an extent, this does not fit in 32 bits */
+	req.extent_count = 0xffffffff;
+
+	rsp->extents_returned = cpu_to_le32(2);
+	rsp->total_extents = cpu_to_le32(2);
+	rsp->extents[0].start_dpa = cpu_to_le64(0x1000);
+	rsp->extents[1].start_dpa = cpu_to_le64(0x2000);
+	rsp->extents[1].len = cpu_to_le64(0x400);
+
+	ASSERT_EQ(setup(), 0, "setup failed");
+	cxlmi_mock_set_response(test_ep, 0x56, 0x03, CXLMI_RET_SUCCESS,
+				rsp, DC_EXT_LIST_SZ(2));
+	rc = cxlmi_cmd_fmapi_get_dc_region_ext_list(test_ep, NULL, &req, ret);
+	teardown();
+
+	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
+	ASSERT_EQ(ret->extents_returned, 2, "extents returned mismatch");
+	ASSERT_TRUE(ret->extents[0].start_dpa == 0x1000, "first extent");
+	ASSERT_TRUE(ret->extents[1].start_dpa == 0x2000 &&
+		    ret->extents[1].len == 0x400, "second extent");
+
+	return 0;
+}
+
+#define DC_TAG_LIST_SZ(n) \
+	(sizeof(struct cxlmi_cmd_fmapi_dc_list_tags_rsp) + \
+	 (n) * sizeof(((struct cxlmi_cmd_fmapi_dc_list_tags_rsp *)0)->tags_list[0]))
+
+static int test_cmd_fmapi_dc_list_tags_too_many(void)
+{
+	struct cxlmi_cmd_fmapi_dc_list_tags_req req = {0};
+	uint8_t rsp_buf[DC_TAG_LIST_SZ(4)] = {0};
+	uint8_t ret_buf[DC_TAG_LIST_SZ(2)] = {0};
+	struct cxlmi_cmd_fmapi_dc_list_tags_rsp *rsp = (void *)rsp_buf;
+	struct cxlmi_cmd_fmapi_dc_list_tags_rsp *ret = (void *)ret_buf;
+	int rc, i;
+	memset(&ret->tags_list[1], 0x5a, sizeof(ret->tags_list[1]));
+
+	req.tags_count = 1;
+
+	rsp->total_num_tags = cpu_to_le32(4);
+	rsp->num_tags_returned = cpu_to_le32(4);
+	for (i = 0; i < 4; i++)
+		rsp->tags_list[i].tag[0] = i + 1;
+
+	ASSERT_EQ(setup(), 0, "setup failed");
+	cxlmi_mock_set_response(test_ep, 0x56, 0x08, CXLMI_RET_SUCCESS,
+				rsp, DC_TAG_LIST_SZ(4));
+	rc = cxlmi_cmd_fmapi_dc_list_tags(test_ep, NULL, &req, ret);
+	teardown();
+
+	ASSERT_EQ(rc, -1, "more tags than requested not rejected");
+	ASSERT_EQ(ret->num_tags_returned, 0, "tags reported to the caller");
+	for (i = 0; i < (int)sizeof(ret->tags_list[1]); i++)
+		ASSERT_EQ(((uint8_t *)&ret->tags_list[1])[i], 0x5a,
+			  "wrote past the caller's buffer");
+
+	return 0;
+}
+
+static int test_cmd_fmapi_dc_list_tags_huge_count(void)
+{
+	struct cxlmi_cmd_fmapi_dc_list_tags_req req = {0};
+	uint8_t rsp_buf[DC_TAG_LIST_SZ(2)] = {0};
+	uint8_t ret_buf[DC_TAG_LIST_SZ(2)] = {0};
+	struct cxlmi_cmd_fmapi_dc_list_tags_rsp *rsp = (void *)rsp_buf;
+	struct cxlmi_cmd_fmapi_dc_list_tags_rsp *ret = (void *)ret_buf;
+	int rc;
+
+	/* times the size of a tag entry, this does not fit in 32 bits */
+	req.tags_count = 0xffffffff;
+
+	rsp->total_num_tags = cpu_to_le32(2);
+	rsp->num_tags_returned = cpu_to_le32(2);
+	rsp->tags_list[0].tag[0] = 0x11;
+	rsp->tags_list[1].tag[0] = 0x22;
+	rsp->tags_list[1].flags = 1;
+
+	ASSERT_EQ(setup(), 0, "setup failed");
+	cxlmi_mock_set_response(test_ep, 0x56, 0x08, CXLMI_RET_SUCCESS,
+				rsp, DC_TAG_LIST_SZ(2));
+	rc = cxlmi_cmd_fmapi_dc_list_tags(test_ep, NULL, &req, ret);
+	teardown();
+
+	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
+	ASSERT_EQ(ret->num_tags_returned, 2, "tags returned mismatch");
+	ASSERT_EQ(ret->tags_list[0].tag[0], 0x11, "first tag");
+	ASSERT_TRUE(ret->tags_list[1].tag[0] == 0x22 &&
+		    ret->tags_list[1].flags == 1, "second tag");
+
+	return 0;
+}
+
+/* a failed command leaves nothing to decode */
+static int test_cmd_fmapi_dc_list_tags_error(void)
+{
+	struct cxlmi_cmd_fmapi_dc_list_tags_req req = { .tags_count = 1 };
+	uint8_t ret_buf[DC_TAG_LIST_SZ(1)];
+	struct cxlmi_cmd_fmapi_dc_list_tags_rsp *ret = (void *)ret_buf;
+	int rc;
+
+	memset(ret_buf, 0x5a, sizeof(ret_buf));
+
+	ASSERT_EQ(setup(), 0, "setup failed");
+	cxlmi_mock_set_response(test_ep, 0x56, 0x08, CXLMI_RET_UNSUPPORTED,
+				NULL, 0);
+	rc = cxlmi_cmd_fmapi_dc_list_tags(test_ep, NULL, &req, ret);
+	teardown();
+
+	ASSERT_EQ(rc, CXLMI_RET_UNSUPPORTED, "return code not passed on");
+	ASSERT_TRUE(ret->num_tags_returned == 0x5a5a5a5a,
+		    "output written for a failed command");
+
+	return 0;
+}
+
 static int test_cmd_memdev_security_receive(void)
 {
 	struct cxlmi_cmd_memdev_security_receive_req req = {0};
@@ -9916,11 +10084,16 @@ int main(void)
 	RUN_TEST(test_cmd_fmapi_get_dc_reg_config);
 	RUN_TEST(test_cmd_fmapi_set_dc_region_config);
 	RUN_TEST(test_cmd_fmapi_get_dc_region_ext_list);
+	RUN_TEST(test_cmd_fmapi_get_dc_region_ext_list_too_many);
+	RUN_TEST(test_cmd_fmapi_get_dc_region_ext_list_huge_count);
 	RUN_TEST(test_cmd_fmapi_initiate_dc_add);
 	RUN_TEST(test_cmd_fmapi_initiate_dc_release);
 	RUN_TEST(test_cmd_fmapi_dc_add_reference);
 	RUN_TEST(test_cmd_fmapi_dc_remove_reference);
 	RUN_TEST(test_cmd_fmapi_dc_list_tags);
+	RUN_TEST(test_cmd_fmapi_dc_list_tags_too_many);
+	RUN_TEST(test_cmd_fmapi_dc_list_tags_huge_count);
+	RUN_TEST(test_cmd_fmapi_dc_list_tags_error);
 	RUN_TEST(test_cmd_memdev_security_receive);
 	RUN_TEST(test_cmd_vendor_specific);
 
