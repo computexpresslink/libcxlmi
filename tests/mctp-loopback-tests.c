@@ -211,7 +211,7 @@ static void responder_reply(const struct responder *r, int sd, bool fmapi)
 {
 	static uint8_t rx[4096], tx[4096];
 	struct cci_msg *req = (void *)rx, *rsp = (void *)tx;
-	struct sockaddr_mctp peer;
+	struct sockaddr_mctp peer = { 0 };
 	socklen_t peer_len = sizeof(peer);
 	uint16_t opcode, rc;
 	size_t n, tx_len;
@@ -315,6 +315,8 @@ static int responder_start(const struct responder *r, pid_t *pid)
 {
 	int fds[2], err = EIO;
 
+	*pid = -1;
+
 	if (pipe(fds))
 		return errno;
 
@@ -412,14 +414,14 @@ static int failures, checks;
 	}								\
 } while (0)
 
-static void die(const char *what)
+static void __attribute__((noreturn)) die(const char *what)
 {
 	fprintf(stderr, "mctp-loopback-tests: %s: %s\n", what,
 		strerror(errno));
 	exit(1);
 }
 
-static void skip(const char *why)
+static void __attribute__((noreturn)) skip(const char *why)
 {
 	fprintf(stderr, "mctp-loopback-tests: %s, skipping\n", why);
 	exit(SKIP);
