@@ -65,6 +65,12 @@ jobs:
           CC: ${{ matrix.cc }}
           CXX: ${{ matrix.cc == 'clang' && 'clang++' || 'g++' }}
 
+      - name: Check use as a meson subproject
+        run: scripts/check-subproject.sh
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cc == 'clang' && 'clang++' || 'g++' }}
+
   build-32bit:
     name: Build (gcc, i686)
     runs-on: ubuntu-24.04

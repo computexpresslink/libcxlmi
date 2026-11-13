@@ -1063,6 +1063,10 @@ configuration enables. CI also runs the following, which can be run locally:
   compiles on its own as C and C++, that a program links through
   `pkg-config libcxlmi` and runs, and that an application's own `log.h` does
   not clash with the library's.
+- **Use as a meson subproject**: `scripts/check-subproject.sh` creates a
+  small parent project, in C and C++ with `warning_level=3` and `werror`, that
+  gets libcxlmi through `dependency('libcxlmi')` and a wrap file, and builds
+  and runs it.
 - **Python bindings**: with `-Dpython=enabled`, `meson test` also runs
   `tests/python/test_cxlmi.py` as the `python-bindings` test. See
   [Python.md](Python.md#testing).
