@@ -902,6 +902,20 @@ either set of mctpd D-Bus names. It needs no hardware, privileges or kernel
 MCTP support, and is skipped if `dbus-daemon` is not installed. The endpoints
 it finds are opened but not talked to.
 
+The MCTP transport itself is covered by `tests/mctp-loopback-tests.c`, over the
+kernel's real `AF_MCTP` sockets. The test moves into a network namespace of its
+own, gives the loopback device an MCTP address, and runs a small CXL responder
+in a child process, which answers a few commands on the CCI and FM-API message
+types and can be told to misbehave: not reply, or reply with the wrong tag,
+command, category or length. It needs a kernel with `CONFIG_MCTP` and root:
+
+```bash
+sudo ./build/tests/mctp-loopback-tests
+```
+
+Run by `meson test` as a regular user, or on a kernel without MCTP, it is
+skipped.
+
 ## Usage
 
 ### Basic Test Pattern

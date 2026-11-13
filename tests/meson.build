@@ -18,6 +18,19 @@ mock_tests = executable(
 
 test('mock-tests', mock_tests)
 
+# The MCTP transport over AF_MCTP loopback, with a responder in the test
+# itself. It needs root and a kernel with MCTP, and skips itself otherwise.
+if conf.get('HAVE_LINUX_MCTP_H') == 1
+    mctp_loopback_tests = executable(
+        'mctp-loopback-tests',
+        ['mctp-loopback-tests.c'],
+        dependencies: libcxlmi_dep,
+        include_directories: [inc]
+    )
+
+    test('mctp-loopback-tests', mctp_loopback_tests)
+endif
+
 # cxlmi_scan_mctp() against a fake mctpd on a private D-Bus; the test
 # skips itself if there is no dbus-daemon to run.
 if libdbus_dep.found()
