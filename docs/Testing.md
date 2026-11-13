@@ -894,6 +894,14 @@ cxlmi_mock_set_response(ep, 0x00, 0x01, CXLMI_RET_SUCCESS, &rsp, sizeof(rsp));
 The mock transport bypasses the actual transport layer (MCTP, mailbox). To test
 transport-level behavior, you need real hardware or a separate transport mock.
 
+The D-Bus discovery of MCTP endpoints, `cxlmi_scan_mctp()`, is the exception:
+it has its own test, `tests/scan-mctp-tests.c`, built when libdbus is enabled
+and run by `meson test`. It starts a private `dbus-daemon` in place of the
+system bus, and a fake mctpd that answers with a canned set of endpoints under
+either set of mctpd D-Bus names. It needs no hardware, privileges or kernel
+MCTP support, and is skipped if `dbus-daemon` is not installed. The endpoints
+it finds are opened but not talked to.
+
 ## Usage
 
 ### Basic Test Pattern

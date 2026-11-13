@@ -69,7 +69,9 @@ Component discovery
   the necessary Identify command and/or disabling the FM-API.
 
 - Enumerate all MCTP endpoints with `cxlmi_scan_mctp()`. Each found endpoint
-  will be subject to the above treatment.
+  will be subject to the above treatment. The scan can be repeated on the same
+  context to pick up endpoints that have appeared since; endpoints that are
+  already open are left alone, and the number of newly opened ones is returned.
 
 - Individual, Linux-specific `device` endpoint by using `cxlmi_open()`. This
   is for in-band communication through ioctl for Mailbox based raw CXL commands.
@@ -416,8 +418,10 @@ Also, to configure with dbus support to enable MCTP scanning:
 ```
 meson setup -Dlibdbus=enabled -Dmctpd=(openbmc | codeconstruct) build
 ```
-The `mctpd` option defaults to "openbmc", but "codeconstruct" can also be specified, which refers to CodeConstruct's
-[mctpd v2](https://codeconstruct.com.au/docs/mctp-utils-v2-0-release/).
+mctpd has used two sets of D-Bus names: the OpenBMC ones (`xyz.openbmc_project.MCTP`) up to v1.1, and its
+own (`au.com.codeconstruct.MCTP1`) as of [mctpd v2](https://codeconstruct.com.au/docs/mctp-utils-v2-0-release/).
+A scan works with either: the `mctpd` option only selects which one is tried first, "openbmc" (the default)
+or "codeconstruct".
 
 To enable CXL 2.0 compatibility mode:
 ```
