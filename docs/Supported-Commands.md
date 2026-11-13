@@ -1,6 +1,6 @@
 # libcxlmi Command Support Summary
 
-This document summarizes the support status of CXL commands within the `libcxlmi` library, based on the CXL 3.2 Specification. Overall it the library supports approximately **55%** across all CCI commands listed in the specification.
+This document summarizes the support status of CXL commands within the `libcxlmi` library, based on the CXL 3.2 Specification. Overall the library supports approximately **58%** (95 of 165) across all CCI commands listed in the specification.
 
 ---
 
@@ -41,9 +41,9 @@ This document summarizes the support status of CXL commands within the `libcxlmi
 |                     | ✅ `0404h`        | [Populate Log](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Generic-Component-Commands.md#populate-log-0404h)          |
 |                     | ✅ `0405h`        | [Get Supported Logs Sub-List](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Generic-Component-Commands.md#get-supported-logs-sub-list-0405h) |
 | **Features** |                   |                                            |
-|                     | `0500h`           | Get Supported Features                     |
-|                     | `0501h`           | Get Feature                                |
-|                     | `0502h`           | Set Feature                                |
+|                     | ✅ `0500h`        | [Get Supported Features](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Generic-Component-Commands.md#get-supported-features-0500h) |
+|                     | ✅ `0501h`        | [Get Feature](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Generic-Component-Commands.md#get-feature-0501h) |
+|                     | ✅ `0502h`        | [Set Feature](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Generic-Component-Commands.md#set-feature-0502h) |
 | **Maintenance** |                   |                                            |
 |                     | `0600h`           | Perform Maintenance                        |
 | **PBR Components** |                   |                                            |
@@ -58,7 +58,7 @@ This document summarizes the support status of CXL commands within the `libcxlmi
 | Command Set Group                     | Combined Opcode   | Command Name                               |
 | :------------------------------------ | :---------------- | :----------------------------------------- |
 | **Identify Memory Device** |                   |                                            |
-|                                       | ✅ `4000h`        | [Identify Memory Device](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#identify-memory-device-400h) |
+|                                       | ✅ `4000h`        | [Identify Memory Device](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#identify-memory-device-4000h) |
 | **Capacity Configuration and LSA** |                   |                                            |
 |                                       | ✅ `4100h`        | [Get Partition Info](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#get-partition-info-4100h) |
 |                                       | ✅ `4101h`        | [Set Partition Info](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#set-partition-info-4101h) |
@@ -80,7 +80,7 @@ This document summarizes the support status of CXL commands within the `libcxlmi
 | **Sanitize and Media Operations** |                   |                                            |
 |                                       | ✅ `4400h`        | [Sanitize](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#sanitize-4400h) |
 |                                       | ✅ `4401h`        | [Secure Erase](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#secure-erase-4401h) |
-|                                       | `4402h`           | Media Operations                         |
+|                                       | ✅ `4402h`        | [Media Operations](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#media-operations-4402h) |
 | **Persistent Memory Security** |                   |                                            |
 |                                       | ✅ `4500h`        | [Get Security State](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#get-security-state-4500h) |
 |                                       | ✅ `4501h`        | [Set Passphrase](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#set-passphrase-4501h) |
@@ -89,8 +89,8 @@ This document summarizes the support status of CXL commands within the `libcxlmi
 |                                       | ✅ `4504h`        | [Freeze Security State](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#freeze-security-state-4504h) |
 |                                       | ✅ `4505h`        | [Passphrase Secure Erase](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#passphrase-secure-erase-4505h) |
 | **Security Send/Receive** |                   |                                            |
-|                                       | `4600h`           | Security Send                            |
-|                                       | `4601h`           | Security Receive                         |
+|                                       | ✅ `4600h`        | [Security Send](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#security-send-4600h) |
+|                                       | ✅ `4601h`        | [Security Receive](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#security-receive-4601h) |
 | **SLD QoS Telemetry** |                   |                                            |
 |                                       | ✅ `4700h`        | [Get SLD QoS Control](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#get-sld-qos-control-4700h) |
 |                                       | ✅ `4701h`        | [Set SLD QoS Control](https://github.com/computexpresslink/libcxlmi/blob/main/docs/Memory-Device-Commands.md#set-sld-qos-control-4701h) |
@@ -125,7 +125,7 @@ This document summarizes the support status of CXL commands within the `libcxlmi
 
 ---
 
-## FM-API Commands (~42% supported)
+## FM-API Commands (~46% supported)
 
 | Command Set Group                     | Combined Opcode   | Command Name                               |
 | :------------------------------------ | :---------------- | :----------------------------------------- |
@@ -133,20 +133,20 @@ This document summarizes the support status of CXL commands within the `libcxlmi
 |                                       | ✅ `5100h`        | [Identify Switch Device](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#identify-switch-device-5100h) |
 |                                       | ✅ `5101h`        | [Get Physical Port State](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#get-physical-port-state-5101h) |
 |                                       | ✅ `5102h`        | [Physical Port Control](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#physical-port-control-5102h) |
-|                                       | `5103h`           | Send PPB CXL.io Configuration Request    |
+|                                       | ✅ `5103h`        | [Send PPB CXL.io Configuration Request](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#send-ppb-cxlio-configuration-request-5103h) |
 |                                       | ✅ `5104h`        | [Get Domain Validation SV State](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#get-domain-validation-sv-state-5104h) |
 |                                       | ✅ `5105h`        | [Set Domain Validation SV](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#set-domain-validation-sv-5105h) |
 |                                       | ✅ `5106h`        | [Get VCS Domain Validation SV State](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#get-vcs-domain-validation-sv-state-5106h) |
 |                                       | ✅ `5107h`        | [Get Domain Validation SV](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#get-domain-validation-sv-5107h) |
 | **Virtual Switch** |                   |                                            |
-|                                       | `5200h`           | Get Virtual CXL Switch Info              |
+|                                       | ✅ `5200h`        | [Get Virtual CXL Switch Info](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#get-virtual-cxl-switch-info-5200h) |
 |                                       | ✅ `5201h`        | [Bind vPPB](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#bind-vppb-5201h) |
-|                                       | ✅ `5202h`        | [Unbind vPPB](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#unbind-vppb-5202) |
+|                                       | ✅ `5202h`        | [Unbind vPPB](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#unbind-vppb-5202h) |
 |                                       | `5203h`           | Generate AER Event                       |
 | **MLD Port** |                   |                                            |
 |                                       | ✅ `5300h`        | [Tunnel Management Command](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#tunnel-management-command-5300h) |
-|                                       | `5301h`           | Send LD CXL.io Configuration Request     |
-|                                       | `5302h`           | Send LD CXL.io Memory Request            |
+|                                       | ✅ `5301h`        | [Send LD CXL.io Configuration Request](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#send-ld-cxlio-configuration-request-5301h) |
+|                                       | ✅ `5302h`        | [Send LD CXL.io Memory Request](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#send-ld-cxlio-memory-request-5302h) |
 | **MLD Components** |                   |                                            |
 |                                       | ✅ `5400h`        | [Get LD Info](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#get-ld-info-5400h) |
 |                                       | ✅ `5401h`        | [Get LD Allocations](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#get-ld-allocations-5401h) |
@@ -160,7 +160,7 @@ This document summarizes the support status of CXL commands within the `libcxlmi
 |                                       | ✅ `5409h`        | [Set QoS BW Limit](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#set-qos-bw-limit-5409h) |
 | **Multi-Headed Devices** |                   |                                            |
 |                                       | ✅ `5500h`        | [Get Multi-Headed Info](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#get-multi-headed-info-5500h) |
-|                                       | `5501h`           | Get Head Info                            |
+|                                       | ✅ `5501h`        | [Get Head Info](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#get-head-info-5501h) |
 | **DCD Management** |                   |                                            |
 |                                       | ✅ `5600h`        | [Get DCD Info](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#get-dcd-info-5600h) |
 |                                       | ✅ `5601h`        | [Get Host DC Region Config](https://github.com/computexpresslink/libcxlmi/blob/main/docs/FM-API.md#get-host-dc-region-config-5601h) |

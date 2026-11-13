@@ -1027,9 +1027,27 @@ Mock Infrastructure:
   ...
 
 ==========================================================
-Results: 299 passed, 0 failed, 299 total
+Results: 325 passed, 0 failed, 325 total
 ==========================================================
 ```
+
+### Other Automated Checks
+
+`meson test -C build` runs the mock tests, plus whatever else the build
+configuration enables. CI also runs the following, which can be run locally:
+
+- **Installed headers and library**: `scripts/check-install.sh build` installs
+  the build into a temporary directory and checks that each installed header
+  compiles on its own as C and C++, that a program links through
+  `pkg-config libcxlmi` and runs, and that an application's own `log.h` does
+  not clash with the library's.
+- **Python bindings**: with `-Dpython=enabled`, `meson test` also runs
+  `tests/python/test_cxlmi.py` as the `python-bindings` test. See
+  [Python.md](Python.md#testing).
+- **32-bit builds**: the mock tests are built and run for i686
+  (`scripts/cross/i686-multilib.txt`) and for armhf under qemu-user
+  (`scripts/cross/arm-linux-gnueabihf.txt` with `scripts/cross/qemu-arm.txt`).
+  See the cross-compiling section of the [README](../README.md).
 
 ## Code Coverage
 

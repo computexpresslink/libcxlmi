@@ -680,6 +680,7 @@ The Python bindings expose all CXL commands across four command sets:
 - `cxlmi_cmd_fmapi_set_domain_validation_sv()` - Set domain validation SV
 - `cxlmi_cmd_fmapi_get_vcs_domain_validation_sv_state()` - Get VCS domain validation SV state
 - `cxlmi_cmd_fmapi_get_domain_validation_sv()` - Get domain validation SV
+- `cxlmi_cmd_fmapi_get_vcs_info()` - Get Virtual CXL Switch info
 - `cxlmi_cmd_fmapi_bind_vppb()` - Bind virtual PPB
 - `cxlmi_cmd_fmapi_unbind_vppb()` - Unbind virtual PPB
 - `cxlmi_cmd_fmapi_send_ld_cxlio_config_request()` - Send LD CXL.io config request
@@ -695,6 +696,7 @@ The Python bindings expose all CXL commands across four command sets:
 - `cxlmi_cmd_fmapi_get_qos_bw_limit()` - Get QoS bandwidth limit
 - `cxlmi_cmd_fmapi_set_qos_bw_limit()` - Set QoS bandwidth limit
 - `cxlmi_cmd_fmapi_get_multiheaded_info()` - Get multi-headed info
+- `cxlmi_cmd_fmapi_get_head_info()` - Get head info
 - `cxlmi_cmd_fmapi_get_dcd_info()` - Get DCD info
 - `cxlmi_cmd_fmapi_get_dc_reg_config()` - Get DC region config
 - `cxlmi_cmd_fmapi_set_dc_region_config()` - Set DC region config

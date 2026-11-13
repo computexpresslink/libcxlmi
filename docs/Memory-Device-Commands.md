@@ -3,7 +3,7 @@ command set, as per the latest specification.
 
 <!--ts-->
 * [Identify Memory Device (40h)](#identify-memory-device-40h)
-   * [Identify Memory Device (400h)](#identify-memory-device-400h)
+   * [Identify Memory Device (4000h)](#identify-memory-device-4000h)
 * [Capacity Configuration and Label Storage (41h)](#capacity-configuration-and-label-storage-41h)
    * [Get Partition Info (4100h)](#get-partition-info-4100h)
    * [Set Partition Info (4101h)](#set-partition-info-4101h)
@@ -53,7 +53,7 @@ command set, as per the latest specification.
 
 # Identify Memory Device (40h)
 
-## Identify Memory Device (400h)
+## Identify Memory Device (4000h)
 
 Return payload:
 

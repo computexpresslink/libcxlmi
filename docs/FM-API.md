@@ -6,7 +6,7 @@ command set, as per the latest specification.
    * [Identify Switch Device (5100h)](#identify-switch-device-5100h)
    * [Get Physical Port State (5101h)](#get-physical-port-state-5101h)
    * [Physical Port Control (5102h)](#physical-port-control-5102h)
-   * [Send PPB CXL.io Configuration Request (5103)](#send-ppb-cxlio-configuration-request-5103)
+   * [Send PPB CXL.io Configuration Request (5103h)](#send-ppb-cxlio-configuration-request-5103h)
    * [Get Domain Validation SV State (5104h)](#get-domain-validation-sv-state-5104h)
    * [Set Domain Validation SV (5105h)](#set-domain-validation-sv-5105h)
    * [Get VCS Domain Validation SV State (5106h)](#get-vcs-domain-validation-sv-state-5106h)
@@ -14,7 +14,7 @@ command set, as per the latest specification.
 * [Virtual Switch (52h)](#virtual-switch-52h)
    * [Get Virtual CXL Switch Info (5200h)](#get-virtual-cxl-switch-info-5200h)
    * [Bind vPPB (5201h)](#bind-vppb-5201h)
-   * [Unbind vPPB (5202)](#unbind-vppb-5202)
+   * [Unbind vPPB (5202h)](#unbind-vppb-5202h)
 * [MLD Port (53h)](#mld-port-53h)
    * [Tunnel Management Command (5300h)](#tunnel-management-command-5300h)
    * [Send LD CXL.io Configuration Request (5301h)](#send-ld-cxlio-configuration-request-5301h)
@@ -144,7 +144,7 @@ int cxlmi_cmd_fmapi_phys_port_control(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_phys_port_control_req *in);
    ```
 
-## Send PPB CXL.io Configuration Request (5103)
+## Send PPB CXL.io Configuration Request (5103h)
 
 Input payload:
 
@@ -334,7 +334,7 @@ int cxlmi_cmd_fmapi_bind_vppb(struct cxlmi_endpoint *ep,
 			struct cxlmi_cmd_fmapi_bind_vppb_req *in);
    ```
 
-## Unbind vPPB (5202)
+## Unbind vPPB (5202h)
 
 Input payload:
 
