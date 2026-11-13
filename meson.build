@@ -186,9 +186,12 @@ add_project_arguments(
 
 subdir('ccan')
 subdir('src')
-subdir('examples')
-if get_option('tests')
-    subdir('tests')
+# A parent project only wants the library.
+if not meson.is_subproject()
+    subdir('examples')
+    if get_option('tests')
+        subdir('tests')
+    endif
 endif
 
 ################################################################################

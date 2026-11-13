@@ -461,6 +461,21 @@ meson install -C build
 rm -rf build
 ```
 
+The library can also be built as a subproject of another `meson` project,
+which then finds it with `dependency('libcxlmi')`. With the sources (or a
+link to them) in `subprojects/libcxlmi`, the parent project needs
+`subprojects/libcxlmi.wrap`:
+```
+[wrap-file]
+directory = libcxlmi
+
+[provide]
+dependency_names = libcxlmi
+```
+Only the library is built in that case, not its tests and examples, and its
+options are set as `-Dlibcxlmi:libdbus=enabled`. Where a libcxlmi is also
+installed, `--force-fallback-for=libcxlmi` selects the subproject.
+
 Testing
 =======
 
