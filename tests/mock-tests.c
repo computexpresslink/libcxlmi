@@ -9943,6 +9943,194 @@ static int test_endian_fmapi_set_ld_allocations_response(void)
  * Main
  * ============================================================ */
 
+/*
+ * A device that says it returned more list entries than were asked for,
+ * for each command that copies a list: the response and the caller's buffer
+ * only have room for what was asked. Each payload is as long as a response
+ * with one entry, and claims 200.
+ */
+static int list_too_many(uint8_t set, uint8_t cmd, const uint8_t *pl,
+			 size_t size, int (*call)(void *ret), void *ret)
+{
+	int rc;
+
+	if (setup())
+		return -2;
+	cxlmi_mock_set_response(test_ep, set, cmd, CXLMI_RET_SUCCESS,
+				(void *)pl, size);
+	rc = call(ret);
+	teardown();
+
+	return rc;
+}
+
+static int call_5101(void *ret)
+{
+	uint8_t req[2] = { 1, 0 };
+
+	return cxlmi_cmd_fmapi_get_phys_port_state(test_ep, NULL,
+						   (void *)req, ret);
+}
+
+static int call_5401(void *ret)
+{
+	struct cxlmi_cmd_fmapi_get_ld_allocations_req req = {
+		.ld_allocation_list_limit = 1,
+	};
+
+	return cxlmi_cmd_fmapi_get_ld_allocations(test_ep, NULL, &req, ret);
+}
+
+static int call_5402(void *ret)
+{
+	uint8_t req[4 + 16] = { 1 };
+
+	return cxlmi_cmd_fmapi_set_ld_allocations(test_ep, NULL,
+						  (void *)req, ret);
+}
+
+static int call_5406(void *ret)
+{
+	struct cxlmi_cmd_fmapi_get_qos_allocated_bw_req req = { .number_ld = 1 };
+
+	return cxlmi_cmd_fmapi_get_qos_allocated_bw(test_ep, NULL, &req, ret);
+}
+
+static int call_5407(void *ret)
+{
+	uint8_t req[3] = { 1, 0, 50 };
+
+	return cxlmi_cmd_fmapi_set_qos_allocated_bw(test_ep, NULL,
+						    (void *)req, ret);
+}
+
+static int call_5408(void *ret)
+{
+	struct cxlmi_cmd_fmapi_get_qos_bw_limit_req req = { .number_ld = 1 };
+
+	return cxlmi_cmd_fmapi_get_qos_bw_limit(test_ep, NULL, &req, ret);
+}
+
+static int call_5409(void *ret)
+{
+	uint8_t req[3] = { 1, 0, 50 };
+
+	return cxlmi_cmd_fmapi_set_qos_bw_limit(test_ep, NULL,
+						(void *)req, ret);
+}
+
+static int call_5500(void *ret)
+{
+	struct cxlmi_cmd_fmapi_get_multiheaded_info_req req = {
+		.ld_map_list_limit = 1,
+	};
+
+	return cxlmi_cmd_fmapi_get_multiheaded_info(test_ep, NULL, &req, ret);
+}
+
+static int call_5501(void *ret)
+{
+	struct cxlmi_cmd_fmapi_get_head_info_req req = { .num_heads = 1 };
+
+	return cxlmi_cmd_fmapi_get_head_info(test_ep, NULL, &req, ret);
+}
+
+static int call_5601(void *ret)
+{
+	struct cxlmi_cmd_fmapi_get_host_dc_region_config_req req = {
+		.region_cnt = 8,
+	};
+
+	return cxlmi_cmd_fmapi_get_dc_reg_config(test_ep, NULL, &req, ret);
+}
+
+static int call_4800(void *ret)
+{
+	struct cxlmi_cmd_memdev_get_dc_config_req req = { .region_cnt = 8 };
+
+	return cxlmi_cmd_memdev_get_dc_config(test_ep, NULL, &req, ret);
+}
+
+static int call_0100(void *ret)
+{
+	struct cxlmi_cmd_get_event_records_req req = { 0 };
+
+	return cxlmi_cmd_get_event_records(test_ep, NULL, &req, ret);
+}
+
+static int test_cmd_list_too_many(void)
+{
+	/* count at offset 0 unless noted */
+	static const uint8_t ports[4 + 16] = { 200 };
+	static const uint8_t ldalloc[4 + 16] = { 1, 0, 0, 200 };	/* 3h */
+	static const uint8_t setalloc[4 + 16] = { 200 };
+	static const uint8_t bw[2 + 1] = { 200 };
+	static const uint8_t ldmap[8 + 1] = { 4, 2, 0, 0, 0, 200 };	/* 5h */
+	static const uint8_t heads[4 + 9] = { 200 };
+	static const uint8_t hostdc[sizeof(struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp)] =
+		{ 0, 0, 8, 200 };					/* 3h */
+	static const uint8_t memdc[sizeof(struct cxlmi_cmd_memdev_get_dc_config_rsp)] =
+		{ 8, 200 };						/* 1h */
+	static const uint8_t events[sizeof(struct cxlmi_cmd_get_event_records_rsp)] =
+		{ [0x14] = 200 };
+	static const struct {
+		const char *name;
+		uint8_t set, cmd;
+		const uint8_t *pl;
+		size_t size;
+		int (*call)(void *ret);
+	} cases[] = {
+		{ "5101h", 0x51, 0x01, ports, sizeof(ports), call_5101 },
+		{ "5401h", 0x54, 0x01, ldalloc, sizeof(ldalloc), call_5401 },
+		{ "5402h", 0x54, 0x02, setalloc, sizeof(setalloc), call_5402 },
+		{ "5406h", 0x54, 0x06, bw, sizeof(bw), call_5406 },
+		{ "5407h", 0x54, 0x07, bw, sizeof(bw), call_5407 },
+		{ "5408h", 0x54, 0x08, bw, sizeof(bw), call_5408 },
+		{ "5409h", 0x54, 0x09, bw, sizeof(bw), call_5409 },
+		{ "5500h", 0x55, 0x00, ldmap, sizeof(ldmap), call_5500 },
+		{ "5501h", 0x55, 0x01, heads, sizeof(heads), call_5501 },
+		{ "5601h", 0x56, 0x01, hostdc, sizeof(hostdc), call_5601 },
+		{ "4800h", 0x48, 0x00, memdc, sizeof(memdc), call_4800 },
+		{ "0100h", 0x01, 0x00, events, sizeof(events), call_0100 },
+	};
+	/*
+	 * Room for what was asked of any of these, then a canary. The
+	 * largest are the fixed eight regions of the DC configurations.
+	 */
+	enum { ROOM = sizeof(struct cxlmi_cmd_fmapi_get_host_dc_region_config_rsp) +
+		      sizeof(struct cxlmi_cmd_memdev_get_dc_config_rsp),
+	       CANARY = 64 };
+	uint8_t *ret = malloc(ROOM + CANARY);
+	size_t i, j;
+
+	ASSERT_EQ(!ret, 0, "no memory");
+	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+		int rc;
+
+		memset(ret, 0, ROOM);
+		memset(ret + ROOM, 0x5a, CANARY);
+		rc = list_too_many(cases[i].set, cases[i].cmd, cases[i].pl,
+				   cases[i].size, cases[i].call, ret);
+		if (rc != -1) {
+			fprintf(stderr, "\n    %s: rc %d for 200 entries where 1 was asked for\n",
+				cases[i].name, rc);
+			free(ret);
+			return -1;
+		}
+		for (j = 0; j < CANARY; j++) {
+			if (ret[ROOM + j] != 0x5a) {
+				fprintf(stderr, "\n    %s: wrote past the caller's buffer\n",
+					cases[i].name);
+				free(ret);
+				return -1;
+			}
+		}
+	}
+	free(ret);
+
+	return 0;
+}
+
 int main(void)
 {
 	printf("==========================================================\n");
@@ -10094,6 +10282,7 @@ int main(void)
 	RUN_TEST(test_cmd_fmapi_dc_list_tags_too_many);
 	RUN_TEST(test_cmd_fmapi_dc_list_tags_huge_count);
 	RUN_TEST(test_cmd_fmapi_dc_list_tags_error);
+	RUN_TEST(test_cmd_list_too_many);
 	RUN_TEST(test_cmd_memdev_security_receive);
 	RUN_TEST(test_cmd_vendor_specific);
 

@@ -167,6 +167,22 @@ CXLMI_EXPORT int cxlmi_cmd_request_bg_op_abort(struct cxlmi_endpoint *ep,
 			    &rsp, sizeof(rsp), sizeof(rsp));
 }
 
+/*
+ * A response says how many list entries it holds. The response buffer and
+ * the caller's are sized for the number that was asked for, so a device
+ * that claims more would have the copy run past both.
+ */
+static bool cci_list_fits(struct cxlmi_endpoint *ep, const char *what,
+			  uint32_t returned, uint32_t asked)
+{
+	if (returned <= asked)
+		return true;
+
+	cxlmi_msg(ep->ctx, LOG_ERR, "%u %s returned, room for %u\n",
+		  returned, what, asked);
+	return false;
+}
+
 CXLMI_EXPORT int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 				     struct cxlmi_tunnel_info *ti,
 				     struct cxlmi_cmd_get_event_records_req *in,
@@ -213,6 +229,11 @@ CXLMI_EXPORT int cxlmi_cmd_get_event_records(struct cxlmi_endpoint *ep,
 	ret->last_overflow_timestamp =
 		le64_to_cpu(rsp_pl->last_overflow_timestamp);
 	ret->record_count = le16_to_cpu(rsp_pl->record_count);
+	if (!cci_list_fits(ep, "event records", ret->record_count,
+			   CXLMI_MAX_SUPPORTED_EVENT_RECORDS)) {
+		ret->record_count = 0;
+		return -1;
+	}
 
 	for (i = 0; i < ret->record_count; i++) {
 		memcpy(ret->records[i].uuid, rsp_pl->records[i].uuid, 0x10);
@@ -2192,6 +2213,9 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_phys_port_state(struct cxlmi_endpoint *ep,
 	rsp_pl = (struct cxlmi_cmd_fmapi_get_phys_port_state_rsp *)rsp->payload;
 	memset(ret, 0, sizeof(*ret));
 
+	if (!cci_list_fits(ep, "ports", rsp_pl->num_ports, in->num_ports))
+		return -1;
+
 	ret->num_ports = rsp_pl->num_ports;
 	for (i = 0; i < rsp_pl->num_ports; i++) {
 		ret->ports[i].port_id = rsp_pl->ports[i].port_id;
@@ -2704,6 +2728,11 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_ld_allocations(struct cxlmi_endpoint *ep,
 	ret->memory_granularity = rsp_pl->memory_granularity;
 	ret->start_ld_id = rsp_pl->start_ld_id;
 	ret->ld_allocation_list_len = rsp_pl->ld_allocation_list_len;
+	if (!cci_list_fits(ep, "LD allocations", ret->ld_allocation_list_len,
+			   in->ld_allocation_list_limit)) {
+		ret->ld_allocation_list_len = 0;
+		return -1;
+	}
 
 	for (i = 0; i < ret->ld_allocation_list_len; i++) {
 		ret->ld_allocation_list[i].range_1_allocation_mult =
@@ -2762,6 +2791,11 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_ld_allocations(struct cxlmi_endpoint *ep,
 
 	ret->number_ld = rsp_pl->number_ld;
 	ret->start_ld_id = rsp_pl->start_ld_id;
+	if (!cci_list_fits(ep, "LD entries", ret->number_ld,
+			   in->number_ld)) {
+		ret->number_ld = 0;
+		return -1;
+	}
 
 	for (i = 0; i < ret->number_ld; i++) {
 		ret->ld_allocation_list[i].range_1_allocation_mult =
@@ -2931,6 +2965,11 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_qos_allocated_bw(struct cxlmi_endpoint *ep,
 
 	ret->number_ld = rsp_pl->number_ld;
 	ret->start_ld_id = rsp_pl->start_ld_id;
+	if (!cci_list_fits(ep, "LD entries", ret->number_ld,
+			   in->number_ld)) {
+		ret->number_ld = 0;
+		return -1;
+	}
 
 	for (i = 0; i < ret->number_ld; i++)
 		ret->qos_allocation_fraction[i] = rsp_pl->qos_allocation_fraction[i];
@@ -2980,6 +3019,11 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_qos_allocated_bw(struct cxlmi_endpoint *ep,
 
 	ret->number_ld = rsp_pl->number_ld;
 	ret->start_ld_id = rsp_pl->start_ld_id;
+	if (!cci_list_fits(ep, "LD entries", ret->number_ld,
+			   in->number_ld)) {
+		ret->number_ld = 0;
+		return -1;
+	}
 
 	for (i = 0; i < ret->number_ld; i++)
 		ret->qos_allocation_fraction[i] = rsp_pl->qos_allocation_fraction[i];
@@ -3027,6 +3071,11 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_qos_bw_limit(struct cxlmi_endpoint *ep,
 
 	ret->number_ld = rsp_pl->number_ld;
 	ret->start_ld_id = rsp_pl->start_ld_id;
+	if (!cci_list_fits(ep, "LD entries", ret->number_ld,
+			   in->number_ld)) {
+		ret->number_ld = 0;
+		return -1;
+	}
 
 	for (i = 0; i < ret->number_ld; i++)
 		ret->qos_limit_fraction[i] = rsp_pl->qos_limit_fraction[i];
@@ -3076,6 +3125,11 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_set_qos_bw_limit(struct cxlmi_endpoint *ep,
 
 	ret->number_ld = rsp_pl->number_ld;
 	ret->start_ld_id = rsp_pl->start_ld_id;
+	if (!cci_list_fits(ep, "LD entries", ret->number_ld,
+			   in->number_ld)) {
+		ret->number_ld = 0;
+		return -1;
+	}
 
 	for (i = 0; i < ret->number_ld; i++)
 		ret->qos_limit_fraction[i] = rsp_pl->qos_limit_fraction[i];
@@ -3126,6 +3180,11 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_multiheaded_info(struct cxlmi_endpoint *ep,
 	ret->num_heads = rsp_pl->num_heads;
 	ret->start_ld_id = rsp_pl->start_ld_id;
 	ret->ld_map_len = rsp_pl->ld_map_len;
+	if (!cci_list_fits(ep, "LD map entries", ret->ld_map_len,
+			   in->ld_map_list_limit)) {
+		ret->ld_map_len = 0;
+		return -1;
+	}
 
 	memcpy(ret->ld_map, rsp_pl->ld_map,
 	       ret->ld_map_len * sizeof(*rsp_pl->ld_map));
@@ -3170,6 +3229,11 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_head_info(struct cxlmi_endpoint *ep,
 
 	rsp_pl = (struct cxlmi_cmd_fmapi_get_head_info_rsp *)rsp->payload;
 	ret->num_heads = rsp_pl->num_heads;
+	if (!cci_list_fits(ep, "heads", ret->num_heads,
+			   in->num_heads)) {
+		ret->num_heads = 0;
+		return -1;
+	}
 	memcpy(ret->head_info_list, rsp_pl->head_info_list,
 	       ret->num_heads * sizeof(*rsp_pl->head_info_list));
 
@@ -3274,6 +3338,11 @@ CXLMI_EXPORT int cxlmi_cmd_fmapi_get_dc_reg_config(struct cxlmi_endpoint *ep,
 	ret->host_id = le16_to_cpu(rsp_pl->host_id);
 	ret->num_regions = rsp_pl->num_regions;
 	ret->regions_returned = rsp_pl->regions_returned;
+	if (!cci_list_fits(ep, "DC regions", ret->regions_returned,
+			   ARRAY_SIZE(ret->region_configs))) {
+		ret->regions_returned = 0;
+		return -1;
+	}
 	for (i = 0; i < ret->regions_returned; i++) {
 		ret->region_configs[i].base = le64_to_cpu(rsp_pl->region_configs[i].base);
 		ret->region_configs[i].decode_len =
@@ -3644,6 +3713,11 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_config(struct cxlmi_endpoint *ep,
 
 	ret->num_regions = rsp_pl->num_regions;
 	ret->regions_returned = rsp_pl->regions_returned;
+	if (!cci_list_fits(ep, "DC regions", ret->regions_returned,
+			   ARRAY_SIZE(ret->region_configs))) {
+		ret->regions_returned = 0;
+		return -1;
+	}
 	for (i = 0; i < ret->regions_returned; i++) {
 		ret->region_configs[i].base = le64_to_cpu(rsp_pl->region_configs[i].base);
 		ret->region_configs[i].decode_len =
