@@ -10303,7 +10303,12 @@ static int test_cmd_list_too_many_more(void)
 		uint8_t *pl = calloc(1, room), *ret = malloc(room + CANARY);
 		int rc;
 
-		ASSERT_EQ(!pl || !ret, 0, "no memory");
+		if (!pl || !ret) {
+			free(pl);
+			free(ret);
+			fprintf(stderr, "\n    no memory\n");
+			return -1;
+		}
 		/* little-endian, as wide as the field */
 		for (j = 0; j < cases[i].count_size; j++)
 			pl[cases[i].count_at + j] = (uint8_t)(claim >> (8 * j));
