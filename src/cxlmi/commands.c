@@ -1555,7 +1555,8 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_scan_media(struct cxlmi_endpoint *ep,
 	req_pl = (struct cxlmi_cmd_memdev_scan_media_req *)req->payload;
 	req_pl->scan_media_physaddr = cpu_to_le64(in->scan_media_physaddr);
 	req_pl->scan_media_physaddr_length = cpu_to_le64(in->scan_media_physaddr_length);
-	req_pl->scan_media_flags = cpu_to_le16(in->scan_media_flags);
+	/* a byte (Table 8-327): no byte order */
+	req_pl->scan_media_flags = in->scan_media_flags;
 
 	return send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
 }
