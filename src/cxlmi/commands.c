@@ -400,8 +400,8 @@ cxlmi_cmd_set_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
 {
 	struct cxlmi_cmd_set_mctp_event_interrupt_policy_req *req_pl;
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
-	struct cxlmi_cci_msg rsp;
-	size_t req_sz;
+	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
+	size_t req_sz, rsp_sz;
 	int rc = 0;
 
 	CXLMI_BUILD_BUG_ON(sizeof(*in) != 2);
@@ -417,7 +417,16 @@ cxlmi_cmd_set_mctp_event_interrupt_policy(struct cxlmi_endpoint *ep,
 	req_pl->event_interrupt_settings =
 		cpu_to_le16(in->event_interrupt_settings);
 
-	rc = send_cmd_cci(ep, ti, req, req_sz, &rsp, sizeof(rsp), sizeof(rsp));
+	/*
+	 * The output payload is the policy as set, in the same layout as the
+	 * input (Table 8-236). A response without it is also accepted.
+	 */
+	rsp_sz = sizeof(*rsp) + sizeof(*in);
+	rsp = calloc(1, rsp_sz);
+	if (!rsp)
+		return -1;
+
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, sizeof(*rsp));
 	return rc;
 }
 

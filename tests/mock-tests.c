@@ -1922,6 +1922,28 @@ static int test_cmd_set_mctp_event_interrupt_policy(void)
 	return 0;
 }
 
+/*
+ * The output payload of Set MCTP Event Interrupt Policy is the policy as
+ * set (Table 8-236): a response that carries it is a success.
+ */
+static int test_cmd_set_mctp_event_interrupt_policy_payload(void)
+{
+	struct cxlmi_cmd_set_mctp_event_interrupt_policy_req req = {0};
+	uint8_t pl[2] = { 0x0f, 0x80 };
+	int rc;
+
+	req.event_interrupt_settings = 0x800f;
+
+	ASSERT_EQ(setup(), 0, "setup failed");
+	cxlmi_mock_set_response(test_ep, 0x01, 0x05, CXLMI_RET_SUCCESS,
+				pl, sizeof(pl));
+	rc = cxlmi_cmd_set_mctp_event_interrupt_policy(test_ep, NULL, &req);
+	teardown();
+
+	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "a response with the policy failed");
+	return 0;
+}
+
 static int test_cmd_event_notification(void)
 {
 	struct cxlmi_cmd_event_notification_req req = {0};
@@ -10160,6 +10182,7 @@ int main(void)
 	RUN_TEST(test_cmd_set_event_interrupt_policy);
 	RUN_TEST(test_cmd_get_mctp_event_interrupt_policy);
 	RUN_TEST(test_cmd_set_mctp_event_interrupt_policy);
+	RUN_TEST(test_cmd_set_mctp_event_interrupt_policy_payload);
 	RUN_TEST(test_cmd_event_notification);
 
 	TEST_SUITE("Firmware Update Commands");

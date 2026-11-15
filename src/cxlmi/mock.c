@@ -264,6 +264,22 @@ int send_mock_cmd(struct cxlmi_endpoint *ep,
 
 	mock->responses_returned++;
 
+	/*
+	 * A payload where the caller has room for none: a real transport's
+	 * length check fails such a response, and so does the mock, so that a
+	 * command whose response payload was not provided for shows here.
+	 */
+	if (rsp_msg && rsp_msg_sz == sizeof(*rsp_msg) &&
+	    resp->payload && resp->payload_size > 0 &&
+	    resp->return_code == CXLMI_RET_SUCCESS) {
+		cxlmi_msg(ep->ctx, LOG_ERR,
+			  "mock: a %zu byte payload for cmd %02x:%02x, which has room for none\n",
+			  resp->payload_size, req_msg->command_set, req_msg->command);
+		free(resp->payload);
+		free(resp);
+		return -1;
+	}
+
 	/* Build response message */
 	if (rsp_msg && rsp_msg_sz > 0) {
 		memset(rsp_msg, 0, rsp_msg_sz);

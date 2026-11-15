@@ -110,6 +110,7 @@ static size_t responder_handle(const struct responder *r, bool fmapi,
 {
 	static uint64_t timestamp = TIMESTAMP;
 	static uint8_t msg_limit = 9;
+	static uint8_t event_policy[2];
 	uint64_t le64;
 
 	*rc = CXLMI_RET_SUCCESS;
@@ -168,6 +169,18 @@ static size_t responder_handle(const struct responder *r, bool fmapi,
 		memcpy(&le64, in, 8);
 		timestamp = le64_to_cpu(le64);
 		return 0;
+	case 0x0104:	/* Get MCTP Event Interrupt Policy */
+		memcpy(out, event_policy, 2);
+		return 2;
+	case 0x0105:	/* Set MCTP Event Interrupt Policy */
+		if (in_len != 2) {
+			*rc = CXLMI_RET_PAYLOADLEN;
+			return 0;
+		}
+		/* the output payload is the policy as set (Table 8-236) */
+		memcpy(event_policy, in, 2);
+		memcpy(out, event_policy, 2);
+		return 2;
 	case 0x0400:	/* Get Supported Logs: two entries */
 		memset(out, 0, 8 + 2 * 20);
 		out[0] = 2;
@@ -477,6 +490,10 @@ static void test_commands(bool is_switch)
 	struct cxlmi_cmd_set_response_msg_limit_req set_limit = { .limit = 12 };
 	struct cxlmi_cmd_set_response_msg_limit_rsp new_limit = { 0 };
 	struct cxlmi_cmd_bg_op_status_rsp bg;
+	struct cxlmi_cmd_set_mctp_event_interrupt_policy_req set_policy = {
+		.event_interrupt_settings = 0x801f,
+	};
+	struct cxlmi_cmd_get_mctp_event_interrupt_policy_rsp policy = { 0 };
 	struct cxlmi_cmd_get_supported_logs_rsp *logs;
 	struct cxlmi_cmd_fmapi_identify_sw_device_rsp sw = { 0 };
 	struct cxlmi_ctx *ctx = new_ctx();
@@ -521,6 +538,14 @@ static void test_commands(bool is_switch)
 
 	rc = cxlmi_cmd_bg_op_status(ep, NULL, &bg);
 	CHECK(rc == 0, "background operation status: %d", rc);
+
+	/* a response with the output payload Table 8-236 gives it */
+	rc = cxlmi_cmd_set_mctp_event_interrupt_policy(ep, NULL, &set_policy);
+	CHECK(rc == 0, "set MCTP event interrupt policy: %d", rc);
+	rc = cxlmi_cmd_get_mctp_event_interrupt_policy(ep, NULL, &policy);
+	CHECK(rc == 0 && policy.event_interrupt_settings == 0x801f,
+	      "MCTP event interrupt policy read back: %d, %04x", rc,
+	      policy.event_interrupt_settings);
 
 	/* a response of variable length */
 	logs = calloc(1, sizeof(*logs) +
