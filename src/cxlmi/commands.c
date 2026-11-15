@@ -1409,7 +1409,9 @@ cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
 	if (!rsp)
 		return -1;
 
-	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	/* 20h + Media Error Record Count * 10h bytes (Table 8-321) */
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz,
+			  sizeof(*rsp) + sizeof(*rsp_pl));
 	if (rc)
 		return rc;
 
@@ -1576,7 +1578,9 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_scan_media_results(struct cxlmi_endpoint *
 	if (!rsp)
 		return -1;
 
-	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz, rsp_sz);
+	/* 20h + Media Error Record Count * 10h bytes (Table 8-328) */
+	rc = send_cmd_cci(ep, ti, &req, sizeof(req), rsp, rsp_sz,
+			  sizeof(*rsp) + sizeof(*rsp_pl));
 	if (rc)
 		return rc;
 

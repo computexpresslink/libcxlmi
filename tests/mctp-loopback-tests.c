@@ -189,6 +189,22 @@ static size_t responder_handle(const struct responder *r, bool fmapi,
 		memset(out + 28, 0xbb, 16);
 		out[28 + 17] = 0x01;		/* log size 100h */
 		return 8 + 2 * 20;
+	case 0x4300:	/* Get Poison List: one Media Error Record */
+		if (r->is_switch)
+			break;
+		memset(out, 0, 0x20 + 0x10);
+		out[0x0a] = 1;			/* Media Error Record Count */
+		out[0x20] = 0x40;		/* its address, 40h */
+		out[0x28] = 1;			/* its length, 1 */
+		return 0x20 + 0x10;
+	case 0x4305:	/* Get Scan Media Results: one Media Error Record */
+		if (r->is_switch)
+			break;
+		memset(out, 0, 0x20 + 0x10);
+		out[0x12] = 1;			/* Media Error Record Count */
+		out[0x20] = 0x80;
+		out[0x28] = 1;
+		return 0x20 + 0x10;
 	case 0x4000:	/* Identify Memory Device */
 		if (r->is_switch)
 			break;
@@ -578,6 +594,11 @@ static void test_commands(bool is_switch)
 		      sw.num_physical_ports, sw.num_total_vppb);
 	} else {
 		struct cxlmi_cmd_memdev_identify_rsp md = { 0 };
+		struct cxlmi_cmd_memdev_get_poison_list_req poison_req = {
+			.get_poison_list_phy_addr_len = 1,
+		};
+		struct cxlmi_cmd_memdev_get_poison_list_rsp *poison;
+		struct cxlmi_cmd_memdev_get_scan_media_results_rsp *scan;
 
 		CHECK(rc == CXLMI_RET_UNSUPPORTED,
 		      "identify switch on a type 3: %d", rc);
@@ -588,6 +609,26 @@ static void test_commands(bool is_switch)
 			       sizeof(md.fw_revision)),
 		      "identify memory device: %d, capacity %llu", rc,
 		      (unsigned long long)md.total_capacity);
+
+		/* responses as long as the records they hold, not their most */
+		poison = calloc(1, sizeof(*poison) + CXLMI_MAX_POISON_RECORDS *
+				sizeof(poison->records[0]));
+		scan = calloc(1, sizeof(*scan) + CXLMI_MAX_SCAN_MEDIA_RECORDS *
+			      sizeof(scan->record[0]));
+		if (!poison || !scan)
+			die("out of memory");
+		rc = cxlmi_cmd_get_poison_list(ep, NULL, &poison_req, poison);
+		CHECK(rc == 0 && poison->more_err_media_record_cnt == 1 &&
+		      poison->records[0].media_err_addr == 0x40,
+		      "get poison list: %d, %u records", rc,
+		      poison->more_err_media_record_cnt);
+		rc = cxlmi_cmd_memdev_get_scan_media_results(ep, NULL, scan);
+		CHECK(rc == 0 && scan->media_error_count == 1 &&
+		      scan->record[0].media_error_address == 0x80,
+		      "get scan media results: %d, %u records", rc,
+		      scan->media_error_count);
+		free(poison);
+		free(scan);
 	}
 out:
 	responder_stop(pid);
