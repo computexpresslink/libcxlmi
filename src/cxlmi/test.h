@@ -87,6 +87,22 @@ int cxlmi_mock_get_last_command(struct cxlmi_endpoint *ep,
 				void *payload,
 				size_t *payload_size);
 
+/**
+ * cxlmi_mock_get_last_tunnel() - Get the tunnel the last command sent to a
+ * mock endpoint was sent through.
+ * @ep: Mock endpoint object
+ * @ti: Output: the tunnel information the command was sent with; its level
+ *      is 0, and its port and LD -1, if it was sent through none.
+ *
+ * The mock does not wrap a command in Tunnel Management Commands: it
+ * answers the inner command. This says where a real endpoint would have
+ * sent it.
+ *
+ * Return: 0 on success, -1 on failure.
+ */
+int cxlmi_mock_get_last_tunnel(struct cxlmi_endpoint *ep,
+			       struct cxlmi_tunnel_info *ti);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1161,7 +1161,7 @@ int send_cmd_cci(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 		cxlmi_insert_delay(ep);
 
 	if (cxlmi_is_mock_endpoint(ep)) {
-		rc = send_mock_cmd(ep, req_msg, req_msg_sz,
+		rc = send_mock_cmd(ep, ti, req_msg, req_msg_sz,
 				   rsp_msg, rsp_msg_sz, rsp_msg_sz_min);
 	} else if (ep->transport_data) {
 		if (!ti || ti->level == 0)

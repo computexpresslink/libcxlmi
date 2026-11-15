@@ -39,6 +39,8 @@ struct cxlmi_transport_mock {
 	uint8_t last_command;
 	void *last_payload;
 	size_t last_payload_size;
+	/* and the tunnel it was sent through: level 0 if none */
+	struct cxlmi_tunnel_info last_tunnel;
 };
 
 bool cxlmi_is_mock_endpoint(struct cxlmi_endpoint *ep)
@@ -165,6 +167,21 @@ CXLMI_EXPORT int cxlmi_mock_get_stats(struct cxlmi_endpoint *ep,
 	return 0;
 }
 
+CXLMI_EXPORT int cxlmi_mock_get_last_tunnel(struct cxlmi_endpoint *ep,
+					    struct cxlmi_tunnel_info *ti)
+{
+	struct cxlmi_transport_mock *mock;
+
+	if (!ep || !ti || !cxlmi_is_mock_endpoint(ep)) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	mock = ep->transport_data;
+	*ti = mock->last_tunnel;
+	return 0;
+}
+
 CXLMI_EXPORT int cxlmi_mock_get_last_command(struct cxlmi_endpoint *ep,
 					     uint8_t *command_set,
 					     uint8_t *command,
@@ -215,7 +232,7 @@ mock_find_response(struct cxlmi_transport_mock *mock,
 }
 
 /* Internal: called by send_cmd_cci for mock transport */
-int send_mock_cmd(struct cxlmi_endpoint *ep,
+int send_mock_cmd(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 		  struct cxlmi_cci_msg *req_msg, size_t req_msg_sz,
 		  struct cxlmi_cci_msg *rsp_msg, size_t rsp_msg_sz,
 		  size_t rsp_msg_sz_min)
@@ -229,6 +246,11 @@ int send_mock_cmd(struct cxlmi_endpoint *ep,
 	/* Store last command for verification */
 	mock->last_command_set = req_msg->command_set;
 	mock->last_command = req_msg->command;
+	if (ti)
+		mock->last_tunnel = *ti;
+	else
+		mock->last_tunnel = (struct cxlmi_tunnel_info)
+			__TUNNEL_INITIALIZER(-1, -1, 0, 0);
 
 	req_pl_size = req_msg->pl_length[0] |
 		      (req_msg->pl_length[1] << 8) |

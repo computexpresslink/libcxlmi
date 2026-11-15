@@ -17,7 +17,7 @@ struct cxlmi_cci_msg;
 bool cxlmi_is_mock_endpoint(struct cxlmi_endpoint *ep);
 
 /* Internal send function for mock transport */
-int send_mock_cmd(struct cxlmi_endpoint *ep,
+int send_mock_cmd(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 		  struct cxlmi_cci_msg *req_msg, size_t req_msg_sz,
 		  struct cxlmi_cci_msg *rsp_msg, size_t rsp_msg_sz,
 		  size_t rsp_msg_sz_min);

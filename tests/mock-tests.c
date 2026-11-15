@@ -1944,6 +1944,36 @@ static int test_cmd_set_mctp_event_interrupt_policy_payload(void)
 	return 0;
 }
 
+/* The tunnel a command was sent through is recorded with it */
+static int test_mock_last_tunnel(void)
+{
+	struct cxlmi_cmd_identify_rsp id;
+	struct cxlmi_tunnel_info ti;
+	DEFINE_CXLMI_TUNNEL_SWITCH(sw, 5);
+	DEFINE_CXLMI_TUNNEL_SWITCH_MLD(sw_ld, 3, 1);
+
+	ASSERT_EQ(setup(), 0, "setup failed");
+
+	cxlmi_cmd_identify(test_ep, &sw, &id);
+	ASSERT_EQ(cxlmi_mock_get_last_tunnel(test_ep, &ti), 0, "get failed");
+	ASSERT_EQ(ti.level, 1, "switch tunnel level");
+	ASSERT_EQ(ti.port, 5, "switch tunnel port");
+
+	cxlmi_cmd_identify(test_ep, &sw_ld, &id);
+	cxlmi_mock_get_last_tunnel(test_ep, &ti);
+	ASSERT_EQ(ti.level, 2, "switch and MLD tunnel level");
+	ASSERT_EQ(ti.port, 3, "switch and MLD tunnel port");
+	ASSERT_EQ(ti.ld, 1, "switch and MLD tunnel LD");
+
+	cxlmi_cmd_identify(test_ep, CXLMI_NO_TUNNEL, &id);
+	cxlmi_mock_get_last_tunnel(test_ep, &ti);
+	ASSERT_EQ(ti.level, 0, "no tunnel level");
+	ASSERT_EQ(ti.port, -1, "no tunnel port");
+
+	teardown();
+	return 0;
+}
+
 static int test_cmd_event_notification(void)
 {
 	struct cxlmi_cmd_event_notification_req req = {0};
@@ -10183,6 +10213,7 @@ int main(void)
 	RUN_TEST(test_cmd_get_mctp_event_interrupt_policy);
 	RUN_TEST(test_cmd_set_mctp_event_interrupt_policy);
 	RUN_TEST(test_cmd_set_mctp_event_interrupt_policy_payload);
+	RUN_TEST(test_mock_last_tunnel);
 	RUN_TEST(test_cmd_event_notification);
 
 	TEST_SUITE("Firmware Update Commands");
