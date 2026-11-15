@@ -231,6 +231,30 @@ CXLMI_EXPORT int cxlmi_endpoint_set_timeout(struct cxlmi_endpoint *ep,
 	return 0;
 }
 
+CXLMI_EXPORT int cxlmi_endpoint_get_mctp_addr(struct cxlmi_endpoint *ep,
+					    unsigned int *net, uint8_t *eid)
+{
+	struct cxlmi_transport_mctp *mctp;
+
+	if (!ep) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (cxlmi_is_mock_endpoint(ep))
+		return mock_get_mctp_addr(ep, net, eid);
+	if (!ep->transport_data) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	mctp = ep->transport_data;
+	if (net)
+		*net = mctp->nid;
+	if (eid)
+		*eid = mctp->eid;
+	return 0;
+}
+
 CXLMI_EXPORT unsigned int cxlmi_endpoint_get_timeout(struct cxlmi_endpoint *ep)
 {
 	if (!ep) {

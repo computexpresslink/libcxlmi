@@ -4,6 +4,7 @@
  *
  * Comprehensive unit tests using the mock transport layer.
  */
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1958,6 +1959,28 @@ static int test_cmd_set_mctp_event_interrupt_policy_payload(void)
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "a response with the policy failed");
+	return 0;
+}
+
+/* A mock endpoint has an MCTP address once a test gives it one */
+static int test_mock_mctp_addr(void)
+{
+	unsigned int net = 0;
+	uint8_t eid = 0;
+
+	ASSERT_EQ(setup(), 0, "setup failed");
+	errno = 0;
+	ASSERT_EQ(cxlmi_endpoint_get_mctp_addr(test_ep, &net, &eid), -1,
+		  "an address before one was given");
+	ASSERT_EQ(errno, EINVAL, "errno");
+	ASSERT_EQ(cxlmi_mock_set_mctp_addr(test_ep, 3, 0x42), 0, "set failed");
+	ASSERT_EQ(cxlmi_endpoint_get_mctp_addr(test_ep, &net, &eid), 0, "get failed");
+	ASSERT_EQ(net, 3, "network");
+	ASSERT_EQ(eid, 0x42, "EID");
+	ASSERT_EQ(cxlmi_endpoint_get_mctp_addr(test_ep, NULL, NULL), 0,
+		  "get with nowhere to put it");
+	teardown();
+	ASSERT_EQ(cxlmi_endpoint_get_mctp_addr(NULL, &net, &eid), -1, "no endpoint");
 	return 0;
 }
 
@@ -10378,6 +10401,7 @@ int main(void)
 	RUN_TEST(test_cmd_set_mctp_event_interrupt_policy);
 	RUN_TEST(test_cmd_set_mctp_event_interrupt_policy_payload);
 	RUN_TEST(test_mock_last_tunnel);
+	RUN_TEST(test_mock_mctp_addr);
 	RUN_TEST(test_cmd_event_notification);
 
 	TEST_SUITE("Firmware Update Commands");

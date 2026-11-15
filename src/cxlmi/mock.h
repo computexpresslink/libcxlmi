@@ -22,6 +22,10 @@ int send_mock_cmd(struct cxlmi_endpoint *ep, struct cxlmi_tunnel_info *ti,
 		  struct cxlmi_cci_msg *rsp_msg, size_t rsp_msg_sz,
 		  size_t rsp_msg_sz_min);
 
+/* The MCTP address a test gave a mock endpoint: -1, EINVAL, if none */
+int mock_get_mctp_addr(struct cxlmi_endpoint *ep, unsigned int *net,
+		       uint8_t *eid);
+
 /* Internal close function for mock transport */
 void mock_close(struct cxlmi_endpoint *ep);
 

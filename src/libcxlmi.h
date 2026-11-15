@@ -149,6 +149,23 @@ int cxlmi_endpoint_set_timeout(struct cxlmi_endpoint *ep,
 			       unsigned int timeout_ms);
 
 /**
+ * cxlmi_endpoint_get_mctp_addr - get the MCTP address of an endpoint
+ * @ep: endpoint object
+ * @net: MCTP network the endpoint was opened on (may be NULL)
+ * @eid: its Endpoint ID (may be NULL)
+ *
+ * The address a message from the endpoint comes from, such as an MCTP
+ * Event Notification it sends: what tells which endpoint sent it. An
+ * endpoint opened on MCTP_NET_ANY (0) reports 0, where a message from it
+ * comes from the network the kernel chose: 0 then matches any network.
+ *
+ * Return: 0 for an endpoint reached over MCTP, or -1 with errno set to
+ * EINVAL for one that is not, such as one opened with cxlmi_open().
+ */
+int cxlmi_endpoint_get_mctp_addr(struct cxlmi_endpoint *ep,
+				 unsigned int *net, uint8_t *eid);
+
+/**
  * cxlmi_endpoint_has_fmapi - determine whether or not the underlying
  * the library can send FM-API commands.
  * @ep: endpoint object

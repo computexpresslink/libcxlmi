@@ -103,6 +103,22 @@ int cxlmi_mock_get_last_command(struct cxlmi_endpoint *ep,
 int cxlmi_mock_get_last_tunnel(struct cxlmi_endpoint *ep,
 			       struct cxlmi_tunnel_info *ti);
 
+/**
+ * cxlmi_mock_set_mctp_addr() - Give a mock endpoint an MCTP address.
+ * @ep: Mock endpoint object
+ * @net: MCTP network
+ * @eid: Endpoint ID
+ *
+ * cxlmi_endpoint_get_mctp_addr() then reports it, as for an endpoint
+ * reached over MCTP: for testing code that tells endpoints by address,
+ * such as the sender of an Event Notification. A mock endpoint has none
+ * until it is given one.
+ *
+ * Return: 0 on success, -1 on failure.
+ */
+int cxlmi_mock_set_mctp_addr(struct cxlmi_endpoint *ep, unsigned int net,
+			     uint8_t eid);
+
 #ifdef __cplusplus
 }
 #endif

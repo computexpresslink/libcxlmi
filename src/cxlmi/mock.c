@@ -41,6 +41,10 @@ struct cxlmi_transport_mock {
 	size_t last_payload_size;
 	/* and the tunnel it was sent through: level 0 if none */
 	struct cxlmi_tunnel_info last_tunnel;
+	/* the MCTP address it stands for, if a test gave it one */
+	bool has_mctp_addr;
+	unsigned int mctp_net;
+	uint8_t mctp_eid;
 };
 
 bool cxlmi_is_mock_endpoint(struct cxlmi_endpoint *ep)
@@ -164,6 +168,39 @@ CXLMI_EXPORT int cxlmi_mock_get_stats(struct cxlmi_endpoint *ep,
 	if (responses_returned)
 		*responses_returned = mock->responses_returned;
 
+	return 0;
+}
+
+CXLMI_EXPORT int cxlmi_mock_set_mctp_addr(struct cxlmi_endpoint *ep,
+					  unsigned int net, uint8_t eid)
+{
+	struct cxlmi_transport_mock *mock;
+
+	if (!ep || !cxlmi_is_mock_endpoint(ep)) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	mock = ep->transport_data;
+	mock->has_mctp_addr = true;
+	mock->mctp_net = net;
+	mock->mctp_eid = eid;
+	return 0;
+}
+
+int mock_get_mctp_addr(struct cxlmi_endpoint *ep, unsigned int *net,
+		       uint8_t *eid)
+{
+	struct cxlmi_transport_mock *mock = ep->transport_data;
+
+	if (!mock->has_mctp_addr) {
+		errno = EINVAL;
+		return -1;
+	}
+	if (net)
+		*net = mock->mctp_net;
+	if (eid)
+		*eid = mock->mctp_eid;
 	return 0;
 }
 

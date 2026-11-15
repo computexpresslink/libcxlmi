@@ -523,6 +523,14 @@ static void test_commands(bool is_switch)
 		goto out;
 
 	CHECK(!cxlmi_open_mctp(ctx, NET, EID), "endpoint opened twice");
+	{
+		unsigned int net = 0;
+		uint8_t eid = 0;
+
+		rc = cxlmi_endpoint_get_mctp_addr(ep, &net, &eid);
+		CHECK(rc == 0 && net == NET && eid == EID,
+		      "MCTP address: %d, network %u, EID %u", rc, net, eid);
+	}
 	CHECK(cxlmi_endpoint_has_fmapi(ep), "probe did not enable FM-API");
 
 	rc = cxlmi_cmd_identify(ep, NULL, &id);
