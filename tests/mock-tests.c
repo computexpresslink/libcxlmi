@@ -10205,6 +10205,143 @@ static int test_cmd_list_too_many(void)
 	return 0;
 }
 
+/*
+ * Seven more commands return a list whose length the device reports: Get
+ * Supported Logs and its Sub-List, Get Supported Features, Get Poison
+ * List, Get Scan Media Results, Media Operations Discovery and the memory
+ * device's Get Dynamic Capacity Extent List. Each asks for a few entries,
+ * or has a fixed number of them, and the device claims many more, in a
+ * response that fits what libcxlmi receives into. The command fails and
+ * nothing is written past the room the caller was told to give @ret.
+ */
+static int call_0400(void *ret)
+{
+	return cxlmi_cmd_get_supported_logs(test_ep, NULL, ret);
+}
+
+static int call_0405(void *ret)
+{
+	struct cxlmi_cmd_get_supported_logs_sublist_req req = {
+		.max_supported_log_entries = 1,
+	};
+
+	return cxlmi_cmd_get_supported_logs_sublist(test_ep, NULL, &req, ret);
+}
+
+static int call_0500(void *ret)
+{
+	struct cxlmi_cmd_get_supported_features_req req = {
+		.count = 0x30,		/* one entry */
+	};
+
+	return cxlmi_cmd_get_supported_features(test_ep, NULL, &req, ret);
+}
+
+static int call_4300(void *ret)
+{
+	struct cxlmi_cmd_memdev_get_poison_list_req req = {
+		.get_poison_list_phy_addr_len = 1,
+	};
+
+	return cxlmi_cmd_get_poison_list(test_ep, NULL, &req, ret);
+}
+
+static int call_4305(void *ret)
+{
+	return cxlmi_cmd_memdev_get_scan_media_results(test_ep, NULL, ret);
+}
+
+static int call_4402(void *ret)
+{
+	struct cxlmi_cmd_memdev_media_operations_discovery_req req = {
+		.discovery_osa = { .num_ops = 1 },
+	};
+
+	return cxlmi_cmd_memdev_media_operations_discovery(test_ep, NULL, &req, ret);
+}
+
+static int call_4801(void *ret)
+{
+	struct cxlmi_cmd_memdev_get_dc_extent_list_req req = { .extent_cnt = 1 };
+
+	return cxlmi_cmd_memdev_get_dc_extent_list(test_ep, NULL, &req, ret);
+}
+
+static int call_4801_none(void *ret)
+{
+	struct cxlmi_cmd_memdev_get_dc_extent_list_req req = { .extent_cnt = 0 };
+
+	return cxlmi_cmd_memdev_get_dc_extent_list(test_ep, NULL, &req, ret);
+}
+
+static int test_cmd_list_too_many_more(void)
+{
+	enum { CANARY = 64 };
+	static const struct {
+		const char *name;
+		uint8_t set, cmd;
+		size_t header, entry;	/* of the response */
+		size_t room;		/* entries the caller gives room for */
+		size_t count_at;	/* offset of the count */
+		size_t count_size;	/* its width */
+		int (*call)(void *ret);
+	} cases[] = {
+		{ "0400h", 0x04, 0x00, 8, 0x14, CXLMI_MAX_SUPPORTED_LOGS, 0, 2, call_0400 },
+		{ "0405h", 0x04, 0x05, 8, 0x14, 1, 0, 1, call_0405 },
+		{ "0500h", 0x05, 0x00, 8, 0x30, 1, 0, 2, call_0500 },
+		{ "4300h", 0x43, 0x00, 0x20, 0x10, CXLMI_MAX_POISON_RECORDS, 0x0a, 2, call_4300 },
+		{ "4305h", 0x43, 0x05, 0x20, 0x10, CXLMI_MAX_SCAN_MEDIA_RECORDS, 0x12, 2, call_4305 },
+		{ "4402h", 0x44, 0x02, 0x0c, 0x02, 1, 0x0a, 2, call_4402 },
+		{ "4801h", 0x48, 0x01, 0x10, 0x28, 1, 0, 4, call_4801 },
+		{ "4801h for none", 0x48, 0x01, 0x10, 0x28, 0, 0, 4, call_4801_none },
+	};
+	size_t i, j;
+
+	for (i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+		size_t room = cases[i].header + cases[i].room * cases[i].entry;
+		uint32_t claim = cases[i].count_size == 1 ? 200 : 1000;
+		uint8_t *pl = calloc(1, room), *ret = malloc(room + CANARY);
+		int rc;
+
+		ASSERT_EQ(!pl || !ret, 0, "no memory");
+		/* little-endian, as wide as the field */
+		for (j = 0; j < cases[i].count_size; j++)
+			pl[cases[i].count_at + j] = (uint8_t)(claim >> (8 * j));
+		memset(ret, 0, room);
+		memset(ret + room, 0x5a, CANARY);
+
+		rc = list_too_many(cases[i].set, cases[i].cmd, pl, room,
+				   cases[i].call, ret);
+		free(pl);
+		if (rc != -1) {
+			fprintf(stderr, "\n    %s: rc %d for %u entries where %zu fit\n",
+				cases[i].name, rc, claim, cases[i].room);
+			free(ret);
+			return -1;
+		}
+		for (j = 0; j < CANARY; j++) {
+			if (ret[room + j] != 0x5a) {
+				fprintf(stderr, "\n    %s: wrote past the caller's buffer\n",
+					cases[i].name);
+				free(ret);
+				return -1;
+			}
+		}
+		/* and the count the caller sees is none */
+		for (j = 0; j < cases[i].count_size; j++) {
+			if (ret[cases[i].count_at + j]) {
+				fprintf(stderr, "\n    %s: a count is reported\n",
+					cases[i].name);
+				free(ret);
+				return -1;
+			}
+		}
+		free(ret);
+	}
+
+	return 0;
+}
+
 int main(void)
 {
 	printf("==========================================================\n");
@@ -10359,6 +10496,7 @@ int main(void)
 	RUN_TEST(test_cmd_fmapi_dc_list_tags_huge_count);
 	RUN_TEST(test_cmd_fmapi_dc_list_tags_error);
 	RUN_TEST(test_cmd_list_too_many);
+	RUN_TEST(test_cmd_list_too_many_more);
 	RUN_TEST(test_cmd_memdev_security_receive);
 	RUN_TEST(test_cmd_vendor_specific);
 

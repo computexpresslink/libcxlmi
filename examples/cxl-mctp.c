@@ -482,7 +482,8 @@ static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 	int i, rc[num_poisons];
 	struct cxlmi_cmd_memdev_inject_poison_req inject_poison[num_poisons];
 	struct cxlmi_cmd_memdev_get_poison_list_req get_poison_list_req[num_poisons];
-	struct cxlmi_cmd_memdev_get_poison_list_rsp get_poison_list_rsp[num_poisons];
+	/* room for every record a device may return */
+	struct cxlmi_cmd_memdev_get_poison_list_rsp *plist;
 	struct cxlmi_cmd_memdev_clear_poison_req clear_poison[num_poisons];
 	uint64_t phy_addr[num_poisons];
 	uint64_t phy_start_addr = 0x00001000;
@@ -504,42 +505,47 @@ static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 		}
 	}
 
+	plist = calloc(1, sizeof(*plist) +
+		       CXLMI_MAX_POISON_RECORDS * sizeof(plist->records[0]));
+	if (!plist)
+		return -1;
+
 	for (i = 0; i < num_poisons; i++) {
 		rc[i] = cxlmi_cmd_memdev_inject_poison(ep, NULL,
 						       &inject_poison[i]);
 		if (rc[i])
-			return rc[i];
+			goto out;
 		else {
 			printf("Inject poison physical address - %d - %" PRIu64 "\n",
 			       i, inject_poison[i].inject_poison_phy_addr);
 		}
 
-		memset(&get_poison_list_rsp[i], 0, sizeof(get_poison_list_rsp[i]));
 		rc[i] = cxlmi_cmd_get_poison_list(ep, NULL, &get_poison_list_req[i],
-						  &get_poison_list_rsp[i]);
+						  plist);
 		if (rc[i])
-			return rc[i];
+			goto out;
 		else {
 			printf("Get poison list flags - %d\n",
-			       get_poison_list_rsp[i].poison_list_flags);
+			       plist->poison_list_flags);
 			printf("Get poison list overflow timestamp - %" PRIu64 "\n",
-			       get_poison_list_rsp[i].overflow_timestamp);
+			       plist->overflow_timestamp);
 			printf("Get poison list more media err count - %d\n",
-			       get_poison_list_rsp[i].more_err_media_record_cnt);
+			       plist->more_err_media_record_cnt);
 			printf("Get poison list media err records err address - %" PRIu64 "\n",
-			       get_poison_list_rsp[i].records[0].media_err_addr);
+			       plist->records[0].media_err_addr);
 			printf("Get poison list media err records err length - %d\n",
-			       get_poison_list_rsp[i].records[0].media_err_len);
+			       plist->records[0].media_err_len);
 		}
 
 		rc[i] = cxlmi_cmd_memdev_clear_poison(ep, NULL, &clear_poison[i]);
 		if (rc[i])
-			return rc[i];
+			goto out;
 	}
 
 	printf("Poison mgmt commands executed successfully\n");
-
-	return 0;
+out:
+	free(plist);
+	return i < num_poisons ? rc[i] : 0;
 }
 
 static int test_fmapi_get_dcd_info(struct cxlmi_endpoint *ep)

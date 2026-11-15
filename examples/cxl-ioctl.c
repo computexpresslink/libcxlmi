@@ -174,7 +174,8 @@ static int play_with_scan_media(struct cxlmi_endpoint *ep)
 		.scan_media_physaddr_length = 64,
 		.scan_media_flags = 0x0,
 	};
-	struct cxlmi_cmd_memdev_get_scan_media_results_rsp results;
+	/* room for every record a device may return */
+	struct cxlmi_cmd_memdev_get_scan_media_results_rsp *results;
 
 	memset(&req, 0, sizeof(struct cxlmi_cmd_memdev_get_scan_media_capabilities_req));
 
@@ -195,20 +196,27 @@ static int play_with_scan_media(struct cxlmi_endpoint *ep)
 
 	sleep(rsp.estimated_scan_media_time);
 
-	rc = cxlmi_cmd_memdev_get_scan_media_results(ep, NULL, &results);
+	results = calloc(1, sizeof(*results) +
+			 CXLMI_MAX_SCAN_MEDIA_RECORDS * sizeof(results->record[0]));
+	if (!results)
+		return -1;
+
+	rc = cxlmi_cmd_memdev_get_scan_media_results(ep, NULL, results);
 
 	if(rc){
+		free(results);
 		return rc;
 	}
 
 	printf("Get scan media results - \n restart phy address : 0x%" PRIx64 "\n"
 	       "Physical address length : %" PRIu64 "\n scan media flags : %d\n"
 	       "media error count : %d",
-	       results.scan_media_restart_physaddr,
-	       results.scan_media_restart_physaddr_length,
-	       results.scan_media_flags,
-	       results.media_error_count);
+	       results->scan_media_restart_physaddr,
+	       results->scan_media_restart_physaddr_length,
+	       results->scan_media_flags,
+	       results->media_error_count);
 
+	free(results);
 	return 0;
 }
 
@@ -414,7 +422,8 @@ static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 	const int num_poisons = 3;
 	int i, rc[num_poisons];
 	struct cxlmi_cmd_memdev_get_poison_list_req get_poison_list_req[num_poisons];
-	struct cxlmi_cmd_memdev_get_poison_list_rsp get_poison_list_rsp[num_poisons];
+	/* room for every record a device may return */
+	struct cxlmi_cmd_memdev_get_poison_list_rsp *plist;
 	struct cxlmi_cmd_memdev_inject_poison_req inject_poison[num_poisons];
 	struct cxlmi_cmd_memdev_clear_poison_req clear_poison[num_poisons];
 	uint64_t phy_addr[num_poisons];
@@ -436,41 +445,46 @@ static int play_with_poison_mgmt(struct cxlmi_endpoint *ep)
 			clear_poison[i].clear_poison_write_data[j] = 0;
 	}
 
+	plist = calloc(1, sizeof(*plist) +
+		       CXLMI_MAX_POISON_RECORDS * sizeof(plist->records[0]));
+	if (!plist)
+		return -1;
+
 	for (i = 0; i < num_poisons; i++) {
 		rc[i] = cxlmi_cmd_memdev_inject_poison(ep, NULL, &inject_poison[i]);
 		if (rc[i])
-			return rc[i];
+			goto out;
 		else {
 			printf("Inject poison physical address - %d - %" PRIu64 "\n",
 			       i, inject_poison[i].inject_poison_phy_addr);
 		}
 
-		memset(&get_poison_list_rsp[i], 0, sizeof(get_poison_list_rsp[i]));
 		rc[i] = cxlmi_cmd_get_poison_list(ep, NULL, &get_poison_list_req[i],
-						  &get_poison_list_rsp[i]);
+						  plist);
 		if (rc[i])
-			return rc[i];
+			goto out;
 		else {
 			printf("Get poison list flags - %d\n",
-					get_poison_list_rsp[i].poison_list_flags);
+					plist->poison_list_flags);
 			printf("Get poison list overflow timestamp - %" PRIu64 "\n",
-					get_poison_list_rsp[i].overflow_timestamp);
+					plist->overflow_timestamp);
 			printf("Get poison list more media err count - %d\n",
-					get_poison_list_rsp[i].more_err_media_record_cnt);
+					plist->more_err_media_record_cnt);
 			printf("Get poison list media err records err address - %" PRIu64 "\n",
-					get_poison_list_rsp[i].records[0].media_err_addr);
+					plist->records[0].media_err_addr);
 			printf("Get poison list media err records err length - %d\n",
-					get_poison_list_rsp[i].records[0].media_err_len);
+					plist->records[0].media_err_len);
 		}
 
 		rc[i] = cxlmi_cmd_memdev_clear_poison(ep, NULL, &clear_poison[i]);
 		if (rc[i])
-			return rc[i];
+			goto out;
 	}
 
 	printf("Poison mgmt commands executed successfully\n");
-
-	return 0;
+out:
+	free(plist);
+	return i < num_poisons ? rc[i] : 0;
 }
 
 int main(int argc, char **argv)

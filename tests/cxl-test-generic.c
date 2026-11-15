@@ -670,7 +670,8 @@ static void test_get_supported_features(struct cxlmi_endpoint *ep)
 		return;
 	}
 
-	req.count = 16;
+	/* Count is in bytes: room for the 16 entries allocated */
+	req.count = 16 * sizeof(rsp->supported_feature_entries[0]);
 	req.starting_feature_index = 0;
 
 	rc = cxlmi_cmd_get_supported_features(ep, get_tunnel_info(), &req, rsp);
@@ -718,7 +719,8 @@ static void test_get_feature(struct cxlmi_endpoint *ep)
 		return;
 	}
 
-	sf_req.count = 16;
+	/* Count is in bytes: room for the 16 entries allocated */
+	sf_req.count = 16 * sizeof(sf_rsp->supported_feature_entries[0]);
 	sf_req.starting_feature_index = 0;
 
 	rc = cxlmi_cmd_get_supported_features(ep, get_tunnel_info(), &sf_req, sf_rsp);
@@ -789,7 +791,8 @@ static void test_set_feature(struct cxlmi_endpoint *ep)
 		return;
 	}
 
-	sf_req.count = 16;
+	/* Count is in bytes: room for the 16 entries allocated */
+	sf_req.count = 16 * sizeof(sf_rsp->supported_feature_entries[0]);
 	sf_req.starting_feature_index = 0;
 
 	rc = cxlmi_cmd_get_supported_features(ep, get_tunnel_info(), &sf_req, sf_rsp);

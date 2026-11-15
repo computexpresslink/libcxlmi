@@ -496,6 +496,11 @@ int cxlmi_cmd_set_timestamp(struct cxlmi_endpoint *ep,
 			    struct cxlmi_tunnel_info *ti,
 			    struct cxlmi_cmd_set_timestamp_req *in);
 
+/*
+ * @ret of cxlmi_cmd_get_supported_logs() has room for this many entries. A
+ * device that reports more fails the command: read a longer list with
+ * cxlmi_cmd_get_supported_logs_sublist().
+ */
 #define CXLMI_MAX_SUPPORTED_LOGS 7
 int cxlmi_cmd_get_supported_logs(struct cxlmi_endpoint *ep,
 				 struct cxlmi_tunnel_info *ti,
@@ -518,10 +523,19 @@ int cxlmi_cmd_clear_log(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_populate_log(struct cxlmi_endpoint *ep,
 			   struct cxlmi_tunnel_info *ti,
 			   struct cxlmi_cmd_populate_log_req *in);
+/*
+ * @ret has room for @in->max_supported_log_entries entries. A device that
+ * returns more fails the command.
+ */
 int cxlmi_cmd_get_supported_logs_sublist(struct cxlmi_endpoint *ep,
 			  struct cxlmi_tunnel_info *ti,
 			  struct cxlmi_cmd_get_supported_logs_sublist_req *in,
 			  struct cxlmi_cmd_get_supported_logs_sublist_rsp *ret);
+/*
+ * @in->count is in bytes, of the Supported Feature Entries to return, and
+ * @ret has room for that many bytes of entries after the header. A device
+ * that reports more entries than fit in @in->count fails the command.
+ */
 int cxlmi_cmd_get_supported_features(struct cxlmi_endpoint *ep,
 	struct cxlmi_tunnel_info *ti,
 	struct cxlmi_cmd_get_supported_features_req *in,
@@ -573,6 +587,11 @@ int cxlmi_cmd_memdev_set_shutdown_state(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti,
 			      struct cxlmi_cmd_memdev_set_shutdown_state_req *in);
 
+/*
+ * @ret has room for CXLMI_MAX_POISON_RECORDS Media Error Records. A device
+ * that reports more fails the command.
+ */
+#define CXLMI_MAX_POISON_RECORDS 256
 int cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
 					struct cxlmi_tunnel_info *ti,
 					struct cxlmi_cmd_memdev_get_poison_list_req *in,
@@ -590,6 +609,11 @@ int cxlmi_cmd_memdev_get_scan_media_capabilities(struct cxlmi_endpoint *ep,
 int cxlmi_cmd_memdev_scan_media(struct cxlmi_endpoint *ep,
 			 struct cxlmi_tunnel_info *ti,
 			 struct cxlmi_cmd_memdev_scan_media_req *in);
+/*
+ * @ret has room for CXLMI_MAX_SCAN_MEDIA_RECORDS Media Error Records. A
+ * device that reports more fails the command.
+ */
+#define CXLMI_MAX_SCAN_MEDIA_RECORDS 256
 int cxlmi_cmd_memdev_get_scan_media_results(struct cxlmi_endpoint *ep,
 				     struct cxlmi_tunnel_info *ti,
 				     struct cxlmi_cmd_memdev_get_scan_media_results_rsp *ret);
@@ -598,6 +622,10 @@ int cxlmi_cmd_memdev_sanitize(struct cxlmi_endpoint *ep,
 			      struct cxlmi_tunnel_info *ti);
 int cxlmi_cmd_memdev_secure_erase(struct cxlmi_endpoint *ep,
 				  struct cxlmi_tunnel_info *ti);
+/*
+ * @ret has room for @in->discovery_osa.num_ops entries. A device that
+ * returns more fails the command.
+ */
 int cxlmi_cmd_memdev_media_operations_discovery(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_memdev_media_operations_discovery_req *in,
@@ -647,6 +675,12 @@ int cxlmi_cmd_memdev_get_dc_config(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_memdev_get_dc_config_req *in,
 			struct cxlmi_cmd_memdev_get_dc_config_rsp *ret);
+/*
+ * At most 8 extents are asked for at a time: @in->extent_cnt above 8 asks
+ * for 8, and @ret has room for that many. 0 asks for none, for the Total
+ * Extent Count and Generation Number alone. A device that returns more
+ * extents than were asked for fails the command.
+ */
 int cxlmi_cmd_memdev_get_dc_extent_list(struct cxlmi_endpoint *ep,
 			struct cxlmi_tunnel_info *ti,
 			struct cxlmi_cmd_memdev_get_dc_extent_list_req *in,

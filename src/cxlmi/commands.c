@@ -14,11 +14,6 @@
 
 #define CXL_CAPACITY_MULTIPLIER   (256 * 1024 * 1024)
 
-/* Max poison records to retrieve - based on typical mailbox sizes */
-#define MAX_POISON_RECORDS 256
-
-/* Max scan media error records - same as poison records */
-#define MAX_SCAN_MEDIA_RECORDS 256
 
 CXLMI_EXPORT int cxlmi_cmd_identify(struct cxlmi_endpoint *ep,
 				    struct cxlmi_tunnel_info *ti,
@@ -628,8 +623,13 @@ CXLMI_EXPORT int cxlmi_cmd_get_supported_logs(struct cxlmi_endpoint *ep,
 
 	ret->num_supported_log_entries =
 		le16_to_cpu(rsp_pl->num_supported_log_entries);
+	if (!cci_list_fits(ep, "log entries", ret->num_supported_log_entries,
+			   CXLMI_MAX_SUPPORTED_LOGS)) {
+		ret->num_supported_log_entries = 0;
+		return -1;
+	}
 
-	for (i = 0; i < rsp_pl->num_supported_log_entries; i++) {
+	for (i = 0; i < ret->num_supported_log_entries; i++) {
 		memcpy(ret->entries[i].uuid, rsp_pl->entries[i].uuid,
 		       sizeof(rsp_pl->entries[i].uuid));
 		ret->entries[i].log_size =
@@ -841,12 +841,14 @@ cxlmi_cmd_get_supported_logs_sublist(struct cxlmi_endpoint *ep,
 	req_pl->start_log_entry_index = in->start_log_entry_index;
 
 	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) +
-		CXLMI_MAX_SUPPORTED_LOGS * sizeof(*rsp_pl->entries);
+		in->max_supported_log_entries * sizeof(*rsp_pl->entries);
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
 		return -1;
 
-	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz, rsp_sz);
+	/* up to Maximum Supported Log Entries, which a device need not fill */
+	rc = send_cmd_cci(ep, ti, req, req_sz, rsp, rsp_sz,
+			  sizeof(*rsp) + sizeof(*rsp_pl));
 	if (rc)
 		return rc;
 
@@ -857,8 +859,13 @@ cxlmi_cmd_get_supported_logs_sublist(struct cxlmi_endpoint *ep,
 	ret->total_num_supported_log_entries =
 		le16_to_cpu(rsp_pl->total_num_supported_log_entries);
 	ret->start_log_entry_index = rsp_pl->start_log_entry_index;
+	if (!cci_list_fits(ep, "log entries", ret->num_supported_log_entries,
+			   in->max_supported_log_entries)) {
+		ret->num_supported_log_entries = 0;
+		return -1;
+	}
 
-	for (i = 0; i < rsp_pl->num_supported_log_entries; i++) {
+	for (i = 0; i < ret->num_supported_log_entries; i++) {
 		memcpy(ret->entries[i].uuid, rsp_pl->entries[i].uuid,
 		       sizeof(rsp_pl->entries[i].uuid));
 		ret->entries[i].log_size =
@@ -909,8 +916,15 @@ CXLMI_EXPORT int cxlmi_cmd_get_supported_features(struct cxlmi_endpoint *ep,
 
 	rsp_pl = (struct cxlmi_cmd_get_supported_features_rsp *)rsp->payload;
 
-	ret->num_supported_feature_entries = le32_to_cpu(rsp_pl->num_supported_feature_entries);
+	ret->num_supported_feature_entries = le16_to_cpu(rsp_pl->num_supported_feature_entries);
 	ret->device_supported_features = le16_to_cpu(rsp_pl->device_supported_features);
+	/* Count is in bytes: room for that many bytes of entries */
+	if (!cci_list_fits(ep, "feature entries",
+			   ret->num_supported_feature_entries,
+			   in->count / sizeof(rsp_pl->supported_feature_entries[0]))) {
+		ret->num_supported_feature_entries = 0;
+		return -1;
+	}
 
 	for (i = 0; i < ret->num_supported_feature_entries; i++) {
 		memcpy(&ret->supported_feature_entries[i].feature_id,
@@ -1390,7 +1404,7 @@ cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
 	req_pl->get_poison_list_phy_addr_len = cpu_to_le64(in->get_poison_list_phy_addr_len);
 
 	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) +
-		 (MAX_POISON_RECORDS * sizeof(rsp_pl->records[0]));
+		 (CXLMI_MAX_POISON_RECORDS * sizeof(rsp_pl->records[0]));
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
 		return -1;
@@ -1406,6 +1420,12 @@ cxlmi_cmd_get_poison_list(struct cxlmi_endpoint *ep,
 	ret->overflow_timestamp =
 		le64_to_cpu(rsp_pl->overflow_timestamp);
 	ret->more_err_media_record_cnt = le16_to_cpu(rsp_pl->more_err_media_record_cnt);
+	if (!cci_list_fits(ep, "media error records",
+			   ret->more_err_media_record_cnt,
+			   CXLMI_MAX_POISON_RECORDS)) {
+		ret->more_err_media_record_cnt = 0;
+		return -1;
+	}
 
 	for (i = 0; i < ret->more_err_media_record_cnt; i++) {
 		ret->records[i].media_err_addr =
@@ -1550,7 +1570,7 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_scan_media_results(struct cxlmi_endpoint *
 
 	arm_cci_request(ep, &req, 0, MEDIA_AND_POISON, GET_SCAN_MEDIA_RESULTS);
 	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) +
-		 (MAX_SCAN_MEDIA_RECORDS * sizeof(rsp_pl->record[0]));
+		 (CXLMI_MAX_SCAN_MEDIA_RECORDS * sizeof(rsp_pl->record[0]));
 
 	rsp = calloc(1, rsp_sz);
 	if (!rsp)
@@ -1569,6 +1589,11 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_scan_media_results(struct cxlmi_endpoint *
 		le64_to_cpu(rsp_pl->scan_media_restart_physaddr_length);
 	ret->scan_media_flags = rsp_pl->scan_media_flags;
 	ret->media_error_count = le16_to_cpu(rsp_pl->media_error_count);
+	if (!cci_list_fits(ep, "media error records", ret->media_error_count,
+			   CXLMI_MAX_SCAN_MEDIA_RECORDS)) {
+		ret->media_error_count = 0;
+		return -1;
+	}
 	for (i = 0; i < ret->media_error_count; i++) {
 		ret->record[i].media_error_address =
 			le64_to_cpu(rsp_pl->record[i].media_error_address);
@@ -1646,6 +1671,11 @@ int cxlmi_cmd_memdev_media_operations_discovery(struct cxlmi_endpoint *ep,
 	ret->dpa_range_granularity = le64_to_cpu(rsp_pl->dpa_range_granularity);
 	ret->total_supported_ops = le16_to_cpu(rsp_pl->total_supported_ops);
 	ret->num_supported_ops = le16_to_cpu(rsp_pl->num_supported_ops);
+	if (!cci_list_fits(ep, "media operations", ret->num_supported_ops,
+			   in->discovery_osa.num_ops)) {
+		ret->num_supported_ops = 0;
+		return -1;
+	}
 
 	for (i = 0; i < ret->num_supported_ops; i++) {
 		ret->entry[i].media_op_class = rsp_pl->entry[i].media_op_class;
@@ -2034,6 +2064,7 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_extent_list(struct cxlmi_endpoint *ep,
 	_cleanup_free_ struct cxlmi_cci_msg *req = NULL;
 	_cleanup_free_ struct cxlmi_cci_msg *rsp = NULL;
 	ssize_t req_sz, rsp_sz, rsp_sz_min;
+	uint32_t count;
 	int i, rc = -1;
 
 	req_sz = sizeof(*req_pl) + sizeof(*req);
@@ -2041,19 +2072,21 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_extent_list(struct cxlmi_endpoint *ep,
 	if (!req)
 		return -1;
 
+	/*
+	 * At most 8 extents at a time: the software is responsible to retrieve
+	 * all the extents based on the total extent count and the number of
+	 * extents returned till now. 0 asks for none: "the device shall return
+	 * the Total Extent Count and Extent List Generation Number without
+	 * returning any extent data" (Table 8-348).
+	 */
+	count = in->extent_cnt > 8 ? 8 : in->extent_cnt;
+
 	arm_cci_request(ep, req, sizeof(*req_pl), DCD_CONFIG, GET_DYN_CAP_EXT_LIST);
 	req_pl = (struct cxlmi_cmd_memdev_get_dc_extent_list_req *)req->payload;
-	req_pl->extent_cnt = cpu_to_le32(in->extent_cnt);
+	req_pl->extent_cnt = cpu_to_le32(count);
 	req_pl->start_extent_idx = cpu_to_le32(in->start_extent_idx);
 
-	/*
-	 * Assume we retrieve at most 8 extents at one time, the software is
-	 * responsible to retrieve all the extents based on the total extent
-	 * count and the number of extents returned till now.
-	 */
-	if (req_pl->extent_cnt  == 0 || req_pl->extent_cnt > 8)
-		req_pl->extent_cnt = cpu_to_le32(8);
-	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) + 8 * sizeof(rsp_pl->extents[0]);
+	rsp_sz = sizeof(*rsp) + sizeof(*rsp_pl) + count * sizeof(rsp_pl->extents[0]);
 	rsp_sz_min = sizeof(*rsp) + sizeof(*rsp_pl);
 
 	rsp = calloc(1, rsp_sz);
@@ -2070,8 +2103,12 @@ CXLMI_EXPORT int cxlmi_cmd_memdev_get_dc_extent_list(struct cxlmi_endpoint *ep,
 	ret->num_extents_returned = le32_to_cpu(rsp_pl->num_extents_returned);
 	ret->total_num_extents = le32_to_cpu(rsp_pl->total_num_extents);
 	ret->generation_num = le32_to_cpu(rsp_pl->generation_num);
+	if (!cci_list_fits(ep, "extents", ret->num_extents_returned, count)) {
+		ret->num_extents_returned = 0;
+		return -1;
+	}
 
-	for (i = 0; i < ret->num_extents_returned; i++) {
+	for (i = 0; i < (int)ret->num_extents_returned; i++) {
 		ret->extents[i].start_dpa = le64_to_cpu(rsp_pl->extents[i].start_dpa);
 		ret->extents[i].len = le64_to_cpu(rsp_pl->extents[i].len);
 		memcpy(ret->extents[i].tag, rsp_pl->extents[i].tag, 0x10);

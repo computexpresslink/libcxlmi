@@ -265,29 +265,40 @@ static void test_get_shutdown_state(struct cxlmi_endpoint *ep)
 static void test_get_poison_list(struct cxlmi_endpoint *ep)
 {
 	struct cxlmi_cmd_memdev_get_poison_list_req req = {0};
-	struct cxlmi_cmd_memdev_get_poison_list_rsp rsp = {0};
+	struct cxlmi_cmd_memdev_get_poison_list_rsp *rsp;
 	int rc;
+
+	/* room for every record a device may return */
+	rsp = calloc(1, sizeof(*rsp) +
+		     CXLMI_MAX_POISON_RECORDS * sizeof(rsp->records[0]));
+	if (!rsp) {
+		TEST_FAIL("get_poison_list", "allocation failed");
+		return;
+	}
 
 	req.get_poison_list_phy_addr = 0;
 	req.get_poison_list_phy_addr_len = 0x10000; /* 64KB */
 
-	rc = cxlmi_cmd_get_poison_list(ep, get_tunnel_info(), &req, &rsp);
+	rc = cxlmi_cmd_get_poison_list(ep, get_tunnel_info(), &req, rsp);
 	if (is_unsupported(rc)) {
 		TEST_SKIP("get_poison_list", "not supported");
+		free(rsp);
 		return;
 	}
 	if (rc) {
 		TEST_FAIL("get_poison_list", rc_str(rc));
+		free(rsp);
 		return;
 	}
 
 	TEST_PASS("get_poison_list");
 	if (verbose) {
 		printf("           poison_list_flags: 0x%02x\n",
-		       rsp.poison_list_flags);
+		       rsp->poison_list_flags);
 		printf("           more_err_media_record_cnt: %u\n",
-		       rsp.more_err_media_record_cnt);
+		       rsp->more_err_media_record_cnt);
 	}
+	free(rsp);
 }
 
 static void test_inject_clear_poison(struct cxlmi_endpoint *ep)
@@ -734,7 +745,8 @@ static void test_get_scan_media_results(struct cxlmi_endpoint *ep)
 	struct cxlmi_cmd_memdev_get_scan_media_results_rsp *rsp;
 	int rc;
 
-	rsp = calloc(1, sizeof(*rsp) + 16 * sizeof(rsp->record[0]));
+	rsp = calloc(1, sizeof(*rsp) +
+		     CXLMI_MAX_SCAN_MEDIA_RECORDS * sizeof(rsp->record[0]));
 	if (!rsp) {
 		TEST_FAIL("get_scan_media_results", "allocation failed");
 		return;
