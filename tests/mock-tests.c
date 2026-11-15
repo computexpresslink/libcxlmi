@@ -1480,9 +1480,10 @@ static int test_cmd_fmapi_get_phys_port_state(void)
 
 	rsp->num_ports = 1;
 
+	/* one port: a 4-byte header and one 16-byte block (Tables 7-20, 7-21) */
 	ASSERT_EQ(setup(), 0, "setup failed");
-	cxlmi_mock_set_response(test_ep, 0x51, 0x01, CXLMI_RET_SUCCESS,
-				rsp_buf, sizeof(rsp_buf));
+	cxlmi_mock_set_response(test_ep, 0x51, 0x01, CXLMI_RET_SUCCESS, rsp_buf,
+				sizeof(*rsp) + sizeof(rsp->ports[0]));
 	rc = cxlmi_cmd_fmapi_get_phys_port_state(test_ep, NULL, req, ret);
 	teardown();
 
@@ -1575,15 +1576,20 @@ static int test_cmd_fmapi_get_qos_allocated_bw(void)
 
 	rsp->number_ld = 2;
 	rsp->start_ld_id = 0;
+	rsp->qos_allocation_fraction[0] = 0x40;
+	rsp->qos_allocation_fraction[1] = 0x80;
 
+	/* 2 + Number of LDs bytes (Table 7-55) */
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x54, 0x06, CXLMI_RET_SUCCESS,
-				rsp_buf, sizeof(rsp_buf));
+				rsp_buf, sizeof(*rsp) + rsp->number_ld);
 	rc = cxlmi_cmd_fmapi_get_qos_allocated_bw(test_ep, NULL, &req, ret);
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
 	ASSERT_EQ(ret->number_ld, 2, "number_ld mismatch");
+	ASSERT_EQ(ret->qos_allocation_fraction[0], 0x40, "fraction 0 mismatch");
+	ASSERT_EQ(ret->qos_allocation_fraction[1], 0x80, "fraction 1 mismatch");
 	return 0;
 }
 
@@ -1610,15 +1616,18 @@ static int test_cmd_fmapi_set_qos_allocated_bw(void)
 
 	rsp->number_ld = 1;
 	rsp->start_ld_id = 0;
+	rsp->qos_allocation_fraction[0] = 0x55;
 
+	/* 2 + Number of LDs bytes (Table 7-56) */
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x54, 0x07, CXLMI_RET_SUCCESS,
-				rsp_buf, sizeof(rsp_buf));
+				rsp_buf, sizeof(*rsp) + rsp->number_ld);
 	rc = cxlmi_cmd_fmapi_set_qos_allocated_bw(test_ep, NULL, req, ret);
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
 	ASSERT_EQ(ret->number_ld, 1, "number_ld mismatch");
+	ASSERT_EQ(ret->qos_allocation_fraction[0], 0x55, "fraction mismatch");
 	return 0;
 }
 
@@ -1642,15 +1651,20 @@ static int test_cmd_fmapi_get_qos_bw_limit(void)
 
 	rsp->number_ld = 2;
 	rsp->start_ld_id = 0;
+	rsp->qos_limit_fraction[0] = 0x40;
+	rsp->qos_limit_fraction[1] = 0x80;
 
+	/* 2 + Number of LDs bytes (Table 7-58) */
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x54, 0x08, CXLMI_RET_SUCCESS,
-				rsp_buf, sizeof(rsp_buf));
+				rsp_buf, sizeof(*rsp) + rsp->number_ld);
 	rc = cxlmi_cmd_fmapi_get_qos_bw_limit(test_ep, NULL, &req, ret);
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
 	ASSERT_EQ(ret->number_ld, 2, "number_ld mismatch");
+	ASSERT_EQ(ret->qos_limit_fraction[0], 0x40, "fraction 0 mismatch");
+	ASSERT_EQ(ret->qos_limit_fraction[1], 0x80, "fraction 1 mismatch");
 	return 0;
 }
 
@@ -1677,15 +1691,18 @@ static int test_cmd_fmapi_set_qos_bw_limit(void)
 
 	rsp->number_ld = 1;
 	rsp->start_ld_id = 0;
+	rsp->qos_limit_fraction[0] = 0x55;
 
+	/* 2 + Number of LDs bytes (Table 7-59) */
 	ASSERT_EQ(setup(), 0, "setup failed");
 	cxlmi_mock_set_response(test_ep, 0x54, 0x09, CXLMI_RET_SUCCESS,
-				rsp_buf, sizeof(rsp_buf));
+				rsp_buf, sizeof(*rsp) + rsp->number_ld);
 	rc = cxlmi_cmd_fmapi_set_qos_bw_limit(test_ep, NULL, req, ret);
 	teardown();
 
 	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
 	ASSERT_EQ(ret->number_ld, 1, "number_ld mismatch");
+	ASSERT_EQ(ret->qos_limit_fraction[0], 0x55, "fraction mismatch");
 	return 0;
 }
 
@@ -5625,8 +5642,12 @@ static int test_payload_get_log_cel(void)
 static int test_payload_get_supported_features(void)
 {
 	struct cxlmi_cmd_get_supported_features_req req = {0};
-	/* Response includes header + variable entries (use raw bytes for simplicity) */
-	uint8_t rsp_buf[64] = {0};
+	/*
+	 * The 8-byte header and no Supported Feature Entries (Table 8-275):
+	 * the request's 4 bytes have no room for one, which is 30h bytes.
+	 */
+	struct cxlmi_cmd_get_supported_features_rsp rsp = {0};
+	uint8_t ret_buf[sizeof(struct cxlmi_cmd_get_supported_features_rsp) + 4] = {0};
 	struct cxlmi_cmd_get_supported_features_rsp *ret;
 	uint8_t payload[16];
 	size_t payload_size = sizeof(payload);
@@ -5634,12 +5655,12 @@ static int test_payload_get_supported_features(void)
 	uint16_t start_idx;
 	int rc;
 
-	ret = (struct cxlmi_cmd_get_supported_features_rsp *)rsp_buf;
+	ret = (struct cxlmi_cmd_get_supported_features_rsp *)ret_buf;
 	req.count = 4;
 	req.starting_feature_index = 0;
 
 	ASSERT_EQ(setup(), 0, "setup failed");
-	cxlmi_mock_set_response(test_ep, 0x05, 0x00, CXLMI_RET_SUCCESS, rsp_buf, sizeof(rsp_buf));
+	cxlmi_mock_set_response(test_ep, 0x05, 0x00, CXLMI_RET_SUCCESS, &rsp, sizeof(rsp));
 	rc = cxlmi_cmd_get_supported_features(test_ep, NULL, &req, ret);
 
 	cxlmi_mock_get_last_command(test_ep, NULL, NULL, payload, &payload_size);
@@ -7973,7 +7994,8 @@ static int test_endian_memdev_identify_capacity(void)
 	 *   uint64_t total_capacity - offset 16
 	 *   uint64_t volatile_capacity - offset 24
 	 */
-	uint8_t wire_rsp[80] = {0};
+	/* 45h bytes (Table 8-309), as the struct is */
+	uint8_t wire_rsp[sizeof(struct cxlmi_cmd_memdev_identify_rsp)] = {0};
 	struct cxlmi_cmd_memdev_identify_rsp ret = {0};
 	int rc;
 
