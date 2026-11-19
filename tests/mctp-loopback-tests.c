@@ -254,7 +254,7 @@ static void responder_reply(const struct responder *r, int sd, bool fmapi)
 		return;
 
 	req_pl = req->pl_length[0] | req->pl_length[1] << 8 |
-		(req->pl_length[2] & 0xf) << 16;
+		(req->pl_length[2] & 0x1f) << 16;
 	opcode = req->command_set << 8 | req->command;
 
 	memset(rsp, 0, sizeof(*rsp));
@@ -274,7 +274,7 @@ static void responder_reply(const struct responder *r, int sd, bool fmapi)
 	rsp->return_code = cpu_to_le16(rc);
 	rsp->pl_length[0] = n & 0xff;
 	rsp->pl_length[1] = (n >> 8) & 0xff;
-	rsp->pl_length[2] = (n >> 16) & 0xf;
+	rsp->pl_length[2] = (n >> 16) & 0x1f;
 	tx_len = sizeof(*rsp) + n;
 
 	switch (fault_for(r, opcode)) {
