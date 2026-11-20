@@ -2057,6 +2057,39 @@ static int test_cmd_transfer_fw(void)
 	return 0;
 }
 
+/*
+ * A payload of 1 MiB sets bit 20 of the 21-bit CCI payload length, which
+ * a 20-bit decode drops: the whole request must still arrive.
+ */
+static int test_cmd_transfer_fw_1mib(void)
+{
+	static uint8_t req_buf[sizeof(struct cxlmi_cmd_transfer_fw_req) +
+			       1024 * 1024];
+	static uint8_t got[sizeof(req_buf)];
+	struct cxlmi_cmd_transfer_fw_req *req =
+		(struct cxlmi_cmd_transfer_fw_req *)req_buf;
+	size_t data_sz = sizeof(req_buf) - sizeof(*req);
+	size_t got_sz = sizeof(got);
+	int rc, rc_last;
+
+	memset(req_buf, 0, sizeof(req_buf));
+	req->action = 0x01; /* Full transfer */
+	req->slot = 0x01;
+	memset(req->data, 0xAA, data_sz);
+
+	ASSERT_EQ(setup(), 0, "setup failed");
+	cxlmi_mock_set_response(test_ep, 0x02, 0x01, CXLMI_RET_SUCCESS, NULL, 0);
+	rc = cxlmi_cmd_transfer_fw(test_ep, NULL, req, data_sz);
+	rc_last = cxlmi_mock_get_last_command(test_ep, NULL, NULL, got, &got_sz);
+	teardown();
+
+	ASSERT_EQ(rc, CXLMI_RET_SUCCESS, "command failed");
+	ASSERT_EQ(rc_last, 0, "get last command failed");
+	ASSERT_EQ(got_sz, sizeof(req_buf), "request payload length");
+	ASSERT_EQ(got[sizeof(got) - 1], 0xAA, "last data byte");
+	return 0;
+}
+
 /* ============================================================
  * Additional Security Commands (0x45)
  * ============================================================ */
@@ -10407,6 +10440,7 @@ int main(void)
 	TEST_SUITE("Firmware Update Commands");
 	RUN_TEST(test_cmd_get_fw_info);
 	RUN_TEST(test_cmd_transfer_fw);
+	RUN_TEST(test_cmd_transfer_fw_1mib);
 	RUN_TEST(test_cmd_activate_fw);
 
 	TEST_SUITE("Timestamp Commands");

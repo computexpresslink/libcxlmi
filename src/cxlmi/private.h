@@ -17,6 +17,8 @@
 
 #include <ccan/list/list.h>
 
+#include "api-types.h"
+
 #define CXLMI_EXPORT __attribute__ ((visibility("default")))
 
 #define CXLMI_BUILD_BUG_ON_ZERO(e) ((int)(sizeof(struct { int:(-!!(e)); })))
@@ -353,8 +355,28 @@ __cxlmi_msg(struct cxlmi_ctx *c, int lvl, const char *func, const char *format, 
 	} while (0)
 
 
+/*
+ * CXL r4.0 Table 7-16: Message Payload Length is 21 bits. Bytes 5-6
+ * hold bits [15:0]; byte 7 holds bits [20:16] in its low five bits,
+ * with the Background Operation flag in bit 7.
+ */
+#define CXLMI_CCI_PL_LENGTH_HI_MASK	0x1f
+
+static inline uint32_t cci_msg_pl_length(const struct cxlmi_cci_msg *msg)
+{
+	return msg->pl_length[0] | (msg->pl_length[1] << 8) |
+	       ((msg->pl_length[2] & CXLMI_CCI_PL_LENGTH_HI_MASK) << 16);
+}
+
+static inline void cci_msg_set_pl_length(struct cxlmi_cci_msg *msg,
+					 size_t pl_length)
+{
+	msg->pl_length[0] = pl_length & 0xff;
+	msg->pl_length[1] = (pl_length >> 8) & 0xff;
+	msg->pl_length[2] = (pl_length >> 16) & CXLMI_CCI_PL_LENGTH_HI_MASK;
+}
+
 /* for commands.c */
-struct cxlmi_cci_msg;
 struct cxlmi_tunnel_info;
 void arm_cci_request(struct cxlmi_endpoint *ep, struct cxlmi_cci_msg *req,
 		     size_t req_pl_sz, uint8_t cmdset, uint8_t cmd);
